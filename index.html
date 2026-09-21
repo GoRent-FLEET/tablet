@@ -1589,11 +1589,26 @@ function drawCO(){
       var tyreCol=tyreKm!==null&&tyreKm<=0?'var(--rl)':tyreKm!==null&&tyreKm<2000?'var(--al)':'rgba(255,255,255,.5)';
       return '<div style="display:flex;flex-wrap:wrap;gap:5px;padding:6px 14px 8px;border-top:1px solid rgba(255,255,255,.1);">'
         +'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+licCol+';">'+licTxt+'</span>'
-        +'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+fuelCol+';">'+fuelTxt+'</span>'
-        +'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);">'+odoTxt+'</span>'
         +(svcTxt?'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+svcCol+';">'+svcTxt+'</span>':'')
         +(tyreTxt?'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+tyreCol+';">'+tyreTxt+'</span>':'')
-        +'</div>';
+        +'</div>'
+        // Km + fuel OUT (editable, shown on every step)
+        +(function(){
+          var km=co.odometerOut||_cov.odo||'';
+          var src=_cov.lastRet?('↩ Last return '+Number(_cov.lastRet.km).toLocaleString()+' km · '+new Date(_cov.lastRet.at).toLocaleDateString('en-GB',{day:'numeric',month:'short'})):(_cov.odo?'From Fleet Manager':'No previous reading');
+          var fuel=co.fuelOut||'Full';
+          var fb=['Empty','1/4','1/2','3/4','Full'].map(function(f){
+            var on=fuel===f;
+            return '<button onclick="co.fuelOut=\''+f+'\';drawCO();" style="padding:5px 9px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;border:1px solid '+(on?'var(--se)':'rgba(255,255,255,.15)')+';background:'+(on?'rgba(61,220,132,.18)':'rgba(255,255,255,.05)')+';color:'+(on?'var(--se)':'rgba(255,255,255,.6)')+';">'+f+'</button>';
+          }).join('');
+          return '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 14px 10px;border-top:1px solid rgba(255,255,255,.1);">'
+            +'<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:rgba(255,255,255,.6);">🛣 KM OUT'
+            +'<input type="number" inputmode="numeric" pattern="[0-9]*" id="co-odo-out" value="'+km+'" placeholder="Enter km" onfocus="this.select()" oninput="co.odometerOut=+this.value" '
+            +'style="width:110px;padding:5px 8px;font-size:14px;font-weight:800;background:rgba(0,0,0,.35);border:1px solid var(--gb);border-radius:6px;color:#fff;"></label>'
+            +'<span style="font-size:10px;color:rgba(255,255,255,.45);">'+src+'</span>'
+            +'<div style="display:flex;align-items:center;gap:4px;margin-left:auto;"><span style="font-size:11px;font-weight:800;color:rgba(255,255,255,.6);margin-right:2px;">⛽ FUEL OUT</span>'+fb+'</div>'
+            +'</div>';
+        })();
     })()+
     '</div>'+
     '<div class="stg-bar s8">'+bar+'</div>'+
@@ -1642,19 +1657,6 @@ function coStep0(){
     <div><div class="step-title">Step 1 — Vehicle Checks</div>
     <div class="step-sub">Tap each item: once = ✅ OK · twice = ⚠ Problem · Grey = NOT CHECKED = your liability</div></div>
     <div style="margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:6px;background:var(--g0);border:1px solid var(--am);border-radius:20px;padding:3px 10px 3px 3px;"><div style="width:22px;height:22px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000;">${APP_USER&&APP_USER.name?APP_USER.name.slice(0,2).toUpperCase():'??'}</div><span style="font-size:12px;font-weight:800;color:var(--al);white-space:nowrap;">🔒 ${APP_USER&&APP_USER.name?APP_USER.name:'Unknown'}</span></div>
-  </div>
-  <div class="fuel-row" style="flex-wrap:wrap;gap:10px;">
-    <div style="flex:1;min-width:160px;">
-      <div class="fuel-lbl">🛣 Odometer OUT (km)</div>
-      <input type="number" inputmode="numeric" pattern="[0-9]*" id="co-odo-out" value="${co.odometerOut||co.v.odo||''}"
-        placeholder="Enter km" onfocus="this.select()" oninput="co.odometerOut=+this.value"
-        style="padding:10px 14px;font-size:15px;font-weight:700;background:var(--g0);border:2px solid var(--gb);border-radius:var(--rs);color:var(--tx);width:100%;margin-top:6px;">
-      <div style="font-size:12px;color:var(--g5);margin-top:6px;">${co.v.lastRet?'↩ Last returned: <b style="color:var(--tx);">'+Number(co.v.lastRet.km).toLocaleString()+' km</b> on '+new Date(co.v.lastRet.at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' — change it if the dashboard shows a different reading':(co.v.odo?'From Fleet Manager: '+Number(co.v.odo).toLocaleString()+' km — change it if the dashboard shows a different reading':'No previous reading for this vehicle — enter the km from the dashboard')}</div>
-    </div>
-  </div>
-  <div class="fuel-row">
-    <div class="fuel-lbl">⛽ Fuel level OUT</div>
-    <div class="fuel-btns">${(function(){return ['Empty','1/4','1/2','3/4','Full'].map(function(f){return '<button class="fbtn'+(co.fuelOut===f?' on':'')+'" data-f="'+f+'" onclick="co.fuelOut=this.dataset.f;this.closest(\'.fuel-btns\').querySelectorAll(\'.fbtn\').forEach(function(b){b.classList.remove(\'on\')});this.classList.add(\'on\')" ontouchend="event.preventDefault();co.fuelOut=this.dataset.f;this.closest(\'.fuel-btns\').querySelectorAll(\'.fbtn\').forEach(function(b){b.classList.remove(\'on\')});this.classList.add(\'on\')">'+f+'</button>';}).join('');})()}</div>
   </div>
   <div class="prog-wrap">
     <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
