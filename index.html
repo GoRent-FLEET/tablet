@@ -1512,6 +1512,7 @@ function drawCO(){
           '<div class="fhdr-fn">'+co.fn+' <span>'+_cov.reg+'</span></div>'+
           '<div class="fhdr-cl">'+(co.clientName||_cov.cl||'No booking')+'</div>'+
           '<div class="fhdr-cl" style="font-size:13px;opacity:.7;margin-top:1px">📅 '+(_cov.pu||'?')+' → '+(_cov.rt||'?')+'</div>'+
+          '<div style="margin-top:5px;font-size:11px;font-weight:800;color:rgba(255,255,255,.5);">👤 '+(co.prepBy||APP_USER&&APP_USER.name||'—')+'</div>'+
         '</div>'+
         '<div style="text-align:right">'+
           '<span style="font-size:14px;font-weight:700;padding:3px 10px;border-radius:8px;'+_campStyle+'">'+_campLbl+'</span><br>'+
@@ -3287,6 +3288,7 @@ function drawCI(){
         <div>
           <div class="fhdr-fn">${r.fn} <span>${v.reg}</span></div>
           <div class="fhdr-cl">${v.cl} · Return: ${v.rt}</div>
+          <div style="margin-top:5px;font-size:11px;font-weight:800;color:rgba(255,255,255,.5);">👤 ${ci.receivedBy||APP_USER&&APP_USER.name||"—"}</div>
         </div>
         <span style="font-size:14px;font-weight:700;padding:3px 10px;border-radius:8px;background:rgba(240,80,80,.15);color:var(--rl);border:1px solid var(--re)">◀ ARRIVAL</span>
       </div>
