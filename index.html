@@ -1021,21 +1021,35 @@ function renderOV(){
 
     const detail=!isExp?'':(`<div style="border-top:1px solid var(--g2);padding:12px 14px;background:var(--g0);">
       <div style="background:var(--g1);border-radius:8px;padding:10px 12px;border:1px solid var(--g2);margin-bottom:8px;">
-        <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:8px;">✈️ Flight Details</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-          <div style="background:var(--g0);border-radius:7px;padding:8px 10px;border-left:3px solid var(--se);">
-            <div style="font-size:13px;font-weight:700;color:var(--se);text-transform:uppercase;margin-bottom:3px;">▶ Inbound arrival</div>
-            <div style="font-size:14px;font-weight:800;color:var(--tx);">${v.flightIn||'—'}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="font-size:20px;">✈️</span>
+          <span style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;">Flight Details</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:var(--g0);border-radius:10px;padding:10px 12px;border:1px solid var(--g2);border-top:3px solid var(--se);">
+            <div style="font-size:10px;font-weight:800;color:var(--se);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">▶ ARRIVAL</div>
+            <div style="font-size:15px;font-weight:900;color:var(--tx);margin-bottom:3px;">${v.flightIn?v.flightIn.split('·')[0].trim():'—'}</div>
+            <div style="font-size:12px;font-weight:700;color:var(--g5);">${v.flightIn&&v.flightIn.includes('·')?v.flightIn.split('·').slice(1).join('·').trim():''}</div>
           </div>
-          <div style="background:var(--g0);border-radius:7px;padding:8px 10px;border-left:3px solid #4a6fa5;">
-            <div style="font-size:13px;font-weight:700;color:#7ba3d4;text-transform:uppercase;margin-bottom:3px;">◀ Outbound departure</div>
-            <div style="font-size:14px;font-weight:800;color:var(--tx);">${v.flightOut||'—'}</div>
+          <div style="background:var(--g0);border-radius:10px;padding:10px 12px;border:1px solid var(--g2);border-top:3px solid #4a6fa5;">
+            <div style="font-size:10px;font-weight:800;color:#7ba3d4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">◀ DEPARTURE</div>
+            <div style="font-size:15px;font-weight:900;color:var(--tx);margin-bottom:3px;">${v.flightOut?v.flightOut.split('·')[0].trim():'—'}</div>
+            <div style="font-size:12px;font-weight:700;color:var(--g5);">${v.flightOut&&v.flightOut.includes('·')?v.flightOut.split('·').slice(1).join('·').trim():''}</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;background:var(--g0);border-radius:10px;padding:10px 14px;border:1px solid var(--g2);display:flex;align-items:flex-start;gap:10px;">
+          <span style="font-size:18px;">🚐</span>
+          <div style="flex:1;">
+            <div style="font-size:10px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Transfer</div>
+            <div style="font-size:14px;font-weight:800;color:var(--tx);">${v.transfer||'—'}</div>
+            ${v.location?'<div style="font-size:12px;color:var(--g5);margin-top:2px;">📍 '+v.location+'</div>':''}
+            ${v.transferPays?'<div style="display:inline-block;margin-top:5px;font-size:11px;font-weight:800;padding:3px 10px;border-radius:6px;background:'+(v.transferPays==='included'?'rgba(61,220,132,.15)':'rgba(245,166,35,.15)')+';color:'+(v.transferPays==='included'?'var(--se)':'var(--al)')+';">'+(v.transferPays==='included'?'✅ Included in rental':'💳 Client pays')+'</div>':''}
           </div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
         ${[
-          ['📍','Transfer',v.transfer?((v.transfer+(v.location?' · '+v.location:''))+(v.transferPays?' — '+(v.transferPays==='included'?'✅ Included':'💳 Client pays'):'')):(v.location||'—')],
+          
           ['📧','Email',v.email?`<a href="mailto:${v.email}" style="color:var(--se);text-decoration:none;">${v.email}</a>`:'—'],
           ['💬','WhatsApp',v.phone?`<a href="https://wa.me/${v.phone.replace(/[\s+]/g,'')}" target="_blank" style="color:var(--se);text-decoration:none;">${v.phone}</a>`:'—'],
           ['📋','Quote',v.quote||'—'],
