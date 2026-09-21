@@ -794,7 +794,7 @@ function startCO(fn){
     prepBy:'',prepSig:null,prepAt:'',prepItems:{},prepPhotos:[],fuelOut:'Full',
     prepLog:[],prepCheckedBy:{},
     equipSig:null,equipAt:'',equipLog:[],
-    clientName:v.cl||'',clientEmail:'',clientPhone:'',clientPassport:null,clientID:null,
+    clientName:v.cl||'',clientEmail:'',clientPhone:'',quoteNo:'',clientPassport:null,clientID:null,
     licFront:null,licBack:null,
     contract:null,contractSigned:false,
     dmgDone:false,
@@ -1195,7 +1195,13 @@ function coStep1(){
           <input value="${d.licExpiry||''}" placeholder="MM/YYYY" oninput="co.drivers[${i}].licExpiry=this.value">
         </div>
       </div>
-      ${isPrimary?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      ${isPrimary?`<div class="fi" style="margin-bottom:8px;">
+          <label>📋 Quote number</label>
+          <input value="${co.quoteNo||co.v.quote||''}" placeholder="e.g. Q-0343"
+            oninput="co.quoteNo=this.value"
+            style="font-weight:700;border-color:${co.quoteNo||co.v.quote?'var(--gb)':'var(--g3)'}">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
         <div class="fi"><label>📧 Email address</label>
           <input type="email" value="${co.clientEmail||''}" placeholder="client@email.com" oninput="co.clientEmail=this.value"
             style="border-color:${co.clientEmail?'var(--gb)':'var(--g3)'}">
