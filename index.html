@@ -1454,15 +1454,15 @@ function coStep0(){
       L_VEH.push(item);
     }
   }
-  const _pst=l=>{const v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';};
-  const _pby=l=>{const v=co.prepItems[l];return (v&&v.by)||'';};
-  const _pat=l=>{const v=co.prepItems[l];return (v&&v.at)||'';};
-  const done=L_VEH.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_pst(l)&&_pst(l)!=='na').length;
-  const checkable=L_VEH.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__').length;
+  function _pst(l){var v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';}
+  function _pby(l){var v=co.prepItems[l];return (v&&v.by)||'';}
+  function _pat(l){var v=co.prepItems[l];return (v&&v.at)||'';}
+  const done=L_VEH.filter(function(item){var i=item[0],l=item[1];return i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_pst(l)&&_pst(l)!=='na';}).length;
+  const checkable=L_VEH.filter(function(item){var i=item[0];return i!=='__SECTION__'&&i!=='__OPTIONAL__';}).length;
   const pct=Math.round(done/checkable*100);
-  const probs=L_VEH.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_pst(l)==='prob').map(([i,l])=>l);
+  const probs=L_VEH.filter(function(item){var i=item[0],l=item[1];return i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_pst(l)==='prob';}).map(function(item){return item[1];});
   // Staff who have checked items in this section
-  const staffOnStep=Object.keys(co.prepCheckedBy||{}).filter(function(n){return co.prepLog&&co.prepLog.some(function(e){return e.by===n;});})
+  var staffOnStep=Object.keys(co.prepCheckedBy||{}).filter(function(n){return co.prepLog&&co.prepLog.some(function(e){return e.by===n;});})
   return `
   <div class="step-intro">
     <div class="step-ico">🚗</div>
@@ -1491,7 +1491,7 @@ function coStep0(){
     <div class="prog-lbl"><span class="prog-n">${done}/${checkable}</span> items checked
     ${pct===100?'<span style="color:var(--se);font-weight:700;margin-left:8px">✅ All done!</span>':''}</div>
   </div>
-  <div class="chk-list">${L_VEH.map(([ico,lbl,det],i)=>{
+  <div class="chk-list">${L_VEH.map(function(item,i){var ico=item[0]||'',lbl=item[1]||'',det=item[2]||'';
     if(ico==='__CAMPING__'){
       if(!co.v.camping) return ''; // skip tent items if no camping booked
       ico='⛺';
@@ -1689,14 +1689,14 @@ function coStep1_equip(){
     if(item[0]==='__SECTION__'&&item[1].startsWith('🏕')) inEquip=true;
     if(inEquip) L_EQUIP.push(item);
   }
-  const _est=l=>{const v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';};
-  const _eby=l=>{const v=co.prepItems[l];return (v&&v.by)||'';};
-  const _eat=l=>{const v=co.prepItems[l];return (v&&v.at)||'';};
-  const done=L_EQUIP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_est(l)&&_est(l)!=='na').length;
-  const checkable=L_EQUIP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__').length;
+  function _est(l){var v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';}
+  function _eby(l){var v=co.prepItems[l];return (v&&v.by)||'';}
+  function _eat(l){var v=co.prepItems[l];return (v&&v.at)||'';}
+  const done=L_EQUIP.filter(function(item){var i=item[0],l=item[1];return i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_est(l)&&_est(l)!=='na';}).length;
+  const checkable=L_EQUIP.filter(function(item){var i=item[0];return i!=='__SECTION__'&&i!=='__OPTIONAL__';}).length;
   const pct=Math.round(done/checkable*100);
-  const probs=L_EQUIP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_est(l)==='prob').map(([i,l])=>l);
-  const equipStaff=Object.keys(co.prepCheckedBy||{}).filter(function(n){return co.prepLog&&co.prepLog.some(function(e){return e.by===n;});});
+  const probs=L_EQUIP.filter(function(item){var i=item[0],l=item[1];return i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_est(l)==='prob';}).map(function(item){return item[1];});
+  var equipStaff=Object.keys(co.prepCheckedBy||{}).filter(function(n){return co.prepLog&&co.prepLog.some(function(e){return e.by===n;});});
 
   return `
   <div class="step-intro">
@@ -1709,7 +1709,7 @@ function coStep1_equip(){
     <div class="prog-lbl"><span class="prog-n">${done}/${checkable}</span> items checked
     ${pct===100?'<span style="color:var(--se);font-weight:700;margin-left:8px">✅ All packed!</span>':''}</div>
   </div>
-  <div class="chk-list">${L_EQUIP.map(([ico,lbl,det],i)=>{
+  <div class="chk-list">${L_EQUIP.map(function(item,i){var ico=item[0]||'',lbl=item[1]||'',det=item[2]||'';
     const globalIdx=L_PREP.indexOf(L_PREP.find(x=>x[1]===lbl&&x[0]===ico));
     if(ico==='__SECTION__'||ico==='__OPTIONAL__'){
       const isOpt=ico==='__OPTIONAL__';
@@ -2701,9 +2701,9 @@ function coStep5_client(){
   // Build equipment summary from prepItems
   const equipSummary=[];
   let inEquip=false;
-  for(const item of L_PREP){
-    if(!item||!item[0]) continue;
-    const [ico,lbl,det]=item;
+  for(var _ei=0;_ei<L_PREP.length;_ei++){
+    var _item=L_PREP[_ei];if(!_item||!_item[0]) continue;
+    var ico=_item[0],lbl=_item[1]||'',det=_item[2]||'';
     if(ico==='__SECTION__'&&lbl.startsWith('🏕')) inEquip=true;
     if(!inEquip) continue;
     if(ico==='__SECTION__'||ico==='__OPTIONAL__') continue;
@@ -2905,9 +2905,9 @@ function coStep6_mgmt(){
   if(!co||!co.v){return '<div style="padding:20px;color:red;">Error: co.v undefined in coStep6</div>';}
   const _pst=l=>{const v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';};
   const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&i!=='__OPT_ITEM__'&&!l.startsWith('__QTY__')&&!_pst(l)).map(([i,l])=>l);
-  const uncMech=L_MECH.filter(([i,l])=>!co.mechItems[l]).map(([i,l])=>l);
-  const probPrep=L_PREP.filter(([i,l])=>_pst(l)==='prob').map(([i,l])=>l);
-  const probMech=L_MECH.filter(([i,l])=>co.mechItems[l]==='prob').map(([i,l])=>l);
+  const uncMech=L_MECH.filter(function(it){return it&&it[0]!=='__SECTION__'&&!co.mechItems[it[1]];}).map(function(it){return it[1];});
+  const probPrep=L_PREP.filter(function(it){return it&&_pst(it[1])==='prob';}).map(function(it){return it[1];});
+  const probMech=L_MECH.filter(function(it){return it&&co.mechItems[it[1]]==='prob';}).map(function(it){return it[1];});
 
   // Items management can resolve inline — note + tick
   const mgmtResolved=co.mgmtResolved||{};
@@ -2961,14 +2961,14 @@ function coStep6_mgmt(){
       ['📋','Contract',co.clientName,co.contractSigned,0],
       ['🔍','Damage',co.mechBy||'—',true,uncMech.length+probMech.length],
       ['✍️','Client signed',co.clientName,!!co.custSig,0],
-    ].map(([ico,lbl,who,done,issues])=>`
+    ].map(function(row){var ico=row[0],lbl=row[1],who=row[2],done=row[3],issues=row[4]; return `
       <div style="text-align:center;border:2px solid ${done&&!issues?'var(--gb)':done&&issues?'var(--am)':'var(--re)'};border-radius:var(--r);padding:10px 6px;background:${done&&!issues?'var(--sg)':done&&issues?'var(--ag)':'var(--rg)'}">
         <div style="font-size:20px">${ico}</div>
         <div style="font-size:13px;font-weight:700;color:${done&&!issues?'var(--se)':done&&issues?'var(--al)':'var(--rl)'};margin:3px 0">${lbl}</div>
         <div style="font-size:13px;color:${done?'var(--g5)':'var(--rl)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${who||'—'}</div>
         <div style="font-size:16px;margin-top:4px">${done&&!issues?'✅':done&&issues?'⚠️':'❌'}</div>
         ${issues?`<div style="font-size:13px;color:var(--al)">${issues} unchecked</div>`:''}
-      </div>`).join('')}
+      </div>`; }).join('')}
   </div>
 
   <!-- Problems noted -->
@@ -3026,7 +3026,7 @@ async function completeCO(){
 
   const _pst=l=>{const v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';};
   const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&i!=='__OPT_ITEM__'&&!l.startsWith('__QTY__')&&!_pst(l)).map(([i,l])=>l);
-  const uncMech=L_MECH.filter(([i,l])=>!co.mechItems[l]).map(([i,l])=>l);
+  const uncMech=L_MECH.filter(function(it){return it&&it[0]!=='__SECTION__'&&!co.mechItems[it[1]];}).map(function(it){return it[1];});
 
   // Build equipment list for handover doc
   const equipLines=[];
