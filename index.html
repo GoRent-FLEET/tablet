@@ -1021,15 +1021,15 @@ function renderOV(){
 
     const detail=!isExp?'':(`<div style="border-top:1px solid var(--g2);padding:12px 14px;background:var(--g0);">
       <div style="background:var(--g1);border-radius:8px;padding:10px 12px;border:1px solid var(--g2);margin-bottom:8px;">
-        <div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:8px;">✈️ Flight Details</div>
+        <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:8px;">✈️ Flight Details</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
           <div style="background:var(--g0);border-radius:7px;padding:8px 10px;border-left:3px solid var(--se);">
-            <div style="font-size:9px;font-weight:700;color:var(--se);text-transform:uppercase;margin-bottom:3px;">▶ Inbound arrival</div>
-            <div style="font-size:12px;font-weight:800;color:var(--tx);">${v.flightIn||'—'}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--se);text-transform:uppercase;margin-bottom:3px;">▶ Inbound arrival</div>
+            <div style="font-size:14px;font-weight:800;color:var(--tx);">${v.flightIn||'—'}</div>
           </div>
           <div style="background:var(--g0);border-radius:7px;padding:8px 10px;border-left:3px solid #4a6fa5;">
-            <div style="font-size:9px;font-weight:700;color:#7ba3d4;text-transform:uppercase;margin-bottom:3px;">◀ Outbound departure</div>
-            <div style="font-size:12px;font-weight:800;color:var(--tx);">${v.flightOut||'—'}</div>
+            <div style="font-size:13px;font-weight:700;color:#7ba3d4;text-transform:uppercase;margin-bottom:3px;">◀ Outbound departure</div>
+            <div style="font-size:14px;font-weight:800;color:var(--tx);">${v.flightOut||'—'}</div>
           </div>
         </div>
       </div>
@@ -1040,23 +1040,23 @@ function renderOV(){
           ['💬','WhatsApp',v.phone?`<a href="https://wa.me/${v.phone.replace(/[\s+]/g,'')}" target="_blank" style="color:var(--se);text-decoration:none;">${v.phone}</a>`:'—'],
           ['📋','Quote',v.quote||'—'],
         ].map(([ico,lbl,val])=>`<div style="background:var(--g1);border-radius:7px;padding:7px 10px;border:1px solid var(--g2);">
-          <div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:2px;">${ico} ${lbl}</div>
-          <div style="font-size:11px;font-weight:700;color:var(--tx);">${val}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:2px;">${ico} ${lbl}</div>
+          <div style="font-size:14px;font-weight:700;color:var(--tx);">${val}</div>
         </div>`).join('')}
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
-        ${v.camping?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🏕 Camping</span>':'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--g2);color:var(--g5);">🏨 No camping</span>'}
-        ${v.tent?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">⛺ Tent</span>':''}
-        ${v.fridge?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🧊 Fridge</span>':''}
-        ${v.sleepingBags?`<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🛏 ${v.sleepingBags} sleeping bags</span>`:''}
-        ${v.extraFuel?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⛽ Extra fuel</span>':''}
-        ${(v.extras||[]).map(e=>`<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--g2);color:var(--g6);">${e}</span>`).join('')}
+        ${v.camping?'<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🏕 Camping</span>':'<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--g2);color:var(--g5);">🏨 No camping</span>'}
+        ${v.tent?'<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">⛺ Tent</span>':''}
+        ${v.fridge?'<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🧊 Fridge</span>':''}
+        ${v.sleepingBags?`<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🛏 ${v.sleepingBags} sleeping bags</span>`:''}
+        ${v.extraFuel?'<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⛽ Extra fuel</span>':''}
+        ${(v.extras||[]).map(e=>`<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--g2);color:var(--g6);">${e}</span>`).join('')}
       </div>
       ${(v.special||[]).length?`<div style="background:var(--ag);border:1px solid var(--am);border-radius:7px;padding:7px 10px;margin-bottom:8px;">
-        <div style="font-size:9px;font-weight:700;color:var(--al);text-transform:uppercase;margin-bottom:4px;">⚠ Special Requests</div>
-        ${(v.special||[]).map(s=>`<div style="font-size:11px;color:var(--al);font-weight:700;">· ${s}</div>`).join('')}
+        <div style="font-size:13px;font-weight:700;color:var(--al);text-transform:uppercase;margin-bottom:4px;">⚠ Special Requests</div>
+        ${(v.special||[]).map(s=>`<div style="font-size:14px;color:var(--al);font-weight:700;">· ${s}</div>`).join('')}
       </div>`:''}
-      ${v.blocked?`<div style="background:var(--rg);border:1px solid var(--re);border-radius:7px;padding:7px 10px;margin-bottom:8px;font-size:11px;font-weight:700;color:var(--rl);">⛔ ${v.blocked}</div>`:''}
+      ${v.blocked?`<div style="background:var(--rg);border:1px solid var(--re);border-radius:7px;padding:7px 10px;margin-bottom:8px;font-size:14px;font-weight:700;color:var(--rl);">⛔ ${v.blocked}</div>`:''}
       ${actionBtn}
     </div>`);
 
@@ -1068,16 +1068,16 @@ function renderOV(){
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             <span style="font-size:14px;font-weight:800;color:var(--tx);">${v.fn}</span>
-            <span style="font-size:11px;color:var(--g5);">${v.reg}</span>
-            ${v.quote?`<span style="font-size:10px;color:var(--g5);">${v.quote}</span>`:''}
+            <span style="font-size:14px;color:var(--g5);">${v.reg}</span>
+            ${v.quote?`<span style="font-size:13px;color:var(--g5);">${v.quote}</span>`:''}
           </div>
-          <div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:1px;">${v.cl}</div>
-          <div style="font-size:11px;margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <div style="font-size:15px;font-weight:700;color:var(--tx);margin-top:1px;">${v.cl}</div>
+          <div style="font-size:14px;margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             ${dayLabel}
             ${v.camping?`<span style="color:var(--se);font-weight:700;">🏕 ${v.pax} pax</span>`:`<span style="color:var(--g5);">🏨 ${v.pax} pax</span>`}
             ${v.xb?`<span style="color:var(--al);font-weight:700;">🌍 ${v.xb}</span>`:''}
           </div>
-          ${isInProgress?`<div style="font-size:10px;font-weight:800;color:#e53e3e;margin-top:3px;">🔴 IN PROGRESS · ${inprog.staff}</div>`:''}
+          ${isInProgress?`<div style="font-size:13px;font-weight:800;color:#e53e3e;margin-top:3px;">🔴 IN PROGRESS · ${inprog.staff}</div>`:''}
         </div>
         <div style="font-size:18px;color:var(--g5);flex-shrink:0;">${isExp?'▲':'▼'}</div>
       </div>
@@ -1100,10 +1100,10 @@ function renderOV(){
     return `<div onclick="ovExpandTo('${isOut?'out':'in'}','${v.fn}')" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1px solid ${isToday?accent:'var(--g3)'};background:${isToday?(isOut?'rgba(74,111,165,.1)':'rgba(42,157,92,.1)'):'var(--g1)'};margin-bottom:6px;">
       <span style="font-size:18px;font-weight:900;color:${accent};">${isOut?'▶':'◀'}</span>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:800;color:var(--tx);">${v.fn} · ${v.cl}</div>
-        <div style="font-size:10px;color:${isToday?accent:'var(--g5)'};">${isOut?'▶ CHECK-OUT':'◀ CHECK-IN'} · ${new Date(date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}).toUpperCase()}${isToday?' · <strong style="color:'+accent+'">TODAY</strong>':''}</div>
+        <div style="font-size:15px;font-weight:800;color:var(--tx);">${v.fn} · ${v.cl}</div>
+        <div style="font-size:13px;color:${isToday?accent:'var(--g5)'};">${isOut?'▶ CHECK-OUT':'◀ CHECK-IN'} · ${new Date(date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}).toUpperCase()}${isToday?' · <strong style="color:'+accent+'">TODAY</strong>':''}</div>
       </div>
-      <span style="font-size:11px;font-weight:700;color:var(--g5);">Details ›</span>
+      <span style="font-size:14px;font-weight:700;color:var(--g5);">Details ›</span>
     </div>`;
   }).join('');
 
@@ -1111,27 +1111,27 @@ function renderOV(){
   <div style="background:linear-gradient(135deg,var(--g1),var(--g0));border-bottom:2px solid var(--gb);padding:14px 16px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
       <div>
-        <div style="font-size:11px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Today</div>
+        <div style="font-size:14px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Today</div>
         <div style="font-size:15px;font-weight:800;color:var(--se);letter-spacing:-.2px;">${dateStr}</div>
       </div>
       <div style="text-align:right;background:var(--g0);border:2px solid var(--gb);border-radius:10px;padding:8px 14px;">
-        <div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;">Time</div>
+        <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;">Time</div>
         <div id="ov-clock" style="font-size:22px;font-weight:800;color:var(--se);font-variant-numeric:tabular-nums;letter-spacing:-.5px;">${timeStr}</div>
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <button onclick="ovSetView('week')" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid ${view==='week'?'#4a6fa5':'var(--g3)'};background:${view==='week'?'rgba(74,111,165,.15)':'var(--g1)'};color:${view==='week'?'#7ba3d4':'var(--g5)'};">📅 This Week <span style="font-size:10px;opacity:.7;">${weekOut.length+weekIn.length}</span></button>
-      <button onclick="ovSetView('past')" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid ${view==='past'?'#2a9d5c':'var(--g3)'};background:${view==='past'?'rgba(42,157,92,.15)':'var(--g1)'};color:${view==='past'?'var(--se)':'var(--g5)'};">📋 Past 7 Days <span style="font-size:10px;opacity:.7;">${pastOut.length+pastIn.length}</span></button>
+      <button onclick="ovSetView('week')" style="flex:1;padding:9px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:2px solid ${view==='week'?'#4a6fa5':'var(--g3)'};background:${view==='week'?'rgba(74,111,165,.15)':'var(--g1)'};color:${view==='week'?'#7ba3d4':'var(--g5)'};">📅 This Week <span style="font-size:13px;opacity:.7;">${weekOut.length+weekIn.length}</span></button>
+      <button onclick="ovSetView('past')" style="flex:1;padding:9px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:2px solid ${view==='past'?'#2a9d5c':'var(--g3)'};background:${view==='past'?'rgba(42,157,92,.15)':'var(--g1)'};color:${view==='past'?'var(--se)':'var(--g5)'};">📋 Past 7 Days <span style="font-size:13px;opacity:.7;">${pastOut.length+pastIn.length}</span></button>
     </div>
     <div style="display:flex;gap:8px;">
-      <button onclick="ovSetMode('out')" style="flex:1;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid ${mode==='out'?'#4a6fa5':'var(--g3)'};background:${mode==='out'?'rgba(74,111,165,.15)':'var(--g1)'};color:${mode==='out'?'#7ba3d4':'var(--g5)'};">▶ CHECK-OUT <span style="font-size:11px;background:${mode==='out'?'#4a6fa5':'var(--g2)'};color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">${view==='week'?weekOut.length:pastOut.length}</span></button>
-      <button onclick="ovSetMode('in')" style="flex:1;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid ${mode==='in'?'#2a9d5c':'var(--g3)'};background:${mode==='in'?'rgba(42,157,92,.15)':'var(--g1)'};color:${mode==='in'?'var(--se)':'var(--g5)'};">◀ CHECK-IN <span style="font-size:11px;background:${mode==='in'?'#2a9d5c':'var(--g2)'};color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">${view==='week'?weekIn.length:pastIn.length}</span></button>
+      <button onclick="ovSetMode('out')" style="flex:1;padding:10px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:2px solid ${mode==='out'?'#4a6fa5':'var(--g3)'};background:${mode==='out'?'rgba(74,111,165,.15)':'var(--g1)'};color:${mode==='out'?'#7ba3d4':'var(--g5)'};">▶ CHECK-OUT <span style="font-size:14px;background:${mode==='out'?'#4a6fa5':'var(--g2)'};color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">${view==='week'?weekOut.length:pastOut.length}</span></button>
+      <button onclick="ovSetMode('in')" style="flex:1;padding:10px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:2px solid ${mode==='in'?'#2a9d5c':'var(--g3)'};background:${mode==='in'?'rgba(42,157,92,.15)':'var(--g1)'};color:${mode==='in'?'var(--se)':'var(--g5)'};">◀ CHECK-IN <span style="font-size:14px;background:${mode==='in'?'#2a9d5c':'var(--g2)'};color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">${view==='week'?weekIn.length:pastIn.length}</span></button>
     </div>
   </div>
   <div style="padding:12px;">
     ${!mode
-      ? `<div style="font-size:11px;color:var(--g5);text-align:center;margin-bottom:12px;">Select ▶ CHECK-OUT or ◀ CHECK-IN above</div>${summaryRows}`
-      : (activeList.length ? activeList.map(v=>bookingCard(v,mode)).join('') : `<div style="text-align:center;color:var(--g5);padding:24px;font-size:12px;">No ${mode==='out'?'check-outs':'check-ins'} in ${view==='week'?'the next 7 days':'the past 7 days'}</div>`)
+      ? `<div style="font-size:14px;color:var(--g5);text-align:center;margin-bottom:12px;">Select ▶ CHECK-OUT or ◀ CHECK-IN above</div>${summaryRows}`
+      : (activeList.length ? activeList.map(v=>bookingCard(v,mode)).join('') : `<div style="text-align:center;color:var(--g5);padding:24px;font-size:14px;">No ${mode==='out'?'check-outs':'check-ins'} in ${view==='week'?'the next 7 days':'the past 7 days'}</div>`)
     }
   </div>`;
 }
@@ -1183,7 +1183,7 @@ function startCO(fn){
   try{ drawCO(); } catch(err){ 
     toast('drawCO error: '+err.message,'err');
     console.error('drawCO error:',err);
-    document.getElementById('co-body').innerHTML='<div style="padding:20px;color:red;font-size:13px;">Error: '+err.message+'</div>';
+    document.getElementById('co-body').innerHTML='<div style="padding:20px;color:red;font-size:15px;">Error: '+err.message+'</div>';
   }
 }
 
@@ -1214,7 +1214,7 @@ function drawCO(){
     const active=s.n===coStep;
     return `<div class="stg ${active?'active':done?'done':''}" onclick="coGoStep(${s.n})">
       <div style="font-size:16px">${done&&!active?'✅':s.ico}</div>
-      <div style="font-size:9px;margin-top:2px">${s.lbl}</div>
+      <div style="font-size:13px;margin-top:2px">${s.lbl}</div>
     </div>`;
   }).join('');
 
@@ -1233,7 +1233,7 @@ function drawCO(){
     if(!body||body.length<10) body='<div style="padding:20px;color:orange;">Step '+coStep+' returned empty</div>';
   }catch(stepErr){
     var _msg='Step '+coStep+' (line '+_stepLine+') error: '+stepErr.message;
-    body='<div style="padding:20px;color:red;font-size:13px;font-weight:700;">'+_msg+'</div>';
+    body='<div style="padding:20px;color:red;font-size:15px;font-weight:700;">'+_msg+'</div>';
     toast(_msg,'err');
     console.error(_msg, stepErr);
   }
@@ -1243,7 +1243,7 @@ function drawCO(){
   if(_cov.special&&_cov.special.length){
     _specialHtml='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px">';
     for(var _si=0;_si<_cov.special.length;_si++){
-      _specialHtml+='<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am)">⚠ '+_cov.special[_si]+'</span>';
+      _specialHtml+='<span style="font-size:13px;font-weight:700;padding:2px 8px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am)">⚠ '+_cov.special[_si]+'</span>';
     }
     _specialHtml+='</div>';
   }
@@ -1258,11 +1258,11 @@ function drawCO(){
         '<div>'+
           '<div class="fhdr-fn">'+co.fn+' <span>'+_cov.reg+'</span></div>'+
           '<div class="fhdr-cl">'+(co.clientName||_cov.cl||'No booking')+'</div>'+
-          '<div class="fhdr-cl" style="font-size:10px;opacity:.7;margin-top:1px">📅 '+(_cov.pu||'?')+' → '+(_cov.rt||'?')+'</div>'+
+          '<div class="fhdr-cl" style="font-size:13px;opacity:.7;margin-top:1px">📅 '+(_cov.pu||'?')+' → '+(_cov.rt||'?')+'</div>'+
         '</div>'+
         '<div style="text-align:right">'+
-          '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;'+_campStyle+'">'+_campLbl+'</span><br>'+
-          '<span style="font-size:10px;color:var(--g5);margin-top:3px;display:inline-block">👥 '+(_cov.pax||'?')+' pax'+_xbHtml+'</span>'+
+          '<span style="font-size:14px;font-weight:700;padding:3px 10px;border-radius:8px;'+_campStyle+'">'+_campLbl+'</span><br>'+
+          '<span style="font-size:13px;color:var(--g5);margin-top:3px;display:inline-block">👥 '+(_cov.pax||'?')+' pax'+_xbHtml+'</span>'+
         '</div>'+
       '</div>'+
       _specialHtml+
@@ -1307,7 +1307,7 @@ function coStep0(){
   <div class="who-box" style="display:flex;align-items:center;gap:12px;">
     <div style="width:38px;height:38px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#000;">${APP_USER&&APP_USER.name?APP_USER.name.slice(0,2).toUpperCase():'??'}</div>
     <div><div style="font-size:15px;font-weight:900;color:var(--al);">${APP_USER&&APP_USER.name?APP_USER.name:'Unknown'}</div>
-    <div style="font-size:10px;color:var(--g5);">🔒 Preparing this vehicle</div></div>
+    <div style="font-size:13px;color:var(--g5);">🔒 Preparing this vehicle</div></div>
   </div>
   ${licDiscBanner(co.v,'out')}
   <div class="fuel-row" style="flex-wrap:wrap;gap:10px;">
@@ -1335,7 +1335,7 @@ function coStep0(){
       return `<div style="background:${isOpt?'var(--ag)':isMain?'var(--g2)':'var(--g1)'};border-radius:var(--rs);padding:${isMain?'9px 14px':'7px 14px 7px 20px'};margin:${isMain?'10px 0 6px':'4px 0 3px'};border-left:${isOpt?'3px solid var(--am)':isMain?'none':'3px solid var(--se)'};display:flex;align-items:center;gap:10px;">
         <span style="font-size:${isMain?'18':'15'}px;">${lbl.split(' ')[0]}</span>
         <div><div style="font-size:${isMain?'12':'11'}px;font-weight:800;color:${isOpt?'var(--al)':isMain?'var(--tx)':'var(--se)'};">${lbl.replace(lbl.split(' ')[0]+' ','')}</div>
-        <div style="font-size:10px;color:var(--g5);">${det}</div></div>
+        <div style="font-size:13px;color:var(--g5);">${det}</div></div>
       </div>`;
     }
     const st=_pst(lbl);const by=_pby(lbl);const at=_pat(lbl);
@@ -1346,16 +1346,16 @@ function coStep0(){
       <div class="ci-icon">${ico==='__OPT_ITEM__'?`<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>`:ico}</div>
       <div class="ci-text">
         <div class="ci-lbl">${realLbl}</div>
-        <div class="ci-det">${det}${by?` <span style="font-size:9px;color:var(--se);font-weight:700;margin-left:6px;">✓ ${by}${at?' · '+at:''}</span>`:''}</div>
+        <div class="ci-det">${det}${by?` <span style="font-size:13px;color:var(--se);font-weight:700;margin-left:6px;">✓ ${by}${at?' · '+at:''}</span>`:''}</div>
       </div>
       <div class="ci-st">${st==='ok'?okSVG():st==='prob'?probSVG():st==='na'?naSVG():uncSVG()}</div>
     </div>`;
   }).join('')}</div>
   ${probs.length?`<div class="al warn">⚠ Problems noted: ${probs.join(' · ')}</div>`:''}
   ${staffOnStep.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">
-    <div style="font-size:10px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on this step</div>
+    <div style="font-size:13px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on this step</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;">
-      ${staffOnStep.map(n=>{const cnt=(co.prepLog?co.prepLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:12px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:10px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}
+      ${staffOnStep.map(n=>{const cnt=(co.prepLog?co.prepLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:14px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:13px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}
     </div>
   </div>`:''}
   ${photoHTML('co.prepPhotos','📷 Vehicle Photos','Photograph the vehicle exterior — all sides. Proof of condition before departure.',4)}
@@ -1463,7 +1463,7 @@ function coStep1_equip(){
       return `<div style="background:${isOpt?'var(--ag)':isMain?'var(--g2)':'var(--g1)'};border-radius:var(--rs);padding:${isMain?'9px 14px':'7px 14px 7px 20px'};margin:${isMain?'10px 0 6px':'4px 0 3px'};border-left:${isOpt?'3px solid var(--am)':isMain?'none':'3px solid var(--se)'};display:flex;align-items:center;gap:10px;">
         <span style="font-size:${isMain?'18':'15'}px;">${lbl.split(' ')[0]}</span>
         <div><div style="font-size:${isMain?'12':'11'}px;font-weight:800;color:${isOpt?'var(--al)':isMain?'var(--tx)':'var(--se)'};">${lbl.replace(lbl.split(' ')[0]+' ','')}</div>
-        <div style="font-size:10px;color:var(--g5);">${det}</div></div>
+        <div style="font-size:13px;color:var(--g5);">${det}</div></div>
       </div>`;
     }
     const st=_est(lbl);
@@ -1493,17 +1493,17 @@ function coStep1_equip(){
     return `<div class="ci ${st==='ok'?'ok':st==='prob'?'prob':''}" onclick="tapPrepIdx(${li})">
       <div class="ci-icon">${ico==='__OPT_ITEM__'?`<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>`:ico}</div>
       <div class="ci-text">
-        <div class="ci-lbl">${realLbl}${isOptItem?'<span style="font-size:9px;color:var(--g5);margin-left:6px;background:var(--g2);padding:1px 6px;border-radius:8px;">optional</span>':''}</div>
-        <div class="ci-det">${det}${eby?` <span style="font-size:9px;color:var(--se);font-weight:700;margin-left:6px;">✓ ${eby}${eat?' · '+eat:''}</span>`:''}</div>
+        <div class="ci-lbl">${realLbl}${isOptItem?'<span style="font-size:13px;color:var(--g5);margin-left:6px;background:var(--g2);padding:1px 6px;border-radius:8px;">optional</span>':''}</div>
+        <div class="ci-det">${det}${eby?` <span style="font-size:13px;color:var(--se);font-weight:700;margin-left:6px;">✓ ${eby}${eat?' · '+eat:''}</span>`:''}</div>
       </div>
       <div class="ci-st">${st==='ok'?okSVG():st==='prob'?probSVG():st==='na'?naSVG():uncSVG()}</div>
     </div>`;
   }).join('')}</div>
   ${probs.length?`<div class="al warn">⚠ Problems noted: ${probs.join(' · ')}</div>`:''}
   ${equipStaff.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">
-    <div style="font-size:10px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on equipment check</div>
+    <div style="font-size:13px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on equipment check</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;">
-      ${equipStaff.map(n=>{const cnt=(co.prepLog?co.prepLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:12px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:10px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}
+      ${equipStaff.map(n=>{const cnt=(co.prepLog?co.prepLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:14px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:13px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}
     </div>
   </div>`:''}
   ${photoHTML('co.prepPhotos','📷 Equipment Photos','Photograph all packed equipment — tent, boxes, loose items. Client sees these at handover.',6)}
@@ -1578,14 +1578,14 @@ function coStep1(){
         <div style="font-size:14px;font-weight:800;color:${isPrimary?'var(--se)':'var(--tx)'}">
           ${isPrimary?'🧑 Primary Renter (signs contract)':'👤 Additional Driver '+(i)}
         </div>
-        ${!isPrimary?`<button onclick="removeDriver(${i})" style="background:var(--rg);border:1px solid var(--re);border-radius:6px;color:var(--rl);font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;">✕ Remove</button>`:''}
+        ${!isPrimary?`<button onclick="removeDriver(${i})" style="background:var(--rg);border:1px solid var(--re);border-radius:6px;color:var(--rl);font-size:14px;font-weight:700;padding:5px 10px;cursor:pointer;">✕ Remove</button>`:''}
       </div>
 
       <!-- Text details -->
       <div class="fg">
         <div class="fi">
           <label>${isPrimary?'Full legal name (as on passport) *':'Full name (as on passport) *'}</label>
-          ${isPrimary&&co.v.cl?`<div style="font-size:10px;color:var(--am);background:var(--ag);border:1px solid var(--am);border-radius:6px;padding:5px 10px;margin-bottom:6px;">
+          ${isPrimary&&co.v.cl?`<div style="font-size:13px;color:var(--am);background:var(--ag);border:1px solid var(--am);border-radius:6px;padding:5px 10px;margin-bottom:6px;">
             📋 Booking name: <strong style="color:var(--al)">${co.v.cl}</strong> — verify and enter full legal name as per passport below
           </div>`:''}
           <input value="${d.name||''}" placeholder="${isPrimary?'Full legal name exactly as on passport':'Full name as on passport'}"
@@ -1593,7 +1593,7 @@ function coStep1(){
             style="${isPrimary&&!d.name?'border-color:var(--am)':''}"
             ${isPrimary?'list="cl-names-list"':''}>
           ${isPrimary?`<datalist id="cl-names-list">${(typeof clientList!=='undefined'?clientList:[]).map(c=>`<option value="${c.full_name}">`).join('')}</datalist>`:''}
-          ${isPrimary?`<div style="font-size:10px;color:var(--g5);margin-top:3px;">This name will appear on the rental contract and must match the passport exactly.</div>`:''}
+          ${isPrimary?`<div style="font-size:13px;color:var(--g5);margin-top:3px;">This name will appear on the rental contract and must match the passport exactly.</div>`:''}
         </div>
         <div class="fi"><label>Date of birth</label>
           <input value="${d.dob||''}" placeholder="DD/MM/YYYY" oninput="co.drivers[${i}].dob=this.value">
@@ -1656,17 +1656,17 @@ function coStep1(){
         <div class="fi">
           <label>📝 Notes</label>
           <textarea oninput="co.clientNotes=this.value" placeholder="Special requests, dietary needs, baby seat, extra equipment, anything to note..."
-            style="width:100%;min-height:70px;padding:10px 12px;border-radius:var(--rs);border:2px solid ${co.clientNotes?'var(--gb)':'var(--g3)'};background:var(--g0);color:var(--tx);font-size:13px;resize:vertical;font-family:inherit;">${co.clientNotes||''}</textarea>
+            style="width:100%;min-height:70px;padding:10px 12px;border-radius:var(--rs);border:2px solid ${co.clientNotes?'var(--gb)':'var(--g3)'};background:var(--g0);color:var(--tx);font-size:15px;resize:vertical;font-family:inherit;">${co.clientNotes||''}</textarea>
         </div>
       </div>`:''}
 
       <!-- Document photos -->
       <div style="margin-top:10px;">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
-          <div style="font-size:11px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;">📷 Document Photos</div>
+          <div style="font-size:14px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;">📷 Document Photos</div>
           <div style="display:flex;gap:5px;">
-            ${d.passportImg?`<button onclick="extractPassportData(co.drivers[${i}].passportImg,${i})" style="background:var(--bs);border:1px solid var(--bl);border-radius:6px;color:var(--be);font-size:10px;font-weight:700;padding:5px 10px;cursor:pointer;">🔍 Re-read passport</button>`:''}
-            ${d.licFront?`<button onclick="extractLicenceData(co.drivers[${i}].licFront,${i})" style="background:var(--ps);border:1px solid var(--pu);border-radius:6px;color:#c4b5fd;font-size:10px;font-weight:700;padding:5px 10px;cursor:pointer;">🔍 Re-read licence</button>`:''}
+            ${d.passportImg?`<button onclick="extractPassportData(co.drivers[${i}].passportImg,${i})" style="background:var(--bs);border:1px solid var(--bl);border-radius:6px;color:var(--be);font-size:13px;font-weight:700;padding:5px 10px;cursor:pointer;">🔍 Re-read passport</button>`:''}
+            ${d.licFront?`<button onclick="extractLicenceData(co.drivers[${i}].licFront,${i})" style="background:var(--ps);border:1px solid var(--pu);border-radius:6px;color:#c4b5fd;font-size:13px;font-weight:700;padding:5px 10px;cursor:pointer;">🔍 Re-read licence</button>`:''}
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
@@ -1674,18 +1674,18 @@ function coStep1(){
           ${driverDocSlot(i,'licFront','🚗','Licence front',d.licFront)}
           ${driverDocSlot(i,'licBack','🔄','Licence back',d.licBack)}
         </div>
-        ${d.passportImg&&!d.name?`<div style="font-size:10px;color:var(--al);margin-top:6px;">📖 Reading passport details automatically…</div>`:''}
+        ${d.passportImg&&!d.name?`<div style="font-size:13px;color:var(--al);margin-top:6px;">📖 Reading passport details automatically…</div>`:''}
       </div>
 
       <!-- Status -->
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;">
-        <span style="font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;${d.name?'background:var(--sg);color:var(--se)':'background:var(--rg);color:var(--rl)'}">
+        <span style="font-size:13px;padding:2px 8px;border-radius:10px;font-weight:700;${d.name?'background:var(--sg);color:var(--se)':'background:var(--rg);color:var(--rl)'}">
           ${d.name?'✓ '+d.name:'⚠ Name missing'}
         </span>
-        <span style="font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;${d.passportImg?'background:var(--sg);color:var(--se)':'background:var(--rg);color:var(--rl)'}">
+        <span style="font-size:13px;padding:2px 8px;border-radius:10px;font-weight:700;${d.passportImg?'background:var(--sg);color:var(--se)':'background:var(--rg);color:var(--rl)'}">
           ${d.passportImg?'✓ Passport'+(d.passport?' · '+d.passport:''):'⚠ No passport'}
         </span>
-        <span style="font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;${d.licFront?'background:var(--sg);color:var(--se)':'background:var(--rg);color:var(--rl)'}">
+        <span style="font-size:13px;padding:2px 8px;border-radius:10px;font-weight:700;${d.licFront?'background:var(--sg);color:var(--se)':'background:var(--rg);color:var(--rl)'}">
           ${d.licFront?'✓ Licence'+(d.licNo?' · '+d.licNo:'')+(d.licExpiry?' exp '+d.licExpiry:''):'⚠ No licence'}
         </span>
       </div>
@@ -1704,18 +1704,18 @@ function coStep1(){
   </div>
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-    <div style="font-size:12px;color:var(--g5);">
+    <div style="font-size:14px;color:var(--g5);">
       ${co.drivers.length} driver${co.drivers.length!==1?'s':''} &nbsp;·&nbsp;
       <span style="color:${complete===co.drivers.length?'var(--se)':'var(--al)'}">
         ${complete}/${co.drivers.length} complete
       </span>
     </div>
-    <button onclick="addDriver()" style="background:var(--sg);border:2px solid var(--gb);border-radius:8px;color:var(--se);font-size:12px;font-weight:700;padding:9px 16px;cursor:pointer;">+ Add Driver</button>
+    <button onclick="addDriver()" style="background:var(--sg);border:2px solid var(--gb);border-radius:8px;color:var(--se);font-size:14px;font-weight:700;padding:9px 16px;cursor:pointer;">+ Add Driver</button>
   </div>
 
   ${co.drivers.map((d,i)=>driverCard(d,i)).join('')}
 
-  <div class="al info" style="font-size:11px;line-height:1.6;">
+  <div class="al info" style="font-size:14px;line-height:1.6;">
     📋 The booking name (e.g. "Beckermann") is just a reference — the <strong>full legal name from the passport</strong> must be entered here. It will appear on the contract (Section 1.3 &amp; 1.5) and the client must type it exactly when signing in Step 3.
   </div>`;
 }
@@ -1724,8 +1724,8 @@ function driverDocSlot(di,field,ico,lbl,val){
   const inputId=`fi-drv-${di}-${field}`;
   return `<div class="doc-slot ${val?'captured':''}" onclick="document.getElementById('${inputId}').click()" style="aspect-ratio:1.3;">
     ${val
-      ? `<img src="${val}"><div class="doc-slot-overlay"><div class="doc-slot-lbl" style="font-size:9px;">✅ ${lbl}</div><div class="doc-slot-sub" style="font-size:8px;">Tap to retake</div></div>`
-      : `<div class="doc-slot-ico" style="font-size:22px;">${ico}</div><div class="doc-slot-lbl" style="font-size:9px;">${lbl}</div>`}
+      ? `<img src="${val}"><div class="doc-slot-overlay"><div class="doc-slot-lbl" style="font-size:13px;">✅ ${lbl}</div><div class="doc-slot-sub" style="font-size:12px;">Tap to retake</div></div>`
+      : `<div class="doc-slot-ico" style="font-size:22px;">${ico}</div><div class="doc-slot-lbl" style="font-size:13px;">${lbl}</div>`}
     <input type="file" id="${inputId}" accept="image/*" capture="environment"
       onchange="captureDriverDoc(event,${di},'${field}')">
   </div>`;
@@ -1973,11 +1973,11 @@ function coStep2(){
       </select>
     </div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:4px">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+      <label style="display:flex;align-items:center;gap:8px;font-size:15px;cursor:pointer">
         <input type="checkbox" id="ct-aws" ${(co.contract&&co.contract.addon_windscreen)?'checked':''} onchange="(co.contract=co.contract||{}).addon_windscreen=this.checked" style="width:18px;height:18px">
         Windscreen & Tyre cover (+N$184/day)
       </label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+      <label style="display:flex;align-items:center;gap:8px;font-size:15px;cursor:pointer">
         <input type="checkbox" id="ct-aeq" ${(co.contract&&co.contract.addon_equipment)?'checked':''} onchange="(co.contract=co.contract||{}).addon_equipment=this.checked" style="width:18px;height:18px">
         Camping Equipment cover (+N$103.50/day)
       </label>
@@ -2044,9 +2044,9 @@ function previewAndSignContract(){
     <div style="background:#0f3d26;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:3px solid #3ddc84;">
       <div>
         <div style="font-size:16px;font-weight:800;">📋 Rental Agreement</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;">${co.fn} · ${co.clientName} · Please read before signing</div>
+        <div style="font-size:14px;color:rgba(255,255,255,.6);margin-top:2px;">${co.fn} · ${co.clientName} · Please read before signing</div>
       </div>
-      <button onclick="document.getElementById('contract-modal').remove()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">✕ Cancel</button>
+      <button onclick="document.getElementById('contract-modal').remove()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;padding:8px 14px;font-size:14px;font-weight:700;cursor:pointer;">✕ Cancel</button>
     </div>
 
     <!-- CONTRACT BODY — scrollable -->
@@ -2061,25 +2061,25 @@ function previewAndSignContract(){
 
       <!-- Declaration -->
       <!-- Declaration + name confirmation + signature -->
-      <div style="background:#fff8e6;border-top:2px solid #f5a623;padding:10px 16px;font-size:12px;color:#333;line-height:1.6;">
+      <div style="background:#fff8e6;border-top:2px solid #f5a623;padding:10px 16px;font-size:14px;color:#333;line-height:1.6;">
         By signing below, <strong>${(co.contract&&co.contract.client_name)||co.clientName}</strong> confirms they have <strong>read and understood</strong> this entire agreement including all insurance exclusions, speed limits, no-go areas, and negligence provisions. This agreement is legally binding under the laws of Namibia.
       </div>
 
       <!-- Client types their own name -->
       <div style="background:#f0f9f4;border-top:2px solid #1e8449;border-bottom:1px solid #b2dfca;padding:10px 14px;">
-        <div style="font-size:11px;font-weight:700;color:#1e8449;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">✍️ Type your full name to confirm identity</div>
+        <div style="font-size:14px;font-weight:700;color:#1e8449;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">✍️ Type your full name to confirm identity</div>
         <input id="ct-name-confirm" type="text" placeholder="Type your full name exactly as on your passport"
           style="width:100%;padding:12px 14px;border:2px solid #1e8449;border-radius:8px;font-size:15px;font-family:inherit;color:#111;background:#fff;"
           oninput="document.getElementById('ct-name-match').textContent=this.value.trim().toLowerCase()===((co.contract&&co.contract.client_name)||co.clientName||'').toLowerCase()?'✓ Name matches':'⚠ Name does not match — check spelling'">
-        <div id="ct-name-match" style="font-size:11px;color:#888;margin-top:5px;font-weight:700;min-height:16px;"></div>
-        <div style="font-size:10px;color:#888;margin-top:3px;">Must match exactly: <strong style="color:#333;">${(co.contract&&co.contract.client_name)||co.clientName||'—'}</strong></div>
+        <div id="ct-name-match" style="font-size:14px;color:#888;margin-top:5px;font-weight:700;min-height:16px;"></div>
+        <div style="font-size:13px;color:#888;margin-top:3px;">Must match exactly: <strong style="color:#333;">${(co.contract&&co.contract.client_name)||co.clientName||'—'}</strong></div>
       </div>
 
       <!-- Signature canvas -->
       <div style="background:#f9f9f9;border-bottom:2px solid #e0e0e0;">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px 4px;border-bottom:1px solid #e0e0e0;">
-          <div style="font-size:11px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:.4px;">✍️ Sign below</div>
-          <button onclick="clrContractSig()" style="background:#f5f5f5;border:1px solid #ccc;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;color:#555;cursor:pointer;">Clear</button>
+          <div style="font-size:14px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:.4px;">✍️ Sign below</div>
+          <button onclick="clrContractSig()" style="background:#f5f5f5;border:1px solid #ccc;border-radius:6px;padding:5px 12px;font-size:14px;font-weight:700;color:#555;cursor:pointer;">Clear</button>
         </div>
         <canvas id="ct-sig-canvas" style="display:block;width:100%;height:130px;cursor:crosshair;touch-action:none;background:#fff;"></canvas>
       </div>
@@ -2239,7 +2239,7 @@ function showEmailModal(c, contractHtml){
       <!-- Header -->
       <div style="background:var(--gr);padding:16px 20px;border-bottom:2px solid var(--gb);">
         <div style="font-size:17px;font-weight:800;color:#fff;">📧 Send Signed Contract</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:3px;">${c.fleet_no} · ${c.client_name}</div>
+        <div style="font-size:14px;color:rgba(255,255,255,.6);margin-top:3px;">${c.fleet_no} · ${c.client_name}</div>
       </div>
 
       <!-- Recipients -->
@@ -2247,12 +2247,12 @@ function showEmailModal(c, contractHtml){
 
         <!-- Client email -->
         <div style="margin-bottom:14px;">
-          <div style="font-size:11px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Client email *</div>
+          <div style="font-size:14px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Client email *</div>
           ${suggestedEmail
-            ? `<div style="font-size:10px;color:var(--am);background:var(--ag);border:1px solid var(--am);border-radius:6px;padding:4px 10px;margin-bottom:6px;">
+            ? `<div style="font-size:13px;color:var(--am);background:var(--ag);border:1px solid var(--am);border-radius:6px;padding:4px 10px;margin-bottom:6px;">
                 Email from booking: <strong style="color:var(--al)">${suggestedEmail}</strong> — confirm or correct below
               </div>`
-            : `<div style="font-size:10px;color:var(--rl);background:var(--rg);border:1px solid var(--re);border-radius:6px;padding:4px 10px;margin-bottom:6px;">
+            : `<div style="font-size:13px;color:var(--rl);background:var(--rg);border:1px solid var(--re);border-radius:6px;padding:4px 10px;margin-bottom:6px;">
                 ⚠ No email on file — please type client email address
               </div>`}
           <input type="email" id="em-client" value="${suggestedEmail}"
@@ -2263,11 +2263,11 @@ function showEmailModal(c, contractHtml){
 
         <!-- Office copy -->
         <div style="margin-bottom:18px;">
-          <div style="font-size:11px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Office copy (BCC)</div>
+          <div style="font-size:14px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Office copy (BCC)</div>
           <input type="email" id="em-office" value="${OFFICE_EMAIL}"
             placeholder="office@gorent4x4.com"
             style="width:100%;padding:13px 14px;background:var(--g0);border:2px solid var(--g3);border-radius:var(--rs);color:var(--g6);font-size:15px;font-family:inherit;">
-          <div style="font-size:10px;color:var(--g5);margin-top:4px;">Office always receives a BCC of every signed contract</div>
+          <div style="font-size:13px;color:var(--g5);margin-top:4px;">Office always receives a BCC of every signed contract</div>
         </div>
 
         <!-- Status area -->
@@ -2301,13 +2301,13 @@ async function doSendContractEmails(){
   if(!clientEmail || !clientEmail.includes('@')){
     document.getElementById('em-client').style.borderColor='var(--re)';
     document.getElementById('em-client').focus();
-    if(status) status.innerHTML = '<div style="color:var(--rl);font-size:12px;">⚠ Enter a valid client email address</div>';
+    if(status) status.innerHTML = '<div style="color:var(--rl);font-size:14px;">⚠ Enter a valid client email address</div>';
     return;
   }
 
   btn.textContent = '⏳ Sending…';
   btn.disabled = true;
-  if(status) status.innerHTML = '<div style="color:var(--g5);font-size:12px;">Sending to client…</div>';
+  if(status) status.innerHTML = '<div style="color:var(--g5);font-size:14px;">Sending to client…</div>';
 
   // Save email back to co for future use
   co.clientEmail = clientEmail;
@@ -2324,7 +2324,7 @@ async function doSendContractEmails(){
         .eq('id', c.id);
     }
     if(status) status.innerHTML = `
-      <div style="background:var(--sg);border:1px solid var(--gb);border-radius:8px;padding:10px 12px;font-size:12px;">
+      <div style="background:var(--sg);border:1px solid var(--gb);border-radius:8px;padding:10px 12px;font-size:14px;">
         ✅ Contract sent to <strong style="color:var(--se)">${clientEmail}</strong><br>
         📋 Office copy BCC'd to <strong style="color:var(--se)">${officeEmail}</strong>
       </div>`;
@@ -2333,7 +2333,7 @@ async function doSendContractEmails(){
     btn.style.color = 'var(--g5)';
     setTimeout(()=>modal.remove(), 2500);
   } else {
-    if(status) status.innerHTML = '<div style="color:var(--rl);font-size:12px;">⚠ Send failed — check internet connection or Resend API key in Supabase</div>';
+    if(status) status.innerHTML = '<div style="color:var(--rl);font-size:14px;">⚠ Send failed — check internet connection or Resend API key in Supabase</div>';
     btn.textContent = '📧 Retry';
     btn.disabled = false;
   }
@@ -2363,8 +2363,8 @@ function coStep4_dmg(){
 
   <!-- Mechanical -->
   <div style="background:var(--g1);border:2px solid var(--g2);border-radius:var(--r);padding:12px 14px;margin-bottom:14px">
-    <div style="font-size:13px;font-weight:700;margin-bottom:8px">🔧 Mechanical Check
-      <span style="font-size:10px;font-weight:400;color:var(--g5);margin-left:8px">${mechDone}/${L_MECH.length} checked</span>
+    <div style="font-size:15px;font-weight:700;margin-bottom:8px">🔧 Mechanical Check
+      <span style="font-size:13px;font-weight:400;color:var(--g5);margin-left:8px">${mechDone}/${L_MECH.length} checked</span>
     </div>
     <div class="who-box" style="margin-bottom:10px">
       <div class="who-lbl">👤 Handover staff</div>
@@ -2388,8 +2388,8 @@ function coStep4_dmg(){
 
   <!-- Damage Inspector -->
   <div style="background:var(--g1);border:2px solid var(--g2);border-radius:var(--r);padding:12px 14px;margin-bottom:14px">
-    <div style="font-size:13px;font-weight:700;margin-bottom:8px">🔍 Damage Inspection</div>
-    <div class="al info" style="margin-bottom:10px;font-size:11px">Blue = Scratch · Red = Dent · Yellow = Pre-existing</div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:8px">🔍 Damage Inspection</div>
+    <div class="al info" style="margin-bottom:10px;font-size:14px">Blue = Scratch · Red = Dent · Yellow = Pre-existing</div>
     ${insHTML()}
     ${photoHTML('co.dmgPhotos','📷 Damage Photos',`Photograph all damage — new and pre-existing. Stored under ${co.fn}/${co.clientName||co.v.cl}. These protect the company.`,8)}
   </div>
@@ -2521,20 +2521,20 @@ function coStep5_client(){
       <div style="padding:9px 14px;background:${allDone?'rgba(34,197,94,.1)':'var(--g2)'};display:flex;align-items:center;justify-content:space-between;">
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:18px;">${sec.ico}</span>
-          <span style="font-size:12px;font-weight:800;color:${allDone?'var(--se)':'var(--tx)'};">${sec.title}</span>
+          <span style="font-size:14px;font-weight:800;color:${allDone?'var(--se)':'var(--tx)'};">${sec.title}</span>
         </div>
-        <span style="font-size:10px;font-weight:700;background:${allDone?'var(--sg)':'var(--g0)'};color:${allDone?'var(--se)':'var(--g5)'};padding:2px 8px;border-radius:8px;border:1px solid ${allDone?'var(--gb)':'var(--g3)'};">${secDone}/${sec.items.length}</span>
+        <span style="font-size:13px;font-weight:700;background:${allDone?'var(--sg)':'var(--g0)'};color:${allDone?'var(--se)':'var(--g5)'};padding:2px 8px;border-radius:8px;border:1px solid ${allDone?'var(--gb)':'var(--g3)'};">${secDone}/${sec.items.length}</span>
       </div>
       <div style="padding:6px 10px;display:flex;flex-direction:column;gap:4px;">
         ${sec.items.map(it=>{
           const st=hc[it.k]||'';
           return `<div onclick="tapHO('${it.k}')" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:${st==='ok'?'rgba(34,197,94,.08)':'var(--g0)'};border:1px solid ${st==='ok'?'var(--gb)':'var(--g3)'};">
             <div style="width:28px;height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;background:${st==='ok'?'var(--sg)':'var(--g2)'};border:2px solid ${st==='ok'?'var(--se)':'var(--g4)'};">
-              ${st==='ok'?'<span style="font-size:13px;">✓</span>':'<span style="font-size:11px;color:var(--g5);">○</span>'}
+              ${st==='ok'?'<span style="font-size:15px;">✓</span>':'<span style="font-size:14px;color:var(--g5);">○</span>'}
             </div>
             <div style="flex:1;">
-              <div style="font-size:12px;font-weight:700;color:${st==='ok'?'var(--se)':'var(--tx)'};">${it.lbl}</div>
-              <div style="font-size:10px;color:var(--g5);margin-top:1px;">${it.det}</div>
+              <div style="font-size:14px;font-weight:700;color:${st==='ok'?'var(--se)':'var(--tx)'};">${it.lbl}</div>
+              <div style="font-size:13px;color:var(--g5);margin-top:1px;">${it.det}</div>
             </div>
           </div>`;
         }).join('')}
@@ -2544,22 +2544,22 @@ function coStep5_client(){
 
   <!-- Fuel + vehicle condition summary -->
   <div style="background:var(--g1);border:2px solid var(--gb);border-radius:var(--rs);padding:12px 14px;margin-bottom:12px;">
-    <div style="font-size:11px;font-weight:800;color:var(--se);margin-bottom:8px;">⛽ Fuel & Condition at Departure</div>
+    <div style="font-size:14px;font-weight:800;color:var(--se);margin-bottom:8px;">⛽ Fuel & Condition at Departure</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
       <div style="background:var(--g0);border-radius:7px;padding:8px;text-align:center;">
-        <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">Fuel level</div>
+        <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">Fuel level</div>
         <div style="font-size:16px;font-weight:800;color:var(--se);">${co.fuelOut||'Full'}</div>
-        <div style="font-size:9px;color:var(--g5);">must return same</div>
+        <div style="font-size:13px;color:var(--g5);">must return same</div>
       </div>
       <div style="background:var(--g0);border-radius:7px;padding:8px;text-align:center;">
-        <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">ODO out</div>
+        <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">ODO out</div>
         <div style="font-size:16px;font-weight:800;color:var(--tx);">${(co.odometerOut||v.odo||0).toLocaleString()}</div>
-        <div style="font-size:9px;color:var(--g5);">km</div>
+        <div style="font-size:13px;color:var(--g5);">km</div>
       </div>
       <div style="background:var(--g0);border-radius:7px;padding:8px;text-align:center;">
-        <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">Equipment</div>
+        <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">Equipment</div>
         <div style="font-size:16px;font-weight:800;color:var(--se);">${equipSummary.filter(e=>e.st==='ok').length}</div>
-        <div style="font-size:9px;color:var(--g5);">items issued</div>
+        <div style="font-size:13px;color:var(--g5);">items issued</div>
       </div>
     </div>
   </div>
@@ -2567,9 +2567,9 @@ function coStep5_client(){
   <!-- Equipment issued tags -->
   ${equipSummary.length?`
   <div style="background:var(--g1);border:1px solid var(--g2);border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;">
-    <div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:7px;">🏕 Equipment issued to client</div>
+    <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:7px;">🏕 Equipment issued to client</div>
     <div style="display:flex;flex-wrap:wrap;gap:5px;">
-      ${equipSummary.map(e=>`<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:${e.st==='ok'?'var(--sg)':'var(--ag)'};color:${e.st==='ok'?'var(--se)':'var(--al)'};border:1px solid ${e.st==='ok'?'var(--gb)':'var(--am)'};">${e.st==='ok'?'✓':'⚠'} ${e.lbl}</span>`).join('')}
+      ${equipSummary.map(e=>`<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:${e.st==='ok'?'var(--sg)':'var(--ag)'};color:${e.st==='ok'?'var(--se)':'var(--al)'};border:1px solid ${e.st==='ok'?'var(--gb)':'var(--am)'};">${e.st==='ok'?'✓':'⚠'} ${e.lbl}</span>`).join('')}
     </div>
   </div>`:''}
 
@@ -2577,12 +2577,12 @@ function coStep5_client(){
   <div style="background:#0a1520;border:3px solid var(--gb);border-radius:var(--r);overflow:hidden;margin-bottom:10px;">
     <div style="background:linear-gradient(135deg,#0f3d26,#145c30);padding:12px 16px;border-bottom:2px solid var(--gb);">
       <div style="font-size:15px;font-weight:800;color:#fff;">✍️ ${v.cl} — I confirm the above was explained</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;">I understand my responsibilities and accept the vehicle in the condition described</div>
+      <div style="font-size:14px;color:rgba(255,255,255,.6);margin-top:2px;">I understand my responsibilities and accept the vehicle in the condition described</div>
     </div>
     <div style="padding:12px 16px;">
       ${co.custSig?
         `<div class="signed">✅<div class="signed-name">${v.cl} — Handover accepted</div><div class="signed-time">${co.custAt}</div></div>`:
-        `<div style="font-size:11px;color:var(--g5);margin-bottom:10px;">⛽ DIESEL ONLY · ✅ All equipment received · I accept responsibility for the vehicle and contents</div>
+        `<div style="font-size:14px;color:var(--g5);margin-bottom:10px;">⛽ DIESEL ONLY · ✅ All equipment received · I accept responsibility for the vehicle and contents</div>
         <div class="sig-area" style="border-color:var(--gb)">
           <div class="sig-hdr" style="background:#071a0f;border-bottom-color:var(--gb)">
             <span class="sig-lbl" style="color:var(--se)">${v.cl} — sign here</span>
@@ -2630,21 +2630,21 @@ function coStep6_mgmt(){
     return `<div style="background:var(--rg);border:2px solid var(--re);border-radius:var(--rs);margin-bottom:10px;overflow:hidden;">
       <div style="padding:9px 14px;background:rgba(240,80,80,.12);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--re);">
         <span style="font-size:16px;">${icon}</span>
-        <div style="font-size:11px;font-weight:800;color:var(--rl);text-transform:uppercase;letter-spacing:.4px;">${label}</div>
-        <div style="margin-left:auto;font-size:10px;font-weight:700;background:var(--re);color:#fff;padding:2px 8px;border-radius:8px;">${items.filter(l=>!mgmtResolved[l]).length} outstanding</div>
+        <div style="font-size:14px;font-weight:800;color:var(--rl);text-transform:uppercase;letter-spacing:.4px;">${label}</div>
+        <div style="margin-left:auto;font-size:13px;font-weight:700;background:var(--re);color:#fff;padding:2px 8px;border-radius:8px;">${items.filter(l=>!mgmtResolved[l]).length} outstanding</div>
       </div>
       <div style="padding:8px 10px;display:flex;flex-direction:column;gap:5px;">
         ${items.map(lbl=>{
           const res=mgmtResolved[lbl];
           return `<div style="display:flex;align-items:flex-start;gap:8px;background:${res?'var(--sg)':'var(--g0)'};border:1px solid ${res?'var(--gb)':'var(--re)'};border-radius:8px;padding:8px 10px;">
             <div style="flex:1;">
-              <div style="font-size:12px;font-weight:700;color:${res?'var(--se)':'var(--rl)'};">${res?'✅':'❌'} ${lbl}</div>
-              ${res?`<div style="font-size:10px;color:var(--se);margin-top:2px;">Resolved by ${res.by} · ${res.at}${res.note?' — '+res.note:''}</div>`
+              <div style="font-size:14px;font-weight:700;color:${res?'var(--se)':'var(--rl)'};">${res?'✅':'❌'} ${lbl}</div>
+              ${res?`<div style="font-size:13px;color:var(--se);margin-top:2px;">Resolved by ${res.by} · ${res.at}${res.note?' — '+res.note:''}</div>`
                    :`<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
                       <input id="mgmt-note-${section}-${lbl.replace(/[^a-zA-Z0-9]/g,'_')}" placeholder="Add note (optional)"
-                        style="color-scheme:dark;flex:1;min-width:120px;padding:6px 8px;border-radius:6px;border:1px solid var(--g3);background:var(--g1);color:var(--tx);font-size:11px;">
+                        style="color-scheme:dark;flex:1;min-width:120px;padding:6px 8px;border-radius:6px;border:1px solid var(--g3);background:var(--g1);color:var(--tx);font-size:14px;">
                       <button onclick="mgmtResolve('${lbl}','${section}')"
-                        style="padding:6px 12px;background:var(--sg);border:2px solid var(--gb);border-radius:6px;color:var(--se);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                        style="padding:6px 12px;background:var(--sg);border:2px solid var(--gb);border-radius:6px;color:var(--se);font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">
                         ✓ Mark resolved
                       </button>
                     </div>`}
@@ -2677,10 +2677,10 @@ function coStep6_mgmt(){
     ].map(([ico,lbl,who,done,issues])=>`
       <div style="text-align:center;border:2px solid ${done&&!issues?'var(--gb)':done&&issues?'var(--am)':'var(--re)'};border-radius:var(--r);padding:10px 6px;background:${done&&!issues?'var(--sg)':done&&issues?'var(--ag)':'var(--rg)'}">
         <div style="font-size:20px">${ico}</div>
-        <div style="font-size:10px;font-weight:700;color:${done&&!issues?'var(--se)':done&&issues?'var(--al)':'var(--rl)'};margin:3px 0">${lbl}</div>
-        <div style="font-size:10px;color:${done?'var(--g5)':'var(--rl)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${who||'—'}</div>
+        <div style="font-size:13px;font-weight:700;color:${done&&!issues?'var(--se)':done&&issues?'var(--al)':'var(--rl)'};margin:3px 0">${lbl}</div>
+        <div style="font-size:13px;color:${done?'var(--g5)':'var(--rl)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${who||'—'}</div>
         <div style="font-size:16px;margin-top:4px">${done&&!issues?'✅':done&&issues?'⚠️':'❌'}</div>
-        ${issues?`<div style="font-size:9px;color:var(--al)">${issues} unchecked</div>`:''}
+        ${issues?`<div style="font-size:13px;color:var(--al)">${issues} unchecked</div>`:''}
       </div>`).join('')}
   </div>
 
@@ -2701,7 +2701,7 @@ function coStep6_mgmt(){
     `<div class="fi"><label>Manager name *</label>
       ${selStaff('co-m-nm',STAFF_HO,co.mgmtBy)}
     </div>
-    ${hasIssues&&!allResolved?`<div style="background:var(--ag);border:1px solid var(--am);border-radius:var(--rs);padding:8px 12px;margin-bottom:8px;font-size:11px;color:var(--al);">
+    ${hasIssues&&!allResolved?`<div style="background:var(--ag);border:1px solid var(--am);border-radius:var(--rs);padding:8px 12px;margin-bottom:8px;font-size:14px;color:var(--al);">
       ⚠ Signing with unresolved items — you take responsibility for these gaps
     </div>`:''}
     <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">Manager — sign to clear vehicle</span><span class="sig-clr" onclick="clrSig('co-m-sig')">Clear</span></div><canvas class="sig-cv" id="co-m-sig"></canvas></div>
@@ -2774,35 +2774,35 @@ async function completeCO(){
 
   const handoverHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <style>
-    body{font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:20px;color:#1a1a1a;font-size:13px;}
+    body{font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:20px;color:#1a1a1a;font-size:15px;}
     h1{color:#145c30;font-size:20px;margin-bottom:4px;}
     h2{color:#145c30;font-size:14px;border-bottom:2px solid #145c30;padding-bottom:4px;margin-top:20px;}
     .logo{font-size:22px;font-weight:900;color:#145c30;letter-spacing:-1px;}
     .logo span{color:#e07b00;}
     .meta{display:flex;gap:20px;flex-wrap:wrap;margin:10px 0;background:#f4f9f4;border-radius:8px;padding:12px 16px;}
     .meta-item{flex:1;min-width:120px;}
-    .meta-label{font-size:9px;text-transform:uppercase;color:#888;font-weight:700;}
+    .meta-label{font-size:13px;text-transform:uppercase;color:#888;font-weight:700;}
     .meta-value{font-size:14px;font-weight:800;color:#1a1a1a;}
     .equip-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;}
-    .equip-tag{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:#e8f5e9;color:#145c30;border:1px solid #a5d6a7;}
+    .equip-tag{padding:4px 10px;border-radius:6px;font-size:14px;font-weight:700;background:#e8f5e9;color:#145c30;border:1px solid #a5d6a7;}
     .equip-tag.warn{background:#fff3e0;color:#e07b00;border-color:#ffcc80;}
-    .dmg-tag{display:inline-block;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:700;background:#fff3e0;color:#b45309;border:1px solid #fcd34d;margin:3px;}
+    .dmg-tag{display:inline-block;padding:3px 8px;border-radius:5px;font-size:14px;font-weight:700;background:#fff3e0;color:#b45309;border:1px solid #fcd34d;margin:3px;}
     .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0;}
     .photo-grid img{width:100%;border-radius:6px;border:1px solid #ddd;}
     .sig-box{background:#f4f9f4;border:2px solid #145c30;border-radius:8px;padding:12px;margin-top:10px;}
     .sig-box img{max-width:200px;border:1px solid #ccc;border-radius:4px;}
-    .footer{margin-top:24px;padding-top:12px;border-top:1px solid #ddd;font-size:10px;color:#888;text-align:center;}
-    .badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+    .footer{margin-top:24px;padding-top:12px;border-top:1px solid #ddd;font-size:13px;color:#888;text-align:center;}
+    .badge{padding:2px 8px;border-radius:10px;font-size:13px;font-weight:700;}
     .badge.ok{background:#e8f5e9;color:#145c30;}
     .badge.warn{background:#fff3e0;color:#b45309;}
-    .no-dmg{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:7px;padding:8px 12px;color:#145c30;font-weight:700;font-size:12px;}
+    .no-dmg{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:7px;padding:8px 12px;color:#145c30;font-weight:700;font-size:14px;}
     table{width:100%;border-collapse:collapse;margin:8px 0;}
-    td,th{padding:6px 10px;border:1px solid #e0e0e0;font-size:12px;}
+    td,th{padding:6px 10px;border:1px solid #e0e0e0;font-size:14px;}
     th{background:#f4f9f4;font-weight:700;color:#145c30;text-align:left;}
   </style></head><body>
   <div class="logo">Go Rent <span>4×4</span> Namibia</div>
   <h1>Vehicle Handover Document</h1>
-  <p style="color:#666;font-size:11px;">Generated: ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} · ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</p>
+  <p style="color:#666;font-size:14px;">Generated: ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} · ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</p>
 
   <div class="meta">
     <div class="meta-item"><div class="meta-label">Vehicle</div><div class="meta-value">${co.fn}</div></div>
@@ -2819,27 +2819,27 @@ async function completeCO(){
     ${equipLines.map(e=>`<span class="equip-tag ${e.st==='prob'?'warn':''}">${e.st==='ok'?'✓':'⚠'} ${e.lbl}${e.qty&&isNaN(e.qty)?'':e.qty?' ×'+e.qty:''}</span>`).join('')}
   </div>
   ${equipPhotos.length?`
-  <p style="font-size:11px;color:#666;margin:4px 0;">Equipment photos taken at packing:</p>
+  <p style="font-size:14px;color:#666;margin:4px 0;">Equipment photos taken at packing:</p>
   <div class="photo-grid">${equipPhotos.map(src=>`<img src="${src}" alt="equipment">`).join('')}</div>`:''}
 
   <h2>🔍 Vehicle Condition at Departure</h2>
   ${hasDmg?`
-  <p style="font-size:11px;color:#888;">Pre-existing damage noted below — <strong>client is NOT liable for this damage</strong>.</p>
+  <p style="font-size:14px;color:#888;">Pre-existing damage noted below — <strong>client is NOT liable for this damage</strong>.</p>
   <div>${co.dmgd.map(d=>`<span class="dmg-tag">${d.view_name}: ${(d.types||[]).map(t=>t==='sc'?'Scratch':t==='de'?'Dent':t==='cr'?'Crack':'Pre-existing').join(' + ')}</span>`).join('')}</div>
   ${dmgPhotos.length?`<div class="photo-grid" style="margin-top:8px;">${dmgPhotos.map(src=>`<img src="${src}" alt="damage">`).join('')}</div>`:''}`
   :`<div class="no-dmg">✅ No damage recorded — vehicle departed in clean condition</div>`}
 
   <h2>✍️ Client Signature</h2>
   <div class="sig-box">
-    <p style="margin:0 0 8px;font-size:12px;"><strong>${co.clientName||co.v.cl}</strong> confirms receipt of the above equipment, acknowledges the vehicle condition, confirms the fuel level at departure, and agrees:</p>
-    <ul style="font-size:11px;color:#444;margin:6px 0;padding-left:18px;line-height:1.8;">
+    <p style="margin:0 0 8px;font-size:14px;"><strong>${co.clientName||co.v.cl}</strong> confirms receipt of the above equipment, acknowledges the vehicle condition, confirms the fuel level at departure, and agrees:</p>
+    <ul style="font-size:14px;color:#444;margin:6px 0;padding-left:18px;line-height:1.8;">
       <li>Fuel level: <strong>${co.fuelOut||'Full'}</strong> — must be returned at the same level</li>
       <li>⛽ DIESEL ONLY — misfuelling costs are entirely at my expense</li>
       <li>All equipment listed above received in working condition</li>
       <li>New damage on return is my responsibility</li>
       <li>I have read and signed the rental agreement</li>
     </ul>
-    ${co.custSig?`<img src="${co.custSig}" alt="client signature"><p style="font-size:10px;color:#888;margin:4px 0;">Signed: ${co.custAt}</p>`:'<p style="color:#e53e3e;font-weight:700;">No signature captured</p>'}
+    ${co.custSig?`<img src="${co.custSig}" alt="client signature"><p style="font-size:13px;color:#888;margin:4px 0;">Signed: ${co.custAt}</p>`:'<p style="color:#e53e3e;font-weight:700;">No signature captured</p>'}
   </div>
 
 
@@ -2860,17 +2860,17 @@ async function completeCO(){
 
       <!-- Send handover doc -->
       <div style="background:var(--g1);border:2px solid var(--gb);border-radius:var(--rs);padding:14px 16px;margin:14px 0;">
-        <div style="font-size:13px;font-weight:800;color:var(--se);margin-bottom:10px;">📤 Send Handover Document to Client</div>
-        <div style="font-size:11px;color:var(--g5);margin-bottom:12px;">Includes: equipment list · equipment photos · vehicle condition · damage photos · client signature</div>
+        <div style="font-size:15px;font-weight:800;color:var(--se);margin-bottom:10px;">📤 Send Handover Document to Client</div>
+        <div style="font-size:14px;color:var(--g5);margin-bottom:12px;">Includes: equipment list · equipment photos · vehicle condition · damage photos · client signature</div>
 
         <!-- Email -->
         <div style="margin-bottom:10px;">
-          <div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:5px;">📧 Email</div>
+          <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:5px;">📧 Email</div>
           <div style="display:flex;gap:8px;">
             <input id="send-email" type="email" value="${co.clientEmail||''}" placeholder="client@email.com"
-              style="color-scheme:dark;flex:1;padding:9px 12px;border-radius:var(--rs);border:2px solid var(--gb);background:var(--g0);color:var(--tx);font-size:13px;">
+              style="color-scheme:dark;flex:1;padding:9px 12px;border-radius:var(--rs);border:2px solid var(--gb);background:var(--g0);color:var(--tx);font-size:15px;">
             <button onclick="sendHandoverEmail()" id="btn-email"
-              style="padding:9px 16px;background:var(--sg);border:2px solid var(--gb);border-radius:var(--rs);color:var(--se);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+              style="padding:9px 16px;background:var(--sg);border:2px solid var(--gb);border-radius:var(--rs);color:var(--se);font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">
               📧 Send Email
             </button>
           </div>
@@ -2878,16 +2878,16 @@ async function completeCO(){
 
         <!-- WhatsApp -->
         <div>
-          <div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:5px;">💬 WhatsApp</div>
+          <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:5px;">💬 WhatsApp</div>
           <div style="display:flex;gap:8px;">
             <input id="send-wa" type="tel" value="${co.clientPhone||''}" placeholder="+264 81 123 4567"
-              style="color-scheme:dark;flex:1;padding:9px 12px;border-radius:var(--rs);border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:13px;">
+              style="color-scheme:dark;flex:1;padding:9px 12px;border-radius:var(--rs);border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:15px;">
             <button onclick="sendHandoverWA()"
-              style="padding:9px 16px;background:#25d366;border:2px solid #128c7e;border-radius:var(--rs);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+              style="padding:9px 16px;background:#25d366;border:2px solid #128c7e;border-radius:var(--rs);color:#fff;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">
               💬 Send WhatsApp
             </button>
           </div>
-          <div style="font-size:10px;color:var(--g5);margin-top:4px;">Opens WhatsApp with a pre-filled message and download link</div>
+          <div style="font-size:13px;color:var(--g5);margin-top:4px;">Opens WhatsApp with a pre-filled message and download link</div>
         </div>
 
         <div id="send-status" style="margin-top:10px;"></div>
@@ -3022,7 +3022,7 @@ function drawCI(){
     const active=s.n===ciStep;
     return `<div class="stg ${active?'active':done?'done':''}" onclick="ciStep=${s.n};drawCI()">
       <div style="font-size:16px">${done&&!active?'✅':s.ico}</div>
-      <div style="font-size:9px;margin-top:2px">${s.lbl}</div>
+      <div style="font-size:13px;margin-top:2px">${s.lbl}</div>
     </div>`;
   }).join('');
 
@@ -3035,7 +3035,7 @@ function drawCI(){
           <div class="fhdr-fn">${r.fn} <span>${v.reg}</span></div>
           <div class="fhdr-cl">${v.cl} · Return: ${v.rt}</div>
         </div>
-        <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;background:rgba(240,80,80,.15);color:var(--rl);border:1px solid var(--re)">◀ ARRIVAL</span>
+        <span style="font-size:14px;font-weight:700;padding:3px 10px;border-radius:8px;background:rgba(240,80,80,.15);color:var(--rl);border:1px solid var(--re)">◀ ARRIVAL</span>
       </div>
     </div>
     <div class="stg-bar s5">${bar}</div>
@@ -3079,20 +3079,20 @@ function ciStep0_CI(){
   <!-- ODO + FUEL ROW -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
     <div>
-      <div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">🛣 Odometer IN (km) *</div>
+      <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">🛣 Odometer IN (km) *</div>
       <input type="number" id="ci-odo" value="${r.odoIn}"
         oninput="ci.odoIn=+this.value;document.getElementById('ci-km-disp').textContent=(+this.value-(ci.odometerOut||v.odo)).toLocaleString()+' km driven';drawCI()"
         style="padding:12px 14px;font-size:16px;font-weight:700;background:var(--g0);border:2px solid var(--gb);border-radius:var(--rs);color:var(--tx);width:100%;">
-      <div id="ci-km-disp" style="font-size:11px;color:var(--se);margin-top:4px;font-weight:700;">${km>0?km.toLocaleString()+' km driven':''}</div>
-      <div style="font-size:10px;color:var(--g5);margin-top:2px;">ODO out: ${(ci.odometerOut||v.odo).toLocaleString()} km</div>
+      <div id="ci-km-disp" style="font-size:14px;color:var(--se);margin-top:4px;font-weight:700;">${km>0?km.toLocaleString()+' km driven':''}</div>
+      <div style="font-size:13px;color:var(--g5);margin-top:2px;">ODO out: ${(ci.odometerOut||v.odo).toLocaleString()} km</div>
     </div>
     <div>
-      <div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">⛽ Fuel IN *</div>
+      <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">⛽ Fuel IN *</div>
       <select id="ci-fuel" onchange="ci.fuelIn=this.value;drawCI()"
         style="color-scheme:dark;padding:12px 14px;font-size:15px;font-weight:700;width:100%;background:var(--g0);border:2px solid ${r.fuelIn===v.fuelOut?'var(--gb)':'var(--re)'};border-radius:var(--rs);color:${r.fuelIn===v.fuelOut?'var(--se)':'var(--rl)'};">
         ${['Full','3/4','1/2','1/4','Empty'].map(f=>`<option${r.fuelIn===f?' selected':''}>${f}</option>`).join('')}
       </select>
-      <div style="font-size:11px;margin-top:4px;font-weight:700;color:${r.fuelIn===v.fuelOut?'var(--se)':'var(--rl)'};">
+      <div style="font-size:14px;margin-top:4px;font-weight:700;color:${r.fuelIn===v.fuelOut?'var(--se)':'var(--rl)'};">
         ${r.fuelIn===v.fuelOut?'✅ Matches departure':'⚠ Out: '+(v.fuelOut||'Full')+' → In: '+r.fuelIn+' — fuel charge applies'}
       </div>
     </div>
@@ -3112,7 +3112,7 @@ function ciStep0_CI(){
         <span style="font-size:${isMain?'18':'15'}px;">${lbl.split(' ')[0]}</span>
         <div>
           <div style="font-size:${isMain?'12':'11'}px;font-weight:800;color:${isOpt?'var(--al)':isMain?'var(--tx)':'var(--se)'};">${lbl.replace(lbl.split(' ')[0]+' ','')}</div>
-          <div style="font-size:10px;color:var(--g5);">${det}</div>
+          <div style="font-size:13px;color:var(--g5);">${det}</div>
         </div>
       </div>`;
     }
@@ -3127,7 +3127,7 @@ function ciStep0_CI(){
       const qtyNum=parseInt(qtyVal)||0;
       return `<div class="ci ${qtyNum>0?'ok':''}" style="cursor:default;">
         <div class="ci-icon">${ico}</div>
-        <div class="ci-text"><div class="ci-lbl">${realLbl}</div><div class="ci-det">${det}${rby?` <span style="font-size:9px;color:var(--se);font-weight:700;margin-left:6px;">✓ ${rby}${rat?" · "+rat:""}</span>`:""}</div></div>
+        <div class="ci-text"><div class="ci-lbl">${realLbl}</div><div class="ci-det">${det}${rby?` <span style="font-size:13px;color:var(--se);font-weight:700;margin-left:6px;">✓ ${rby}${rat?" · "+rat:""}</span>`:""}</div></div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
           <select onchange="ci.retItems['${realLbl}']=this.value;if(!r.receivedBy){toast('Select your name first','err');this.value='';return;}const s=document.getElementById('ci-step-body');if(s){s.innerHTML=ciStep0_CI();setTimeout(()=>initSig('ci-ret-sig'),60);}"
             style="color-scheme:dark;padding:8px 10px;border-radius:var(--rs);border:2px solid ${qtyNum>0?'var(--gb)':'var(--g3)'};background:${qtyNum>0?'var(--sg)':'var(--g1)'};color:${qtyNum>0?'var(--se)':'var(--g5)'};font-size:14px;font-weight:700;min-width:70px;">
@@ -3141,7 +3141,7 @@ function ciStep0_CI(){
     return `<div class="ci ${st==='ok'?'ok':st==='prob'?'prob':''}" onclick="tapRetItem(${i})">
       <div class="ci-icon">${ico==='__OPT_ITEM__'?`<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>`:ico}</div>
       <div class="ci-text">
-        <div class="ci-lbl">${realLbl}${isOptItem?'<span style="font-size:9px;color:var(--g5);margin-left:6px;background:var(--g2);padding:1px 6px;border-radius:8px;">optional</span>':''}</div>
+        <div class="ci-lbl">${realLbl}${isOptItem?'<span style="font-size:13px;color:var(--g5);margin-left:6px;background:var(--g2);padding:1px 6px;border-radius:8px;">optional</span>':''}</div>
         <div class="ci-det">${det}</div>
       </div>
       <div class="ci-st">${st==='ok'?okSVG():st==='prob'?probSVG():st==='na'?naSVG():uncSVG()}</div>
@@ -3149,7 +3149,7 @@ function ciStep0_CI(){
   }).join('')}</div>
 
   ${probs.length?`<div class="al warn">⚠ Problems noted: ${probs.join(' · ')}</div>`:''}
-  ${retStaff.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;"><div style="font-size:10px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on return check</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${retStaff.map(n=>{const cnt=(ci.retLog?ci.retLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:12px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:10px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}</div></div>`:''}
+  ${retStaff.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;"><div style="font-size:13px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on return check</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${retStaff.map(n=>{const cnt=(ci.retLog?ci.retLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:14px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:13px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}</div></div>`:''}
   ${photoHTML('ci.dmgPhotos','📷 Vehicle Return Photos','Photo the exterior before unloading. Shows client condition matches what they signed.',6)}
 
   ${r.retSig?
@@ -3214,8 +3214,8 @@ function ciStep1_CI(){
     <div class="step-sub">Mark any new damage — blue=scratch · red=dent · yellow=pre-existing from departure</div></div>
   </div>
   ${(v.dmgd&&v.dmgd.length)?
-    `<div class="al info" style="margin-bottom:8px;font-size:11px">⭐ Yellow markings = pre-existing from departure. Blue/Red = NEW damage = client liability.</div>`:
-    `<div class="al ok" style="margin-bottom:8px;font-size:11px">✓ No damage recorded at check-out. Mark any new damage found now.</div>`}
+    `<div class="al info" style="margin-bottom:8px;font-size:14px">⭐ Yellow markings = pre-existing from departure. Blue/Red = NEW damage = client liability.</div>`:
+    `<div class="al ok" style="margin-bottom:8px;font-size:14px">✓ No damage recorded at check-out. Mark any new damage found now.</div>`}
   ${insHTML()}
   ${photoHTML('ci.dmgPhotos','📷 Damage Photos','Photograph ALL damage found — new and pre-existing. Essential evidence for insurance and deposit deductions.',8)}`;
 }
@@ -3254,7 +3254,7 @@ function ciStep3_CI(){
   <div style="background:#0a1520;border:3px solid ${hasIssues?'var(--re)':'var(--gb)'};border-radius:var(--r);overflow:hidden;margin-bottom:14px">
     <div style="background:${hasIssues?'linear-gradient(135deg,#200505,#3a0808)':'linear-gradient(135deg,#0f3d26,#145c30)'};padding:13px 16px;border-bottom:2px solid ${hasIssues?'var(--re)':'var(--gb)'}">
       <div style="font-size:16px;font-weight:800;color:#fff">${hasIssues?'⚠️':'✅'} ${v.cl} — Return Summary</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.6)">Received by ${r.receivedBy||'—'} · ${new Date().toLocaleDateString('en-GB')}</div>
+      <div style="font-size:14px;color:rgba(255,255,255,.6)">Received by ${r.receivedBy||'—'} · ${new Date().toLocaleDateString('en-GB')}</div>
     </div>
     <div style="padding:12px 16px;border-bottom:1px solid var(--g2);display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
       ${[['🛣','KM driven',km.toLocaleString()+' km','ok'],
@@ -3262,21 +3262,21 @@ function ciStep3_CI(){
          ['📅','Days',(Math.round((new Date(v.rt)-new Date(v.pu))/86400000)||'?')+' days','ok'],
       ].map(([ico,lbl,val,st])=>`<div style="text-align:center;background:var(--g1);border-radius:8px;padding:10px 4px">
         <div style="font-size:16px">${ico}</div>
-        <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin:3px 0">${lbl}</div>
-        <div style="font-size:12px;font-weight:700;color:${st==='warn'?'var(--rl)':'var(--se)'}">${val}</div>
+        <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin:3px 0">${lbl}</div>
+        <div style="font-size:14px;font-weight:700;color:${st==='warn'?'var(--rl)':'var(--se)'}">${val}</div>
       </div>`).join('')}
     </div>
     ${hasIssues?`<div style="padding:12px 16px;border-bottom:1px solid var(--g2)">
-      ${newDmg.map(d=>`<div style="font-size:12px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">🔴 NEW DAMAGE — ${d.view_name}: ${d.types.filter(t=>t!=='pr').map(t=>t==='sc'?'Scratch':'Dent').join(', ')}</div>`).join('')}
-      ${fuelShort?`<div style="font-size:12px;color:var(--al);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">⛽ Fuel short — ${v.fuelOut||'Full'} out → ${r.fuelIn} returned — refill cost charged</div>`:''}
-      ${missing.map(i=>`<div style="font-size:12px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">❌ MISSING: ${i}</div>`).join('')}
+      ${newDmg.map(d=>`<div style="font-size:14px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">🔴 NEW DAMAGE — ${d.view_name}: ${d.types.filter(t=>t!=='pr').map(t=>t==='sc'?'Scratch':'Dent').join(', ')}</div>`).join('')}
+      ${fuelShort?`<div style="font-size:14px;color:var(--al);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">⛽ Fuel short — ${v.fuelOut||'Full'} out → ${r.fuelIn} returned — refill cost charged</div>`:''}
+      ${missing.map(i=>`<div style="font-size:14px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">❌ MISSING: ${i}</div>`).join('')}
     </div>`:''}
     <div style="padding:12px 16px;border-bottom:1px solid var(--g2);background:rgba(0,0,0,.2)">
-      <div style="font-size:12px;font-weight:700;color:var(--tx);margin-bottom:8px">By signing you confirm:</div>
+      <div style="font-size:14px;font-weight:700;color:var(--tx);margin-bottom:8px">By signing you confirm:</div>
       ${['You have reviewed this return summary and agree it is accurate',
          hasIssues?'You accept responsibility for the items listed above':'Vehicle returned in good order — no new damage or missing items',
          'The rental period has ended and all obligations are fulfilled',
-      ].map(t=>`<div style="display:flex;gap:8px;padding:4px 0;font-size:11px;color:var(--g6)"><span style="color:var(--se)">✓</span>${t}</div>`).join('')}
+      ].map(t=>`<div style="display:flex;gap:8px;padding:4px 0;font-size:14px;color:var(--g6)"><span style="color:var(--se)">✓</span>${t}</div>`).join('')}
     </div>
     <div style="padding:14px 16px">
       ${r.custSig?
@@ -3325,11 +3325,11 @@ function ciStep4_CI(){
   </div>
 
   ${hasIssues?`<div style="background:var(--rg);border:2px solid var(--re);border-radius:var(--r);padding:12px;margin-bottom:10px">
-    <div style="font-size:13px;font-weight:800;color:var(--rl);margin-bottom:6px">💰 Action Required</div>
-    ${newDmg.length?`<div style="font-size:12px;color:var(--rl);margin-bottom:4px">🔴 Get repair quote for ${newDmg.map(d=>d.view_name).join(', ')} — charge to ${v.cl}</div>`:''}
-    ${fuelShort?`<div style="font-size:12px;color:var(--al);margin-bottom:4px">⛽ Charge refill: ${v.fuelOut||'Full'} → ${r.fuelIn}</div>`:''}
-    ${missing.length?`<div style="font-size:12px;color:var(--rl)">❌ Charge replacement: ${missing.join(', ')}</div>`:''}
-    <div style="font-size:10px;color:var(--am);margin-top:8px">📷 ${(r.dmgPhotos&&r.dmgPhotos.length)||0} photos on file as evidence</div>
+    <div style="font-size:15px;font-weight:800;color:var(--rl);margin-bottom:6px">💰 Action Required</div>
+    ${newDmg.length?`<div style="font-size:14px;color:var(--rl);margin-bottom:4px">🔴 Get repair quote for ${newDmg.map(d=>d.view_name).join(', ')} — charge to ${v.cl}</div>`:''}
+    ${fuelShort?`<div style="font-size:14px;color:var(--al);margin-bottom:4px">⛽ Charge refill: ${v.fuelOut||'Full'} → ${r.fuelIn}</div>`:''}
+    ${missing.length?`<div style="font-size:14px;color:var(--rl)">❌ Charge replacement: ${missing.join(', ')}</div>`:''}
+    <div style="font-size:13px;color:var(--am);margin-top:8px">📷 ${(r.dmgPhotos&&r.dmgPhotos.length)||0} photos on file as evidence</div>
   </div>`:''}
 
   ${r.mgmtSig?
@@ -3359,7 +3359,7 @@ function ciReturnView(v,r,newDmg,fuelShort,missing,damaged){
   return `<div style="background:#0a1520;border:3px solid ${hasIssues?'var(--re)':'var(--gb)'};border-radius:var(--r);overflow:hidden;margin-bottom:14px">
     <div style="background:${hasIssues?'linear-gradient(135deg,#200505,#3a0808)':'linear-gradient(135deg,#0f3d26,#145c30)'};padding:13px 16px;border-bottom:2px solid ${hasIssues?'var(--re)':'var(--gb)'}">
       <div style="font-size:16px;font-weight:800;color:#fff">${hasIssues?'⚠️':'✅'} ${v.cl} — Return Summary</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.6)">Received by ${r.receivedBy||'—'} · ${new Date().toLocaleDateString('en-GB')}</div>
+      <div style="font-size:14px;color:rgba(255,255,255,.6)">Received by ${r.receivedBy||'—'} · ${new Date().toLocaleDateString('en-GB')}</div>
     </div>
     <div style="padding:12px 16px;border-bottom:1px solid var(--g2);display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
       ${[['🛣','KM driven',(r.odoIn-v.odo).toLocaleString()+' km','ok'],
@@ -3367,22 +3367,22 @@ function ciReturnView(v,r,newDmg,fuelShort,missing,damaged){
          ['📅','Days',(Math.round((new Date(r.v.rt)-new Date(r.v.pu))/86400000)||'?')+' days','ok'],
       ].map(([i,l,val,st])=>`<div style="text-align:center;background:var(--g1);border-radius:8px;padding:10px 4px">
         <div style="font-size:16px">${i}</div>
-        <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin:3px 0">${l}</div>
-        <div style="font-size:12px;font-weight:700;color:${st==='warn'?'var(--rl)':'var(--se)'}">${val}</div>
+        <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin:3px 0">${l}</div>
+        <div style="font-size:14px;font-weight:700;color:${st==='warn'?'var(--rl)':'var(--se)'}">${val}</div>
       </div>`).join('')}
     </div>
     ${hasIssues?`<div style="padding:12px 16px;border-bottom:1px solid var(--g2)">
-      ${newDmg.map(d=>`<div style="font-size:12px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">🔴 NEW DAMAGE — ${d.view_name}: ${d.types.filter(t=>t!=='pr').map(t=>t==='sc'?'Scratch':'Dent').join(', ')}</div>`).join('')}
-      ${fuelShort?`<div style="font-size:12px;color:var(--al);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">⛽ Fuel not returned full — refill cost will be charged</div>`:''}
-      ${missing.map(i=>`<div style="font-size:12px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">❌ MISSING: ${i} — replacement cost charged</div>`).join('')}
+      ${newDmg.map(d=>`<div style="font-size:14px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">🔴 NEW DAMAGE — ${d.view_name}: ${d.types.filter(t=>t!=='pr').map(t=>t==='sc'?'Scratch':'Dent').join(', ')}</div>`).join('')}
+      ${fuelShort?`<div style="font-size:14px;color:var(--al);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">⛽ Fuel not returned full — refill cost will be charged</div>`:''}
+      ${missing.map(i=>`<div style="font-size:14px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">❌ MISSING: ${i} — replacement cost charged</div>`).join('')}
     </div>`:''}
     <div style="padding:12px 16px;border-bottom:1px solid var(--g2);background:rgba(0,0,0,.2)">
-      <div style="font-size:12px;font-weight:700;color:var(--tx);margin-bottom:8px">By signing you confirm:</div>
+      <div style="font-size:14px;font-weight:700;color:var(--tx);margin-bottom:8px">By signing you confirm:</div>
       ${[
         'You have reviewed this return summary and agree it is accurate',
         hasIssues?`You accept responsibility for the items listed above`:'Vehicle returned in good order',
         'The rental period has ended and you have no further claims',
-      ].map(t=>`<div style="display:flex;gap:8px;padding:4px 0;font-size:11px;color:var(--g6)"><span style="color:var(--se)">✓</span>${t}</div>`).join('')}
+      ].map(t=>`<div style="display:flex;gap:8px;padding:4px 0;font-size:14px;color:var(--g6)"><span style="color:var(--se)">✓</span>${t}</div>`).join('')}
     </div>
     <div style="padding:14px 16px">
       <div class="sig-area" style="border-color:${hasIssues?'var(--re)':'var(--gb)'}">
@@ -3464,10 +3464,10 @@ async function completeCI(){
     </div>
     ${hasIssues?`<div style="background:var(--rg);border:2px solid var(--re);border-radius:var(--r);padding:14px;margin-bottom:12px">
       <div style="font-size:14px;font-weight:800;color:var(--rl);margin-bottom:8px">💰 Recover from ${ci.v.cl}</div>
-      ${newDmg.length?`<div style="font-size:12px;color:var(--rl);padding:4px 0">🔴 Damage repair: ${newDmg.map(d=>d.view_name).join(', ')}</div>`:''}
-      ${ci.fuelIn!==ci.v.fuelOut?`<div style="font-size:12px;color:var(--al);padding:4px 0">⛽ Fuel: ${ci.v.fuelOut||'Full'} out → ${ci.fuelIn} in</div>`:''}
-      ${missing.length?`<div style="font-size:12px;color:var(--rl);padding:4px 0">❌ Replace: ${missing.join(', ')}</div>`:''}
-      <div style="font-size:10px;color:var(--am);margin-top:8px">📷 ${(ci.dmgPhotos&&ci.dmgPhotos.length)||0} damage photos · Signed contract on file · Management alerted</div>
+      ${newDmg.length?`<div style="font-size:14px;color:var(--rl);padding:4px 0">🔴 Damage repair: ${newDmg.map(d=>d.view_name).join(', ')}</div>`:''}
+      ${ci.fuelIn!==ci.v.fuelOut?`<div style="font-size:14px;color:var(--al);padding:4px 0">⛽ Fuel: ${ci.v.fuelOut||'Full'} out → ${ci.fuelIn} in</div>`:''}
+      ${missing.length?`<div style="font-size:14px;color:var(--rl);padding:4px 0">❌ Replace: ${missing.join(', ')}</div>`:''}
+      <div style="font-size:13px;color:var(--am);margin-top:8px">📷 ${(ci.dmgPhotos&&ci.dmgPhotos.length)||0} damage photos · Signed contract on file · Management alerted</div>
     </div>`:'<div class="al ok" style="margin-bottom:12px">✅ Clean return — full deposit released</div>'}
     <div class="al ${ci.v.st==='maintenance'?'warn':'ok'}">
       ${ci.v.st==='maintenance'?'⚠ Vehicle flagged for maintenance before next rental':'✓ Vehicle back in available fleet'}
@@ -3505,7 +3505,7 @@ function rpFleet(){
     return `<div class="rpt-card" style="border-color:${crit?'var(--re)':warn?'var(--am)':'var(--g2)'};${crit?'animation:pulse 1.5s infinite':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <div class="rpt-fn">${v.fn} <span style="font-size:12px;font-weight:400;color:var(--g5)">${v.reg}</span></div>
+          <div class="rpt-fn">${v.fn} <span style="font-size:14px;font-weight:400;color:var(--g5)">${v.reg}</span></div>
           <div class="rpt-cl">${v.st==='rented'?`On road with ${v.cl} · back ${v.rt}`:'Available'}</div>
           <div class="rpt-meta">Odo: ${v.odo.toLocaleString()} km</div>
         </div>
@@ -3516,51 +3516,51 @@ function rpFleet(){
            ['📋','Licence',licDays!==null?licDays+'d':'—',licDays<=0?'crit':licDays<=90?'warn':'ok'],
            ['🛞','Tyres',tyrLeft!==null?tyrLeft<=0?'OVERDUE':'+'+tyrLeft.toLocaleString()+'km':'—',tyrLeft<=0?'crit':tyrLeft<=3000?'warn':'ok'],
         ].map(([i,l,val,st])=>`<div style="background:var(--g2);border-radius:7px;padding:7px;text-align:center">
-          <div>${i}</div><div style="font-size:9px;color:var(--g5);margin:2px 0;text-transform:uppercase">${l}</div>
-          <div style="font-size:11px;font-weight:700;color:${st==='crit'?'var(--rl)':st==='warn'?'var(--al)':'var(--se)'}">${val}</div>
+          <div>${i}</div><div style="font-size:13px;color:var(--g5);margin:2px 0;text-transform:uppercase">${l}</div>
+          <div style="font-size:14px;font-weight:700;color:${st==='crit'?'var(--rl)':st==='warn'?'var(--al)':'var(--se)'}">${val}</div>
         </div>`).join('')}
       </div>
       <!-- Toyota service section -->
       <div style="margin-top:8px;border-top:1px solid var(--g2);padding-top:8px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-          <div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;">🔧 Last Toyota Service</div>
+          <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;">🔧 Last Toyota Service</div>
           <button onclick="showSvcForm('${v.fn}')"
-            style="font-size:10px;font-weight:700;padding:4px 10px;border-radius:6px;border:1px solid var(--g3);background:var(--g2);color:var(--g6);cursor:pointer;">
+            style="font-size:13px;font-weight:700;padding:4px 10px;border-radius:6px;border:1px solid var(--g3);background:var(--g2);color:var(--g6);cursor:pointer;">
             + Log service
           </button>
         </div>
         <div id="svc-info-${v.fn}">
           ${(v.svc&&v.svc.date)||(v.svc&&v.svc.lastKm)?
             `<div style="display:flex;gap:8px;flex-wrap:wrap;">
-              ${v.svc.date?`<span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:10px;">📅 Date: <strong style="color:var(--tx)">${new Date(v.svc.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</strong></span>`:''}
-              ${v.svc.lastKm?`<span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:10px;">🛣 At: <strong style="color:var(--tx)">${v.svc.lastKm.toLocaleString()} km</strong></span>`:''}
-              ${svcLeft!==null?`<span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:10px;">⏭ Next: <strong style="color:${svcLeft<=0?'var(--rl)':svcLeft<=1500?'var(--al)':'var(--se)'}">${svcLeft<=0?'OVERDUE '+Math.abs(svcLeft).toLocaleString()+'km over':'+'+svcLeft.toLocaleString()+' km'}</strong></span>`:''}
+              ${v.svc.date?`<span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:13px;">📅 Date: <strong style="color:var(--tx)">${new Date(v.svc.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</strong></span>`:''}
+              ${v.svc.lastKm?`<span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:13px;">🛣 At: <strong style="color:var(--tx)">${v.svc.lastKm.toLocaleString()} km</strong></span>`:''}
+              ${svcLeft!==null?`<span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:13px;">⏭ Next: <strong style="color:${svcLeft<=0?'var(--rl)':svcLeft<=1500?'var(--al)':'var(--se)'}">${svcLeft<=0?'OVERDUE '+Math.abs(svcLeft).toLocaleString()+'km over':'+'+svcLeft.toLocaleString()+' km'}</strong></span>`:''}
             </div>`
-            :`<span style="font-size:10px;color:var(--g5);">No service record — tap above to log</span>`}
+            :`<span style="font-size:13px;color:var(--g5);">No service record — tap above to log</span>`}
         </div>
         <div id="svc-form-${v.fn}" style="display:none;margin-top:8px;background:var(--g0);border:2px solid var(--g3);border-radius:8px;padding:10px 12px;">
-          <div style="font-size:11px;font-weight:700;color:var(--tx);margin-bottom:8px;">🔧 Log Toyota Service — ${v.fn}</div>
+          <div style="font-size:14px;font-weight:700;color:var(--tx);margin-bottom:8px;">🔧 Log Toyota Service — ${v.fn}</div>
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
             <div style="flex:1;min-width:120px;">
-              <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Service date</div>
+              <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Service date</div>
               <input type="date" id="svc-date-${v.fn}" value="${(v.svc&&v.svc.date)||''}"
-                style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:13px;">
+                style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:15px;">
             </div>
             <div style="flex:1;min-width:110px;">
-              <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Odometer (km)</div>
+              <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Odometer (km)</div>
               <input type="number" id="svc-km-${v.fn}" value="${(v.svc&&v.svc.lastKm)||''}" placeholder="${v.odo}"
-                style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:13px;font-weight:700;">
+                style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:15px;font-weight:700;">
             </div>
             <div style="flex:1;min-width:80px;">
-              <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Interval (km)</div>
+              <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Interval (km)</div>
               <input type="number" id="svc-int-${v.fn}" value="${(v.svc&&v.svc.intKm)||10000}"
-                style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:13px;">
+                style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:15px;">
             </div>
             <div style="display:flex;gap:6px;flex-shrink:0;">
               <button onclick="saveSvc('${v.fn}')"
-                style="padding:8px 14px;background:var(--sg);border:2px solid var(--gb);border-radius:6px;color:var(--se);font-size:12px;font-weight:700;cursor:pointer;">💾 Save</button>
+                style="padding:8px 14px;background:var(--sg);border:2px solid var(--gb);border-radius:6px;color:var(--se);font-size:14px;font-weight:700;cursor:pointer;">💾 Save</button>
               <button onclick="document.getElementById('svc-form-${v.fn}').style.display='none'"
-                style="padding:8px 10px;background:var(--g2);border:1px solid var(--g3);border-radius:6px;color:var(--g5);font-size:12px;cursor:pointer;">✕</button>
+                style="padding:8px 10px;background:var(--g2);border:1px solid var(--g3);border-radius:6px;color:var(--g5);font-size:14px;cursor:pointer;">✕</button>
             </div>
           </div>
         </div>
@@ -3568,13 +3568,13 @@ function rpFleet(){
       <!-- Tyre history section -->
       <div style="margin-top:8px;border-top:1px solid var(--g2);padding-top:8px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-          <div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;">🛞 Tyre History</div>
+          <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;">🛞 Tyre History</div>
           <button onclick="showNewTyres('${v.fn}')"
-            style="font-size:10px;font-weight:700;padding:4px 10px;border-radius:6px;border:1px solid var(--gb);background:var(--sg);color:var(--se);cursor:pointer;">
+            style="font-size:13px;font-weight:700;padding:4px 10px;border-radius:6px;border:1px solid var(--gb);background:var(--sg);color:var(--se);cursor:pointer;">
             + New tyres fitted
           </button>
         </div>
-        <div id="tyre-hist-${v.fn}" style="font-size:10px;color:var(--g5);">
+        <div id="tyre-hist-${v.fn}" style="font-size:13px;color:var(--g5);">
           ${v.tyres?
             `<div style="display:flex;gap:10px;flex-wrap:wrap;">
               <span style="background:var(--g2);border-radius:6px;padding:4px 10px;">📍 Fitted at: <strong style="color:var(--tx)">${v.tyres.lastKm.toLocaleString()} km</strong></span>
@@ -3584,29 +3584,29 @@ function rpFleet(){
             :'<span style="color:var(--g5);">No tyre record — tap above to log first set</span>'}
         </div>
         <div id="tyre-form-${v.fn}" style="display:none;margin-top:8px;background:var(--g0);border:2px solid var(--gb);border-radius:8px;padding:10px 12px;">
-          <div style="font-size:11px;font-weight:700;color:var(--se);margin-bottom:8px;">🛞 Log New Tyres Fitted — ${v.fn}</div>
+          <div style="font-size:14px;font-weight:700;color:var(--se);margin-bottom:8px;">🛞 Log New Tyres Fitted — ${v.fn}</div>
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
             <div style="flex:1;min-width:130px;">
-              <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Odometer when fitted (km)</div>
+              <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Odometer when fitted (km)</div>
               <input type="number" id="tyre-km-${v.fn}" placeholder="e.g. ${v.odo}"
                 style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:14px;font-weight:700;">
             </div>
             <div style="flex:1;min-width:100px;">
-              <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Interval (km)</div>
+              <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Interval (km)</div>
               <input type="number" id="tyre-int-${v.fn}" value="22000"
                 style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:14px;font-weight:700;">
             </div>
             <div style="display:flex;gap:6px;">
               <button onclick="saveNewTyres('${v.fn}')"
-                style="padding:8px 14px;background:var(--sg);border:2px solid var(--gb);border-radius:6px;color:var(--se);font-size:12px;font-weight:700;cursor:pointer;">💾 Save</button>
+                style="padding:8px 14px;background:var(--sg);border:2px solid var(--gb);border-radius:6px;color:var(--se);font-size:14px;font-weight:700;cursor:pointer;">💾 Save</button>
               <button onclick="document.getElementById('tyre-form-${v.fn}').style.display='none'"
-                style="padding:8px 10px;background:var(--g2);border:1px solid var(--g3);border-radius:6px;color:var(--g5);font-size:12px;cursor:pointer;">✕</button>
+                style="padding:8px 10px;background:var(--g2);border:1px solid var(--g3);border-radius:6px;color:var(--g5);font-size:14px;cursor:pointer;">✕</button>
             </div>
           </div>
-          <div style="font-size:9px;color:var(--g5);margin-top:6px;">Date: ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+          <div style="font-size:13px;color:var(--g5);margin-top:6px;">Date: ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
         </div>
       </div>
-      ${v.blocked?`<div class="al warn" style="margin-top:8px;font-size:10px">⚠ ${v.blocked}</div>`:''}
+      ${v.blocked?`<div class="al warn" style="margin-top:8px;font-size:13px">⚠ ${v.blocked}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -3702,19 +3702,19 @@ async function loadTyreHistory(fn){
     const v=FLEET.find(x=>x.fn===fn);
     el.innerHTML=`
       <div style="margin-bottom:6px;display:flex;gap:8px;flex-wrap:wrap;">
-        <span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:10px;">📍 Fitted at: <strong style="color:var(--tx)">${data[0].fitted_at_km.toLocaleString()} km</strong></span>
-        <span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:10px;">📏 Done so far: <strong style="color:${v?(v.odo-data[0].fitted_at_km)>25000?'var(--al)':'var(--tx)':'var(--tx)'}">${v?(v.odo-data[0].fitted_at_km).toLocaleString():' — '} km</strong></span>
-        <span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:10px;">🎯 Interval: <strong style="color:var(--tx)">${data[0].interval_km.toLocaleString()} km</strong></span>
+        <span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:13px;">📍 Fitted at: <strong style="color:var(--tx)">${data[0].fitted_at_km.toLocaleString()} km</strong></span>
+        <span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:13px;">📏 Done so far: <strong style="color:${v?(v.odo-data[0].fitted_at_km)>25000?'var(--al)':'var(--tx)':'var(--tx)'}">${v?(v.odo-data[0].fitted_at_km).toLocaleString():' — '} km</strong></span>
+        <span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:13px;">🎯 Interval: <strong style="color:var(--tx)">${data[0].interval_km.toLocaleString()} km</strong></span>
       </div>
       ${data.length>1?`
-      <div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">History</div>
+      <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">History</div>
       <div style="display:flex;flex-direction:column;gap:3px;">
         ${data.map((r,i)=>`
           <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;background:var(--g${i===0?'1':'0'});border-radius:6px;border-left:3px solid ${i===0?'var(--se)':'var(--g3)'};">
-            <div style="font-size:10px;color:var(--g5);min-width:70px;">${r.fitted_date}</div>
-            <div style="font-size:10px;font-weight:700;color:var(--tx);">${r.fitted_at_km.toLocaleString()} km</div>
-            ${r.prev_km_done?`<div style="font-size:10px;color:var(--g5);">prev set: ${r.prev_km_done.toLocaleString()} km</div>`:''}
-            ${i===0?'<span style="font-size:9px;background:var(--sg);color:var(--se);padding:1px 6px;border-radius:8px;">current</span>':''}
+            <div style="font-size:13px;color:var(--g5);min-width:70px;">${r.fitted_date}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--tx);">${r.fitted_at_km.toLocaleString()} km</div>
+            ${r.prev_km_done?`<div style="font-size:13px;color:var(--g5);">prev set: ${r.prev_km_done.toLocaleString()} km</div>`:''}
+            ${i===0?'<span style="font-size:13px;background:var(--sg);color:var(--se);padding:1px 6px;border-radius:8px;">current</span>':''}
           </div>`).join('')}
       </div>`:''}`;
   }catch(e){/* table may not exist yet */}
@@ -3772,25 +3772,25 @@ async function loadHistory(){
           +'<span style="font-size:22px;">'+(isOut?'🔑':'🏠')+'</span>'
           +'<div>'
             +'<div style="font-size:14px;font-weight:800;color:var(--tx);">'+(c.fleet_no||'—')
-              +' <span style="font-size:11px;color:var(--g5);font-weight:400;">'+(c.client||'—')+'</span></div>'
-            +'<div style="font-size:10px;font-weight:700;color:'+accent+';text-transform:uppercase;letter-spacing:.4px;">'+(isOut?'▶ CHECK-OUT':'◀ CHECK-IN')+'</div>'
+              +' <span style="font-size:14px;color:var(--g5);font-weight:400;">'+(c.client||'—')+'</span></div>'
+            +'<div style="font-size:13px;font-weight:700;color:'+accent+';text-transform:uppercase;letter-spacing:.4px;">'+(isOut?'▶ CHECK-OUT':'◀ CHECK-IN')+'</div>'
           +'</div>'
         +'</div>'
         +'<div style="text-align:right;">'
-          +'<div style="font-size:13px;font-weight:700;color:var(--tx);">📅 '+fmtDate(c._date)+'</div>'
-          +'<div style="font-size:12px;color:var(--g5);">🕐 '+fmtTime(c._date)+'</div>'
+          +'<div style="font-size:15px;font-weight:700;color:var(--tx);">📅 '+fmtDate(c._date)+'</div>'
+          +'<div style="font-size:14px;color:var(--g5);">🕐 '+fmtTime(c._date)+'</div>'
         +'</div>'
       +'</div>'
       // Staff accountability
       +'<div style="padding:10px 14px;border-bottom:1px solid var(--g2);">'
-        +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">👤 Staff Accountability</div>'
+        +'<div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">👤 Staff Accountability</div>'
         +'<div style="display:grid;grid-template-columns:'+(isOut?'1fr 1fr 1fr':'1fr 1fr')+';gap:6px;">'
           +staffRows.map(s=>{
             const hasName=s.name&&s.name!=='—';
             return '<div style="background:var(--g0);border-radius:7px;padding:8px 10px;border:1px solid '+(hasName?'var(--g3)':'var(--re)')+';border-left:3px solid '+(hasName?accent:'var(--re)')+';">'
-              +'<div style="font-size:9px;color:var(--g5);font-weight:700;text-transform:uppercase;margin-bottom:3px;">'+s.role+'</div>'
-              +'<div style="font-size:13px;font-weight:800;color:'+(hasName?'var(--tx)':'var(--rl)')+';">'+(s.name||'⚠ Not recorded')+'</div>'
-              +(s.signed?'<div style="font-size:9px;color:var(--se);margin-top:2px;">✅ signed '+fmtTime(s.signed)+'</div>':'')
+              +'<div style="font-size:13px;color:var(--g5);font-weight:700;text-transform:uppercase;margin-bottom:3px;">'+s.role+'</div>'
+              +'<div style="font-size:15px;font-weight:800;color:'+(hasName?'var(--tx)':'var(--rl)')+';">'+(s.name||'⚠ Not recorded')+'</div>'
+              +(s.signed?'<div style="font-size:13px;color:var(--se);margin-top:2px;">✅ signed '+fmtTime(s.signed)+'</div>':'')
             +'</div>';
           }).join('')
         +'</div>'
@@ -3808,16 +3808,16 @@ async function loadHistory(){
           ['💰 Deposit',c.deposit_decision||'—'],
           ['🔍 New damage',((c.new_damage_panels&&c.new_damage_panels.length)?'⚠ '+c.new_damage_panels.length+' panel(s)':'None')],
         ]).map(([l,v])=>'<div style="text-align:center;background:var(--g0);border-radius:6px;padding:6px 4px;">'
-          +'<div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:2px;">'+l+'</div>'
-          +'<div style="font-size:11px;font-weight:700;color:var(--tx);">'+v+'</div>'
+          +'<div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:2px;">'+l+'</div>'
+          +'<div style="font-size:14px;font-weight:700;color:var(--tx);">'+v+'</div>'
         +'</div>').join('')
       +'</div>'
       // Issues
       +(hasIssues?'<div style="padding:8px 14px;background:rgba(240,80,80,.06);display:flex;flex-wrap:wrap;gap:6px;">'
-        +(c.new_damage?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--rg);color:var(--rl);border:1px solid var(--re);">🔴 New damage</span>':'')
-        +(c.fuel_short?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⛽ Fuel short</span>':'')
-        +(((c.missing_items&&c.missing_items.length))?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--rg);color:var(--rl);border:1px solid var(--re);">❌ '+c.missing_items.length+' missing</span>':'')
-        +(((c.unchecked_prep&&c.unchecked_prep.length))?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⚠ '+c.unchecked_prep.length+' items unchecked</span>':'')
+        +(c.new_damage?'<span style="font-size:13px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--rg);color:var(--rl);border:1px solid var(--re);">🔴 New damage</span>':'')
+        +(c.fuel_short?'<span style="font-size:13px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⛽ Fuel short</span>':'')
+        +(((c.missing_items&&c.missing_items.length))?'<span style="font-size:13px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--rg);color:var(--rl);border:1px solid var(--re);">❌ '+c.missing_items.length+' missing</span>':'')
+        +(((c.unchecked_prep&&c.unchecked_prep.length))?'<span style="font-size:13px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⚠ '+c.unchecked_prep.length+' items unchecked</span>':'')
       +'</div>':'')
     +'</div>';
   }
@@ -3828,16 +3828,16 @@ async function loadHistory(){
   el.innerHTML=
     // Filter bar
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;background:var(--g1);border-radius:var(--rs);border:1px solid var(--g2);">'
-      +'<select id="rp-filter" onchange="loadHistory()" style="color-scheme:dark;flex:1;min-width:110px;padding:8px;border-radius:6px;border:1px solid var(--g3);background:var(--g0);color:var(--tx);font-size:12px;font-weight:700;">'
+      +'<select id="rp-filter" onchange="loadHistory()" style="color-scheme:dark;flex:1;min-width:110px;padding:8px;border-radius:6px;border:1px solid var(--g3);background:var(--g0);color:var(--tx);font-size:14px;font-weight:700;">'
         +'<option value="all">All movements</option>'
         +'<option value="out"'+(filter==='out'?' selected':'')+'>▶ Check-outs</option>'
         +'<option value="in"'+(filter==='in'?' selected':'')+'>◀ Check-ins</option>'
       +'</select>'
-      +'<select id="rp-person" onchange="loadHistory()" style="color-scheme:dark;flex:1;min-width:120px;padding:8px;border-radius:6px;border:1px solid var(--g3);background:var(--g0);color:var(--tx);font-size:12px;font-weight:700;">'
+      +'<select id="rp-person" onchange="loadHistory()" style="color-scheme:dark;flex:1;min-width:120px;padding:8px;border-radius:6px;border:1px solid var(--g3);background:var(--g0);color:var(--tx);font-size:14px;font-weight:700;">'
         +'<option value="all">All staff</option>'
         +allStaff.map(n=>'<option value="'+n+'"'+(person===n?' selected':'')+'>'+n+'</option>').join('')
       +'</select>'
-      +'<div style="font-size:11px;color:var(--g5);display:flex;align-items:center;padding:0 4px;">'+records.length+' record'+(records.length!==1?'s':'')+'</div>'
+      +'<div style="font-size:14px;color:var(--g5);display:flex;align-items:center;padding:0 4px;">'+records.length+' record'+(records.length!==1?'s':'')+'</div>'
     +'</div>'
     // Stats
     +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">'
@@ -3849,7 +3849,7 @@ async function loadHistory(){
       ].map(([ico,lbl,cnt,col])=>'<div style="background:var(--g1);border:1px solid var(--g2);border-radius:8px;padding:10px;text-align:center;">'
         +'<div style="font-size:18px;">'+ico+'</div>'
         +'<div style="font-size:20px;font-weight:800;color:'+col+';line-height:1;">'+cnt+'</div>'
-        +'<div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-top:2px;">'+lbl+'</div>'
+        +'<div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-top:2px;">'+lbl+'</div>'
       +'</div>').join('')
     +'</div>'
     // Records
@@ -3874,8 +3874,8 @@ async function loadAlerts(){
       ${a.fuel_short?'<span class="bdg a">⛽ Fuel</span>':''}
       ${(a.missing_items&&a.missing_items.length)?`<span class="bdg r">❌ ${a.missing_items.length} missing</span>`:''}
     </div>
-    ${!a.resolved?`<button onclick="SB.from('management_alerts').update({resolved:true,resolved_by:'${(currentProfile&&currentProfile.name)||'mgmt'}',resolved_at:new Date().toISOString()}).eq('id','${a.id}').then(()=>{toast('Resolved ✅','ok');loadAlerts()})" style="margin-top:8px;padding:6px 14px;border-radius:6px;border:1px solid var(--gb);background:var(--sg);color:var(--se);font-size:11px;font-weight:700;cursor:pointer">✅ Mark Resolved</button>`:''}
-    <button onclick="openInsurancePack('','${(a.client||'').replace(/'/g,"\\x27")}','${a.fleet_no||''}');event.stopPropagation()" style="margin-top:8px;margin-left:6px;padding:6px 14px;border-radius:6px;border:1px solid #c0392b;background:#c0392b;color:#fff;font-size:11px;font-weight:700;cursor:pointer">🚨 Insurance Pack</button>
+    ${!a.resolved?`<button onclick="SB.from('management_alerts').update({resolved:true,resolved_by:'${(currentProfile&&currentProfile.name)||'mgmt'}',resolved_at:new Date().toISOString()}).eq('id','${a.id}').then(()=>{toast('Resolved ✅','ok');loadAlerts()})" style="margin-top:8px;padding:6px 14px;border-radius:6px;border:1px solid var(--gb);background:var(--sg);color:var(--se);font-size:14px;font-weight:700;cursor:pointer">✅ Mark Resolved</button>`:''}
+    <button onclick="openInsurancePack('','${(a.client||'').replace(/'/g,"\\x27")}','${a.fleet_no||''}');event.stopPropagation()" style="margin-top:8px;margin-left:6px;padding:6px 14px;border-radius:6px;border:1px solid #c0392b;background:#c0392b;color:#fff;font-size:14px;font-weight:700;cursor:pointer">🚨 Insurance Pack</button>
   </div>`).join('');
 }
 function searchReports(q){/* filter locally */}
@@ -3898,10 +3898,10 @@ function selStaff(id, list, val) {
   if (lockedStaff && val && lockedStaff === val) {
     return '<div style="background:var(--g0);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;">'
       + '<div style="display:flex;align-items:center;gap:10px;">'
-      + '<div style="width:36px;height:36px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#000;">' + val.slice(0,2).toUpperCase() + '</div>'
+      + '<div style="width:36px;height:36px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#000;">' + val.slice(0,2).toUpperCase() + '</div>'
       + '<div><div style="font-size:15px;font-weight:800;color:var(--al);">' + val + '</div>'
-      + '<div style="font-size:10px;color:var(--g5);">🔒 Locked — started this process</div></div></div>'
-      + '<button ontouchend="event.preventDefault();unlockStaff(\'' + id + '\',\'' + fn + '\')" onclick="unlockStaff(\'' + id + '\',\'' + fn + '\')" style="background:var(--g2);border:1px solid var(--g3);border-radius:6px;color:var(--g5);font-size:10px;font-weight:700;padding:5px 10px;cursor:pointer;">🔓 Change</button>'
+      + '<div style="font-size:13px;color:var(--g5);">🔒 Locked — started this process</div></div></div>'
+      + '<button ontouchend="event.preventDefault();unlockStaff(\'' + id + '\',\'' + fn + '\')" onclick="unlockStaff(\'' + id + '\',\'' + fn + '\')" style="background:var(--g2);border:1px solid var(--g3);border-radius:6px;color:var(--g5);font-size:13px;font-weight:700;padding:5px 10px;cursor:pointer;">🔓 Change</button>'
       + '</div>';
   }
 
@@ -3971,9 +3971,9 @@ function licDiscBanner(v, context){
       const sub2 = ok?'Valid for '+daysLeft+' more day'+(daysLeft!==1?'s':''):'';
       statusHTML = '<div style="background:'+bg+';border:1px solid '+border+';border-radius:6px;padding:7px 10px;margin-top:6px;display:flex;align-items:center;gap:8px;">'
         +'<span style="font-size:18px;">'+icon+'</span>'
-        +'<div><div style="font-size:12px;font-weight:800;color:'+col+';">'+label+'</div>'
-        +(expired||warn?'<div style="font-size:10px;color:'+col+';margin-top:1px;">'+sub+'</div>':'')
-        +(ok&&context==='out'?'<div style="font-size:10px;color:'+col+';margin-top:1px;">'+sub2+'</div>':'')
+        +'<div><div style="font-size:14px;font-weight:800;color:'+col+';">'+label+'</div>'
+        +(expired||warn?'<div style="font-size:13px;color:'+col+';margin-top:1px;">'+sub+'</div>':'')
+        +(ok&&context==='out'?'<div style="font-size:13px;color:'+col+';margin-top:1px;">'+sub2+'</div>':'')
         +'</div></div>';
     }
   }
@@ -3984,10 +3984,10 @@ function licDiscBanner(v, context){
   const inputId = 'lic-expiry-'+context;
 
   return '<div style="background:var(--g1);border:2px solid var(--g3);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">'
-    +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">📋 Licence Disc</div>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">📋 Licence Disc</div>'
     +'<div style="display:flex;align-items:center;gap:8px;">'
       +'<div style="flex:1;">'
-        +'<label style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;display:block;margin-bottom:4px;">Expiry Date</label>'
+        +'<label style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;display:block;margin-bottom:4px;">Expiry Date</label>'
         +'<input type="date" id="'+inputId+'" value="'+(expiry||'')+'"'
           +' oninput="'+obj+'._licExpiry=this.value;'
             +'const b=document.getElementById(\'lic-banner-'+context+'\');'
@@ -3995,11 +3995,11 @@ function licDiscBanner(v, context){
           +' style="color-scheme:dark;padding:10px 12px;font-size:14px;font-weight:700;background:var(--g0);border:2px solid '+(expiry?'var(--gb)':'var(--re)')+';border-radius:var(--rs);color:var(--tx);width:100%;">'
       +'</div>'
       +'<button onclick="saveLicExpiry(\''+fnRef+'\',document.getElementById(\''+inputId+'\').value,\''+context+'\')" '
-        +'style="padding:10px 14px;background:var(--sg);border:2px solid var(--gb);border-radius:var(--rs);color:var(--se);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">'
+        +'style="padding:10px 14px;background:var(--sg);border:2px solid var(--gb);border-radius:var(--rs);color:var(--se);font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">'
         +'💾 Save'
       +'</button>'
     +'</div>'
-    +(statusHTML?statusHTML:'<div style="font-size:10px;color:var(--al);margin-top:6px;">⚠ Enter licence disc expiry date above</div>')
+    +(statusHTML?statusHTML:'<div style="font-size:13px;color:var(--al);margin-top:6px;">⚠ Enter licence disc expiry date above</div>')
   +'</div>';
 }
 
@@ -4043,7 +4043,7 @@ function photoHTML(key,title,sub,max){
         <div class="p-add-ico">📷</div><div class="p-add-lbl">${arr.length?'Add more':'Take photo'}</div>
       </div>`:''}
     </div>
-    <div style="font-size:10px;color:var(--g5);margin-top:5px;text-align:center">${arr.length}/${max}</div>
+    <div style="font-size:13px;color:var(--g5);margin-top:5px;text-align:center">${arr.length}/${max}</div>
   </div>`;
 }
 function handlePhotos(e,key){
@@ -4174,7 +4174,7 @@ function getSig(id){return document.getElementById(id)?.toDataURL('image/png')||
 // ── INSURANCE PACK ────────────────────────────────────────────────
 async function openInsurancePack(contractId,clientName,fleetNo){
   const modal=document.createElement('div');modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:flex;align-items:center;justify-content:center;';
-  modal.innerHTML=`<div style="background:var(--g1);border:2px solid var(--re);border-radius:14px;padding:30px;max-width:340px;width:90%;text-align:center"><div style="font-size:36px;margin-bottom:12px">🚨</div><div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:6px">Building Insurance Pack...</div><div style="font-size:12px;color:var(--g5)">Fetching all documents from cloud</div></div>`;
+  modal.innerHTML=`<div style="background:var(--g1);border:2px solid var(--re);border-radius:14px;padding:30px;max-width:340px;width:90%;text-align:center"><div style="font-size:36px;margin-bottom:12px">🚨</div><div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:6px">Building Insurance Pack...</div><div style="font-size:14px;color:var(--g5)">Fetching all documents from cloud</div></div>`;
   document.body.appendChild(modal);
   const cl=clientList.find(c=>c.full_name===clientName);
   let contract=null;
@@ -4194,18 +4194,18 @@ async function openInsurancePack(contractId,clientName,fleetNo){
   const now=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   const win=window.open('','_blank');if(!win){toast('Allow pop-ups','err');return;}
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Insurance Pack</title>
-  <style>body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:20px;max-width:800px;margin:0 auto}
+  <style>body{font-family:Arial,sans-serif;font-size:14px;color:#111;padding:20px;max-width:800px;margin:0 auto}
   .hdr{border-bottom:3px solid #000;padding-bottom:14px;margin-bottom:20px;display:flex;justify-content:space-between}
-  .logo{font-size:20px;font-weight:900}h2{font-size:13px;font-weight:700;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:4px;margin:20px 0 10px}
+  .logo{font-size:20px;font-weight:900}h2{font-size:15px;font-weight:700;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:4px;margin:20px 0 10px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{border:1px solid #ccc;border-radius:4px;padding:10px}
-  .row{display:grid;grid-template-columns:130px 1fr;padding:3px 0;border-bottom:1px solid #eee;font-size:11px}.lbl{font-weight:700;color:#555}
+  .row{display:grid;grid-template-columns:130px 1fr;padding:3px 0;border-bottom:1px solid #eee;font-size:14px}.lbl{font-weight:700;color:#555}
   .doc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.doc-box{border:1px solid #ccc;border-radius:4px;overflow:hidden}
-  .doc-lbl{background:#f5f5f5;padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;border-bottom:1px solid #ccc}
+  .doc-lbl{background:#f5f5f5;padding:6px 10px;font-size:13px;font-weight:700;text-transform:uppercase;border-bottom:1px solid #ccc}
   .doc-box img{width:100%;max-height:180px;object-fit:cover;display:block}
   .dmg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.dmg-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;border:1px solid #ccc}
-  .urgent{background:#e74c3c;color:#fff;padding:8px 14px;border-radius:4px;font-size:12px;font-weight:700;text-align:center;margin-bottom:20px}
+  .urgent{background:#e74c3c;color:#fff;padding:8px 14px;border-radius:4px;font-size:14px;font-weight:700;text-align:center;margin-bottom:20px}
   .toolbar{background:#c0392b;color:#fff;padding:12px 16px;margin:-20px -20px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
-  .toolbar button,.toolbar a{background:#fff;color:#c0392b;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none}
+  .toolbar button,.toolbar a{background:#fff;color:#c0392b;border:none;padding:8px 14px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none}
   @media print{.toolbar{display:none}}</style></head><body>
   <div class="toolbar"><strong>🚨 Insurance Pack — ${clientName} / ${fleetNo}</strong>
     <div style="display:flex;gap:8px">
@@ -4213,8 +4213,8 @@ async function openInsurancePack(contractId,clientName,fleetNo){
       <button onclick="window.print()">🖨 Print / PDF</button>
       <button onclick="window.close()" style="background:rgba(255,255,255,.2);color:#fff">✕</button>
     </div></div>
-  <div class="hdr"><div><div class="logo">GO RENT 4×4 NAMIBIA</div><div style="font-size:11px;color:#555">CC/2021/04371 · Windhoek · gorent4x4.com</div><div style="font-size:16px;font-weight:700;margin-top:8px">INSURANCE CLAIM DOCUMENTATION</div></div>
-    <div style="text-align:right;font-size:11px"><div style="color:#555">Generated:</div><div style="font-weight:700">${now}</div><div style="color:#555;margin-top:6px">Vehicle:</div><div style="font-weight:700">${fleetNo||'—'}</div></div></div>
+  <div class="hdr"><div><div class="logo">GO RENT 4×4 NAMIBIA</div><div style="font-size:14px;color:#555">CC/2021/04371 · Windhoek · gorent4x4.com</div><div style="font-size:16px;font-weight:700;margin-top:8px">INSURANCE CLAIM DOCUMENTATION</div></div>
+    <div style="text-align:right;font-size:14px"><div style="color:#555">Generated:</div><div style="font-weight:700">${now}</div><div style="color:#555;margin-top:6px">Vehicle:</div><div style="font-weight:700">${fleetNo||'—'}</div></div></div>
   <div class="urgent">⚠ CONFIDENTIAL — FOR INSURANCE PURPOSES ONLY</div>
   <h2>1. Client Information</h2>
   <div class="grid2">
@@ -4223,24 +4223,24 @@ async function openInsurancePack(contractId,clientName,fleetNo){
   </div>
   <h2>2. Identity Documents</h2>
   <div class="doc-grid">
-    ${[['Passport Photo',(cl&&cl.passport_photo_url)],["Driver's Licence — Front",(cl&&cl.license_front_url)],['ID Document',(cl&&cl.id_photo_url)],["Driver's Licence — Back",(cl&&cl.license_back_url)]].map(([l,u])=>`<div class="doc-box"><div class="doc-lbl">${l}</div>${u?`<img src="${u}" crossorigin="anonymous">`:' <div style="padding:30px;text-align:center;color:#aaa;font-size:11px">Not on file</div>'}</div>`).join('')}
+    ${[['Passport Photo',(cl&&cl.passport_photo_url)],["Driver's Licence — Front",(cl&&cl.license_front_url)],['ID Document',(cl&&cl.id_photo_url)],["Driver's Licence — Back",(cl&&cl.license_back_url)]].map(([l,u])=>`<div class="doc-box"><div class="doc-lbl">${l}</div>${u?`<img src="${u}" crossorigin="anonymous">`:' <div style="padding:30px;text-align:center;color:#aaa;font-size:14px">Not on file</div>'}</div>`).join('')}
   </div>
   <h2>3. Rental Contract</h2>
-  ${(contract&&contract.contract_html)?`<div style="border:1px solid #ccc;border-radius:4px;padding:14px;font-size:11px;line-height:1.6">${contract.contract_html}</div>`:
+  ${(contract&&contract.contract_html)?`<div style="border:1px solid #ccc;border-radius:4px;padding:14px;font-size:14px;line-height:1.6">${contract.contract_html}</div>`:
   `<div style="padding:20px;border:1px dashed #ccc;text-align:center;color:#aaa">No signed contract on file</div>`}
   <h2>4. Vehicle Condition at Departure</h2>
   ${dmgPhotos.length?`<div class="dmg-grid">${dmgPhotos.map(u=>`<img src="${u}" crossorigin="anonymous">`).join('')}</div>`:
   '<div style="padding:16px;border:1px dashed #ccc;text-align:center;color:#aaa">No departure photos on file</div>'}
   ${prepPhotos.length?`<h2>5. Equipment at Departure</h2><div class="dmg-grid">${prepPhotos.map(u=>`<img src="${u}" crossorigin="anonymous">`).join('')}</div>`:''}
   <h2>${prepPhotos.length?'6':'5'}. Declaration</h2>
-  <div style="border:1px solid #ccc;border-radius:4px;padding:12px;font-size:11px;line-height:1.7;margin-bottom:20px">
+  <div style="border:1px solid #ccc;border-radius:4px;padding:12px;font-size:14px;line-height:1.7;margin-bottom:20px">
     Go Rent 4×4 Namibia certifies that the information in this pack is accurate. All signatures, photographs and records are stored in our Check App system. The rental agreement was signed by the client prior to departure. Identity was verified against passport and driver's licence documents photographed at time of rental.
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:20px;padding-top:16px;border-top:2px solid #000">
-    <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:8px">Authorised Representative</div><div style="border-bottom:1px solid #000;min-height:50px;margin-bottom:4px"></div><div style="font-size:10px;color:#555">Name & Signature</div></div>
-    <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:8px">Company Stamp</div><div style="border-bottom:1px solid #000;min-height:50px;margin-bottom:4px"></div></div>
+    <div><div style="font-size:14px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:8px">Authorised Representative</div><div style="border-bottom:1px solid #000;min-height:50px;margin-bottom:4px"></div><div style="font-size:13px;color:#555">Name & Signature</div></div>
+    <div><div style="font-size:14px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:8px">Company Stamp</div><div style="border-bottom:1px solid #000;min-height:50px;margin-bottom:4px"></div></div>
   </div>
-  <div style="text-align:center;margin-top:20px;font-size:10px;color:#777;border-top:1px solid #ccc;padding-top:10px">
+  <div style="text-align:center;margin-top:20px;font-size:13px;color:#777;border-top:1px solid #ccc;padding-top:10px">
     GO RENT 4×4 RENTALS AND TOURS CC · CC/2021/04371 · gorent4x4.com · WhatsApp: +264 81 858 1750<br>
     Document: ${(clientName||'unknown').replace(/\s+/g,'_')}_${fleetNo}_${Date.now()}
   </div></body></html>`);
@@ -4265,11 +4265,11 @@ function buildContractHTML(c,sigUrl){
   // Blank field box
   const box=(label,val,w='100%',h='32px')=>`
     <div style="display:inline-block;width:${w};vertical-align:top;padding:0 4px 6px 0;">
-      <div style="font-size:9px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px;">${label}</div>
-      <div style="min-height:${h};border:1px solid #bbb;border-radius:3px;padding:5px 8px;font-size:12px;color:#111;background:#fff;font-weight:${val?'600':'400'};color:${val?'#111':'#999'};">${val||''}</div>
+      <div style="font-size:13px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px;">${label}</div>
+      <div style="min-height:${h};border:1px solid #bbb;border-radius:3px;padding:5px 8px;font-size:14px;color:#111;background:#fff;font-weight:${val?'600':'400'};color:${val?'#111':'#999'};">${val||''}</div>
     </div>`;
 
-  const chkBox=(checked)=>`<span style="display:inline-block;width:13px;height:13px;border:1.5px solid #555;border-radius:2px;margin-right:6px;vertical-align:middle;background:${checked?'#111':'#fff'};position:relative;">${checked?'<span style="position:absolute;top:-2px;left:1px;color:#fff;font-size:11px;font-weight:900;">✓</span>':''}</span>`;
+  const chkBox=(checked)=>`<span style="display:inline-block;width:13px;height:13px;border:1.5px solid #555;border-radius:2px;margin-right:6px;vertical-align:middle;background:${checked?'#111':'#fff'};position:relative;">${checked?'<span style="position:absolute;top:-2px;left:1px;color:#fff;font-size:14px;font-weight:900;">✓</span>':''}</span>`;
 
   // Additional drivers — from co.drivers array (skip index 0 = primary) + manual entries
   const addlDrivers = (()=>{
@@ -4281,16 +4281,16 @@ function buildContractHTML(c,sigUrl){
       const d = addl[i]||null;
       rows.push(`
         <div style="display:grid;grid-template-columns:2fr 1.5fr 1.5fr;gap:0;margin-bottom:4px;border:1px solid #ccc;border-radius:3px;overflow:hidden;">
-          <div style="padding:6px 8px;border-right:1px solid #ccc;font-size:11px;">
-            <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Additional Driver ${i+1} — Full Name</div>
+          <div style="padding:6px 8px;border-right:1px solid #ccc;font-size:14px;">
+            <div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Additional Driver ${i+1} — Full Name</div>
             <div style="color:${(d&&d.name)?'#111':'#ccc'};font-weight:${(d&&d.name)?'600':'400'}">${(d&&d.name)||''}</div>
           </div>
-          <div style="padding:6px 8px;border-right:1px solid #ccc;font-size:11px;">
-            <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Date of Birth / Nationality</div>
+          <div style="padding:6px 8px;border-right:1px solid #ccc;font-size:14px;">
+            <div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Date of Birth / Nationality</div>
             <div style="color:${((d&&d.dob)||(d&&d.nationality))?'#111':'#ccc'}">${[(d&&d.dob),(d&&d.nationality)].filter(Boolean).join(' / ')||''}</div>
           </div>
-          <div style="padding:6px 8px;font-size:11px;">
-            <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Licence # / Expiry</div>
+          <div style="padding:6px 8px;font-size:14px;">
+            <div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Licence # / Expiry</div>
             <div style="color:${((d&&d.licNo)||(d&&d.licExpiry))?'#111':'#ccc'}">${[(d&&d.licNo),(d&&d.licExpiry)].filter(Boolean).join(' / ')||''}</div>
           </div>
         </div>`);
@@ -4305,18 +4305,18 @@ function buildContractHTML(c,sigUrl){
     <div style="width:60px;height:60px;flex-shrink:0;background:#e8f5ee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:24px;">🚙</div>
     <div style="flex:1;">
       <div style="font-size:18px;font-weight:900;letter-spacing:-.3px;line-height:1;">GO RENT 4X4 RENTALS AND TOURS CC</div>
-      <div style="font-size:10px;color:#555;margin-top:3px;">Reg. No: CC/2021/04371 | Windhoek, Namibia | WhatsApp: +264 81 861 8085 | gorent4x4.com</div>
-      <div style="font-size:13px;font-weight:700;margin-top:6px;text-transform:uppercase;letter-spacing:.5px;">Vehicle Rental Agreement &amp; Terms and Conditions</div>
+      <div style="font-size:13px;color:#555;margin-top:3px;">Reg. No: CC/2021/04371 | Windhoek, Namibia | WhatsApp: +264 81 861 8085 | gorent4x4.com</div>
+      <div style="font-size:15px;font-weight:700;margin-top:6px;text-transform:uppercase;letter-spacing:.5px;">Vehicle Rental Agreement &amp; Terms and Conditions</div>
     </div>
   </div>
 
   <!-- 1. PARTIES -->
-  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin-bottom:10px;">1. PARTIES &amp; VEHICLE DETAILS</div>
+  <div style="font-size:15px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin-bottom:10px;">1. PARTIES &amp; VEHICLE DETAILS</div>
 
-  <div style="font-size:11px;font-weight:700;margin-bottom:4px;">1.1 RENTAL COMPANY</div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:4px;">1.1 RENTAL COMPANY</div>
   <div style="font-size:10.5px;color:#333;margin-bottom:10px;">GO RENT 4X4 RENTALS AND TOURS CC ("Go Rent" / "GR") — registered Namibian closed corporation (CC/2021/04371).</div>
 
-  <div style="font-size:11px;font-weight:700;margin-bottom:4px;">1.2 CLIENT</div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:4px;">1.2 CLIENT</div>
   <div style="font-size:10.5px;color:#333;margin-bottom:10px;line-height:1.6;">
     The individual who signs this Agreement ("you" / "the Renter") is solely responsible for:
     paying all rental fees, insurance waiver fees, penalties, and fines; ensuring full compliance with this Agreement including speed limits and restricted-area rules;
@@ -4324,59 +4324,59 @@ function buildContractHTML(c,sigUrl){
     minimum driver age 23, licence held minimum 1 year; foreign renters: valid IDP required — no copies accepted.
   </div>
 
-  <div style="font-size:11px;font-weight:700;margin-bottom:6px;">1.3 CLIENT INFORMATION</div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:6px;">1.3 CLIENT INFORMATION</div>
   <div style="border:1px solid #ccc;border-radius:4px;overflow:hidden;margin-bottom:10px;">
     <div style="display:grid;grid-template-columns:2fr 1fr 1.2fr 1.2fr;border-bottom:1px solid #ccc;">
       ${['Full Name','Date of Birth','Nationality','Passport Number'].map((l,i)=>{
         const vals=[c.client_name,c.client_dob,c.client_nationality,c.client_passport];
         return `<div style="padding:7px 8px;${i<3?'border-right:1px solid #ccc;':''}">
-          <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div>
-          <div style="font-size:12px;font-weight:600;color:#111;min-height:18px;">${vals[i]||''}</div>
+          <div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div>
+          <div style="font-size:14px;font-weight:600;color:#111;min-height:18px;">${vals[i]||''}</div>
         </div>`;
       }).join('')}
     </div>
     <div style="display:grid;grid-template-columns:2fr 2fr;">
       <div style="padding:7px 8px;border-right:1px solid #ccc;">
-        <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Driver's Licence #</div>
-        <div style="font-size:12px;font-weight:600;color:#111;min-height:18px;">${c.client_licence||''}</div>
+        <div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Driver's Licence #</div>
+        <div style="font-size:14px;font-weight:600;color:#111;min-height:18px;">${c.client_licence||''}</div>
       </div>
       <div style="padding:7px 8px;">
-        <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Licence Expiry Date</div>
-        <div style="font-size:12px;font-weight:600;color:#111;min-height:18px;">${c.client_licence_expiry||''}</div>
+        <div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Licence Expiry Date</div>
+        <div style="font-size:14px;font-weight:600;color:#111;min-height:18px;">${c.client_licence_expiry||''}</div>
       </div>
     </div>
   </div>
 
-  <div style="font-size:11px;font-weight:700;margin-bottom:6px;">1.4 VEHICLE INFORMATION</div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:6px;">1.4 VEHICLE INFORMATION</div>
   <div style="border:1px solid #ccc;border-radius:4px;overflow:hidden;margin-bottom:8px;">
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #ccc;">
       ${[['Go Rent Fleet Number',c.fleet_no],['Vehicle Registration',c.vehicle_reg],['Total Rental Days',days?(days+' days'):'']].map(([l,v],i)=>
-        `<div style="padding:7px 8px;${i<2?'border-right:1px solid #ccc;':''}"><div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div><div style="font-size:12px;font-weight:600;min-height:18px;">${v||''}</div></div>`
+        `<div style="padding:7px 8px;${i<2?'border-right:1px solid #ccc;':''}"><div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div><div style="font-size:14px;font-weight:600;min-height:18px;">${v||''}</div></div>`
       ).join('')}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #ccc;">
       ${[['Rental FROM Date',fD(c.pickup_date)],['Time',c.pickup_time||'08:00'],['Location',c.pickup_location||'Windhoek, 6 Diehl Str']].map(([l,v],i)=>
-        `<div style="padding:7px 8px;${i<2?'border-right:1px solid #ccc;':''}"><div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div><div style="font-size:12px;font-weight:600;min-height:18px;">${v||''}</div></div>`
+        `<div style="padding:7px 8px;${i<2?'border-right:1px solid #ccc;':''}"><div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div><div style="font-size:14px;font-weight:600;min-height:18px;">${v||''}</div></div>`
       ).join('')}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;">
       ${[['Rental TO Date',fD(c.return_date)],['Time',c.return_time||'08:00'],['Location',c.return_location||'Windhoek, 6 Diehl Str']].map(([l,v],i)=>
-        `<div style="padding:7px 8px;${i<2?'border-right:1px solid #ccc;':''}"><div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div><div style="font-size:12px;font-weight:600;min-height:18px;">${v||''}</div></div>`
+        `<div style="padding:7px 8px;${i<2?'border-right:1px solid #ccc;':''}"><div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div><div style="font-size:14px;font-weight:600;min-height:18px;">${v||''}</div></div>`
       ).join('')}
     </div>
   </div>
-  <div style="font-size:10px;color:#555;margin-bottom:12px;">The vehicle remains sole property of Go Rent at all times. GR may recover it immediately on material breach.</div>
+  <div style="font-size:13px;color:#555;margin-bottom:12px;">The vehicle remains sole property of Go Rent at all times. GR may recover it immediately on material breach.</div>
 
-  <div style="font-size:11px;font-weight:700;margin-bottom:4px;">1.5 ADDITIONAL DRIVERS</div>
-  <div style="font-size:10px;color:#333;margin-bottom:6px;line-height:1.5;">
+  <div style="font-size:14px;font-weight:700;margin-bottom:4px;">1.5 ADDITIONAL DRIVERS</div>
+  <div style="font-size:13px;color:#333;margin-bottom:6px;line-height:1.5;">
     Only persons listed below — plus the Renter — may drive the vehicle. Each must present a valid licence at pick-up. The Renter remains fully liable for any breach by an additional driver.<br>
     Go Rent charges <strong>N$280.00 per additional driver</strong> (once-off fee per rental period), payable at vehicle collection.
   </div>
   ${addlDrivers}
 
   <!-- 2. INSURANCE -->
-  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:16px 0 10px;">2. INSURANCE OPTIONS &amp; SECURITY DEPOSITS
-    <span style="float:right;font-size:9px;font-weight:700;background:#111;color:#fff;padding:3px 10px;border-radius:3px;letter-spacing:.5px;">FOR OFFICE USE ONLY</span>
+  <div style="font-size:15px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:16px 0 10px;">2. INSURANCE OPTIONS &amp; SECURITY DEPOSITS
+    <span style="float:right;font-size:13px;font-weight:700;background:#111;color:#fff;padding:3px 10px;border-radius:3px;letter-spacing:.5px;">FOR OFFICE USE ONLY</span>
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
@@ -4430,8 +4430,8 @@ function buildContractHTML(c,sigUrl){
   </div>
 
   <!-- 3. EXCLUSIONS SUMMARY -->
-  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">3. VEHICLE INSURANCE EXCLUSIONS — ALWAYS THE RENTER'S COST</div>
-  <div style="border:1px solid #e74c3c;border-radius:4px;padding:9px 12px;margin-bottom:12px;font-size:10px;line-height:1.7;background:#fdf5f5;">
+  <div style="font-size:15px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">3. VEHICLE INSURANCE EXCLUSIONS — ALWAYS THE RENTER'S COST</div>
+  <div style="border:1px solid #e74c3c;border-radius:4px;padding:9px 12px;margin-bottom:12px;font-size:13px;line-height:1.7;background:#fdf5f5;">
     <div style="font-weight:700;margin-bottom:5px;">The following damage is NEVER covered under any insurance option. The Renter pays all repair, replacement, and recovery costs in full:</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
       <div>• Windscreen — only covered with optional Tyre &amp; Windscreen add-on<br>
@@ -4449,11 +4449,11 @@ function buildContractHTML(c,sigUrl){
       • Tyre blowout vehicle damage — blowouts, loose lug nuts, broken wheel studs, or jack misuse<br>
       • Negligence or vehicle misuse (see Section 5)</div>
     </div>
-    <div style="font-size:9px;color:#888;margin-top:4px;">See Section 5 for the comprehensive exclusion and void-insurance conditions.</div>
+    <div style="font-size:13px;color:#888;margin-top:4px;">See Section 5 for the comprehensive exclusion and void-insurance conditions.</div>
   </div>
 
   <!-- 4. SPEED LIMITS -->
-  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">4. SPEED LIMITS, TRAFFIC LAWS &amp; GPS TRACKER</div>
+  <div style="font-size:15px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">4. SPEED LIMITS, TRAFFIC LAWS &amp; GPS TRACKER</div>
   <div style="font-size:10.5px;margin-bottom:6px;"><strong>4.1 GR CONTRACT SPEED LIMITS</strong> — Go Rent contractual speed limits take precedence over posted road signs. Exceeding them immediately voids all insurance and triggers a N$1,500 penalty per GPS-detected incident.</div>
   <table style="width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:8px;">
     <tr style="background:#111;color:#fff;"><th style="padding:5px 10px;text-align:left;font-weight:700;">Road Type</th><th style="padding:5px 10px;text-align:right;font-weight:700;">GR Contract Limit</th></tr>
@@ -4461,10 +4461,10 @@ function buildContractHTML(c,sigUrl){
       `<tr style="background:${i%2?'#f9f9f9':'#fff'}"><td style="padding:4px 10px;border-bottom:1px solid #eee;">${r[0]}</td><td style="padding:4px 10px;border-bottom:1px solid #eee;text-align:right;font-weight:700;">${r[1]}</td></tr>`
     ).join('')}
   </table>
-  <div style="background:#fdf5f5;border:1px solid #e74c3c;border-radius:4px;padding:8px 12px;margin-bottom:8px;font-size:10px;line-height:1.5;">
+  <div style="background:#fdf5f5;border:1px solid #e74c3c;border-radius:4px;padding:8px 12px;margin-bottom:8px;font-size:13px;line-height:1.5;">
     <strong>ZERO TOLERANCE — SPEEDING VOIDS ALL INSURANCE:</strong> There are no warnings. A single recorded speeding violation voids your entire insurance for the remainder of the rental. You become personally liable for ALL damage — including damage unrelated to the speeding. GR treats GPS data as primary evidence of any such violation.
   </div>
-  <div style="font-size:10px;color:#333;margin-bottom:12px;line-height:1.6;">
+  <div style="font-size:13px;color:#333;margin-bottom:12px;line-height:1.6;">
     <strong>4.3 Namibian Traffic Laws:</strong> Drive LEFT at all times · Seatbelts mandatory · Zero blood-alcohol tolerance · Stop signs and red lights must be obeyed ·
     Overtaking prohibited on blind rises · No mobile phone while driving · <strong>Headlights ALWAYS on when driving, regardless of time of day or visibility.</strong><br>
     <strong>4.4 Traffic Fines:</strong> Renter's sole responsibility. Additional N$450 administration fee per fine charged by GR.<br>
@@ -4472,21 +4472,21 @@ function buildContractHTML(c,sigUrl){
   </div>
 
   <!-- 5. EXCLUSIONS DETAIL -->
-  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">5. DETAILED EXCLUSIONS &amp; RENTER RESPONSIBILITIES</div>
-  <div style="font-size:10px;line-height:1.7;margin-bottom:10px;">
+  <div style="font-size:15px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">5. DETAILED EXCLUSIONS &amp; RENTER RESPONSIBILITIES</div>
+  <div style="font-size:13px;line-height:1.7;margin-bottom:10px;">
     <strong>5.1 Not covered:</strong> Vehicle overturned (20% replacement value) · Unauthorised areas · No driving after sunset (except towns) · Expired rental · Burn damage · Roof/bonnet/door misuse · Rollovers · Side/rear/canopy windows/mirrors · Rim damage (OEM cost) · Missing rims/tyres · Tyre damage beyond add-on · Water crossing &gt;700mm · Sandblast · Personal belongings · Interior damage · Rooftop tent misuse · Camping equipment (without add-on) · Mechanical misuse · Undercarriage damage · Vegetation scratches · Lost keys N$6,500 · Wrong fuel · Accidents in rest camps/campsites/lodges · Accidents without police report.
   </div>
-  <div style="background:#fdf5f5;border:1px solid #e74c3c;border-radius:4px;padding:8px 12px;margin-bottom:8px;font-size:10px;line-height:1.5;">
+  <div style="background:#fdf5f5;border:1px solid #e74c3c;border-radius:4px;padding:8px 12px;margin-bottom:8px;font-size:13px;line-height:1.5;">
     <strong>5.2 VOID INSURANCE — CANCELLED IMMEDIATELY:</strong> Speeding · Alcohol or drugs · Invalid licence · Unmarked/prohibited roads · Water crossing · Ignoring traffic signals · Civil unrest · Towing · Customs violations · Driving after sunset outside towns · 4x4 misuse on tar · Unauthorised driver · No-Go area · Commercial use.
   </div>
-  <div style="font-size:10px;line-height:1.6;margin-bottom:10px;">
+  <div style="font-size:13px;line-height:1.6;margin-bottom:10px;">
     <strong>5.4 RIMS &amp; MISSING ITEMS — ALWAYS THE CLIENT'S COST:</strong> Rims are excluded from all cover. Rim damage, missing rims, and missing tyres are NEVER covered by any insurance option, including the Tyre &amp; Windscreen add-on. The Renter pays the full replacement value at OEM product cost per item, plus fitting and balancing costs.<br>
     <strong>5.7 Police Reports — Mandatory:</strong> Report required within 24 hours of any accident, theft, or incident. Without it, no insurance claim can be processed.
   </div>
 
   <!-- 6. NO-GO AREAS -->
-  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">6. NO-GO AREAS — STRICTLY PROHIBITED</div>
-  <div style="background:#fdf5f5;border:2px solid #e74c3c;border-radius:4px;padding:9px 12px;margin-bottom:8px;font-size:10px;line-height:1.7;">
+  <div style="font-size:15px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">6. NO-GO AREAS — STRICTLY PROHIBITED</div>
+  <div style="background:#fdf5f5;border:2px solid #e74c3c;border-radius:4px;padding:9px 12px;margin-bottom:8px;font-size:13px;line-height:1.7;">
     <strong>THESE AREAS ARE ABSOLUTELY PROHIBITED.</strong> Entry — whether accidental or intentional — results in: a fine of <strong>N$30,000</strong>; immediate and permanent cancellation of ALL insurance cover; the Renter becomes personally liable for all damage, in addition to the fine.<br>
     <strong>Namibia:</strong> Van Zyl's Pass · Khaudum NP · Sandwich Harbour · Sperrgebiet (Diamond Area 1 &amp; 2) · Skeleton Coast north of Möwe Bay · Remote Damaraland (unmarked) · Diamond Coast/Bogenfels · Off-piste dunes Walvis Bay/Swakopmund · Any unmarked NRA road.<br>
     <strong>6.2 Botswana &amp; Other Countries (separate rules, own deposit N$30,000):</strong> CKGR · Moremi/Okavango Delta · Savuti · Makgadikgadi · Nxai Pans · Cut lines and hunting areas.<br>
@@ -4495,8 +4495,8 @@ function buildContractHTML(c,sigUrl){
   ${c.cross_border?`<div style="background:#f0f9f4;border:1px solid #1e8449;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:10.5px;"><strong>✓ Authorised cross-border travel for this rental:</strong> ${c.cross_border}. Additional cross-border damage deposit of N$30,000 applies and has been received.</div>`:''}
 
   <!-- 7. FEES -->
-  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">7. RENTAL PERIOD, RETURN &amp; ADDITIONAL FEES</div>
-  <div style="font-size:10px;line-height:1.7;margin-bottom:12px;">
+  <div style="font-size:15px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">7. RENTAL PERIOD, RETURN &amp; ADDITIONAL FEES</div>
+  <div style="font-size:13px;line-height:1.7;margin-bottom:12px;">
     <strong>7.1 Office Hours &amp; Return Times:</strong> GR office hours 07:30–16:00, Mon–Fri. Weekend/holiday returns must be arranged in advance.<br>
     <strong>7.2 Late Return:</strong> Daily rate PLUS N$3,500 per extra day or part thereof. Extensions must be requested at least 2 days before agreed return date.<br>
     <strong>7.3 Early Return:</strong> No refund or credit under any circumstances.<br>
@@ -4507,13 +4507,13 @@ function buildContractHTML(c,sigUrl){
   </div>
 
   <!-- 9. LIABILITY -->
-  <div style="font-size:10px;line-height:1.6;margin-bottom:14px;padding:8px 12px;background:#f9f9f9;border:1px solid #ddd;border-radius:4px;">
+  <div style="font-size:13px;line-height:1.6;margin-bottom:14px;padding:8px 12px;background:#f9f9f9;border:1px solid #ddd;border-radius:4px;">
     <strong>9. LIABILITY, INDEMNITY &amp; GOVERNING LAW:</strong> You agree to fully indemnify and hold harmless GO RENT 4X4 RENTALS AND TOURS CC from all claims, losses, damages, and legal actions arising from your use of the vehicle or breach of this Agreement. GR is not liable for indirect or consequential losses including missed flights or accommodation costs. This Agreement is governed by the laws of the Republic of Namibia. Disputes heard in Magistrate's or High Court, Windhoek. Personal information processed per POPIA-equivalent Namibian data-protection legislation for rental administration, GPS monitoring, and insurer communication only.
   </div>
 
   <!-- FINANCIAL SUMMARY -->
   <div style="border:2px solid #111;border-radius:4px;padding:12px;margin-bottom:16px;">
-    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #111;padding-bottom:6px;margin-bottom:10px;">Financial Summary</div>
+    <div style="font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #111;padding-bottom:6px;margin-bottom:10px;">Financial Summary</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
       ${[
         ['Rental period', days?days+' days':'—'],
@@ -4523,47 +4523,47 @@ function buildContractHTML(c,sigUrl){
         ['Windscreen & Tyre add-on', c.addon_windscreen?'N$ '+(184*days).toLocaleString('en-ZA',{minimumFractionDigits:2}):'Not selected'],
         ['Camping Equipment cover', c.addon_equipment?'N$ '+(103.50*days).toLocaleString('en-ZA',{minimumFractionDigits:2}):'Not selected'],
         ['Deposit method', c.deposit_method||'—'],
-      ].map(([l,v])=>`<div style="padding:5px 8px;border-bottom:1px solid #eee;font-size:11px;"><span style="color:#555;font-weight:600;">${l}:</span> <span style="color:#111;font-weight:700;">${v}</span></div>`).join('')}
+      ].map(([l,v])=>`<div style="padding:5px 8px;border-bottom:1px solid #eee;font-size:14px;"><span style="color:#555;font-weight:600;">${l}:</span> <span style="color:#111;font-weight:700;">${v}</span></div>`).join('')}
     </div>
   </div>
 
   <!-- 10. SIGNATURES -->
-  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">10. DECLARATION &amp; SIGNATURES</div>
+  <div style="font-size:15px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">10. DECLARATION &amp; SIGNATURES</div>
   <div style="font-size:10.5px;margin-bottom:14px;line-height:1.6;">
     By signing below, the Renter confirms that they have read, understood, and agree to all terms and conditions set out in this Agreement, including all insurance exclusions, speed limits, no-go area restrictions, and negligence provisions.
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
     <div style="padding:8px 10px;border-right:1px solid #ccc;">
-      <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Renter Full Name</div>
-      <div style="font-size:12px;font-weight:700;min-height:20px;">${c.client_name||''}</div>
+      <div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Renter Full Name</div>
+      <div style="font-size:14px;font-weight:700;min-height:20px;">${c.client_name||''}</div>
     </div>
     <div style="padding:8px 10px;border-right:1px solid #ccc;">
-      <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Date</div>
-      <div style="font-size:12px;font-weight:700;min-height:20px;">${fD(c.pickup_date)}</div>
+      <div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Date</div>
+      <div style="font-size:14px;font-weight:700;min-height:20px;">${fD(c.pickup_date)}</div>
     </div>
     <div style="padding:8px 10px;">
-      <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Place Signed</div>
-      <div style="font-size:12px;font-weight:700;min-height:20px;">Windhoek, 6 Diehl Str</div>
+      <div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Place Signed</div>
+      <div style="font-size:14px;font-weight:700;min-height:20px;">Windhoek, 6 Diehl Str</div>
     </div>
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;padding-top:14px;border-top:2px solid #000;">
     <div>
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:6px;">Renter Signature</div>
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:6px;">Renter Signature</div>
       <div style="border:1px solid #ccc;border-radius:4px;min-height:64px;display:flex;align-items:center;justify-content:center;background:#fafafa;">
-        ${sigUrl?`<img src="${sigUrl}" style="max-height:58px;max-width:100%;display:block;" alt="Renter signature">`:'<span style="color:#ccc;font-size:10px;font-style:italic;">Sign here</span>'}
+        ${sigUrl?`<img src="${sigUrl}" style="max-height:58px;max-width:100%;display:block;" alt="Renter signature">`:'<span style="color:#ccc;font-size:13px;font-style:italic;">Sign here</span>'}
       </div>
-      ${sigUrl?`<div style="font-size:9px;color:#1e8449;margin-top:4px;">✓ Digitally signed — ${fDT(c.client_signed_at)}</div>`:''}
+      ${sigUrl?`<div style="font-size:13px;color:#1e8449;margin-top:4px;">✓ Digitally signed — ${fDT(c.client_signed_at)}</div>`:''}
     </div>
     <div>
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:6px;">For and on behalf of GO RENT 4X4 RENTALS AND TOURS CC</div>
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:6px;">For and on behalf of GO RENT 4X4 RENTALS AND TOURS CC</div>
       <div style="border-bottom:1px solid #000;min-height:64px;margin-bottom:4px;"></div>
-      <div style="font-size:9px;color:#555;">Authorised Representative Name: ${c.staff_signed_by||'___________________________'}</div>
+      <div style="font-size:13px;color:#555;">Authorised Representative Name: ${c.staff_signed_by||'___________________________'}</div>
     </div>
   </div>
 
-  <div style="text-align:center;margin-top:16px;padding-top:10px;border-top:1px solid #ccc;font-size:10px;color:#777;">
+  <div style="text-align:center;margin-top:16px;padding-top:10px;border-top:1px solid #ccc;font-size:13px;color:#777;">
     GO RENT 4X4 RENTALS AND TOURS CC · CC/2021/04371 · Windhoek, Namibia · gorent4x4.com · WhatsApp: +264 81 861 8085
   </div>
 </div>`;
@@ -4723,10 +4723,10 @@ function checkResume() {
       '<div style="font-size:24px;">' + (isOut ? '▶' : '◀') + '</div>' +
       '<div style="flex:1;">' +
         '<div style="font-size:15px;font-weight:900;color:' + (isOut ? '#7ba3d4' : 'var(--se)') + ';">' + rec.fn + '</div>' +
-        '<div style="font-size:12px;font-weight:700;color:var(--tx);margin-top:1px;">' + clientName + '</div>' +
-        '<div style="font-size:10px;color:var(--g5);margin-top:2px;">' + (isOut ? '▶ CHECK-OUT' : '◀ CHECK-IN') + (started ? ' · started ' + started : '') + '</div>' +
+        '<div style="font-size:14px;font-weight:700;color:var(--tx);margin-top:1px;">' + clientName + '</div>' +
+        '<div style="font-size:13px;color:var(--g5);margin-top:2px;">' + (isOut ? '▶ CHECK-OUT' : '◀ CHECK-IN') + (started ? ' · started ' + started : '') + '</div>' +
       '</div>' +
-      '<div style="font-size:13px;font-weight:800;color:' + (isOut ? '#7ba3d4' : 'var(--se)') + ';padding:8px 14px;background:var(--g1);border-radius:8px;border:2px solid ' + (isOut ? '#4a6fa5' : 'var(--gb)') + ';">Resume →</div>';
+      '<div style="font-size:15px;font-weight:800;color:' + (isOut ? '#7ba3d4' : 'var(--se)') + ';padding:8px 14px;background:var(--g1);border-radius:8px;border:2px solid ' + (isOut ? '#4a6fa5' : 'var(--gb)') + ';">Resume →</div>';
     
     card.ontouchend = function(e) { e.preventDefault(); resumeVehicle(this.dataset.fn, this.dataset.type); };
     card.onclick = function() { resumeVehicle(this.dataset.fn, this.dataset.type); };
@@ -4759,12 +4759,12 @@ function closeResumePanel() {
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
     <div>
       <div style="font-size:15px;font-weight:900;color:var(--se);">⚡ Resume where you left off</div>
-      <div style="font-size:11px;color:var(--g5);margin-top:2px;">You have in-progress check-outs/check-ins</div>
+      <div style="font-size:14px;color:var(--g5);margin-top:2px;">You have in-progress check-outs/check-ins</div>
     </div>
-    <button onclick="closeResumePanel()" style="background:var(--g2);border:1px solid var(--g3);border-radius:8px;color:var(--g5);font-size:13px;font-weight:700;padding:6px 12px;cursor:pointer;touch-action:manipulation;">Dismiss</button>
+    <button onclick="closeResumePanel()" style="background:var(--g2);border:1px solid var(--g3);border-radius:8px;color:var(--g5);font-size:15px;font-weight:700;padding:6px 12px;cursor:pointer;touch-action:manipulation;">Dismiss</button>
   </div>
   <div id="resume-list"></div>
-  <button onclick="closeResumePanel()" style="width:100%;margin-top:4px;padding:12px;background:transparent;border:2px solid var(--g3);border-radius:10px;color:var(--g5);font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;">Start fresh — show all vehicles</button>
+  <button onclick="closeResumePanel()" style="width:100%;margin-top:4px;padding:12px;background:transparent;border:2px solid var(--g3);border-radius:10px;color:var(--g5);font-size:15px;font-weight:700;cursor:pointer;touch-action:manipulation;">Start fresh — show all vehicles</button>
 </div>
 <div id="resume-overlay" onclick="closeResumePanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;"></div>
 </body>
