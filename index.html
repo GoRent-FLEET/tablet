@@ -1785,10 +1785,11 @@ function tapPrep(i){
   if(L_PREP[i][1]&&L_PREP[i][1].startsWith('__QTY__'))return;
   const lbl=L_PREP[i][1];
   const isOpt=L_PREP[i][0]==='__OPT_ITEM__';
-  const prevSt=((co.prepItems[lbl]&&co.prepItems[lbl].st))||co.prepItems[lbl]||'';
+  const _pi=co.prepItems[lbl];const prevSt=(_pi&&typeof _pi==='object')?(_pi.st||''):(_pi||'');
   let newSt;
-  if(isOpt) newSt=prevSt===''?'ok':prevSt==='ok'?'prob':prevSt==='prob'?'na':'';
-  else newSt=prevSt===''?'ok':prevSt==='ok'?'prob':'';
+  // Tap: grey → ✅ OK → ⚠ Problem → ✅ OK … (optional items also offer N/A)
+  if(isOpt) newSt=prevSt==='ok'?'prob':prevSt==='prob'?'na':'ok';
+  else newSt=prevSt==='ok'?'prob':'ok';
   const ts=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   co.prepItems[lbl]={st:newSt,by:co.prepBy,at:ts};
   if(newSt) co.prepLog.push({lbl,st:newSt,by:co.prepBy,at:ts});
@@ -2012,10 +2013,11 @@ function tapPrepIdx(i){
   if(L_PREP[i][1]&&L_PREP[i][1].startsWith('__QTY__'))return;
   const lbl=L_PREP[i][1];
   const isOpt=L_PREP[i][0]==='__OPT_ITEM__';
-  const prevSt=((co.prepItems[lbl]&&co.prepItems[lbl].st))||co.prepItems[lbl]||'';
+  const _pi=co.prepItems[lbl];const prevSt=(_pi&&typeof _pi==='object')?(_pi.st||''):(_pi||'');
   let newSt;
-  if(isOpt) newSt=prevSt===''?'ok':prevSt==='ok'?'prob':prevSt==='prob'?'na':'';
-  else newSt=prevSt===''?'ok':prevSt==='ok'?'prob':'';
+  // Tap: grey → ✅ OK → ⚠ Problem → ✅ OK … (optional items also offer N/A)
+  if(isOpt) newSt=prevSt==='ok'?'prob':prevSt==='prob'?'na':'ok';
+  else newSt=prevSt==='ok'?'prob':'ok';
   const ts=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   co.prepItems[lbl]={st:newSt,by:co.prepBy,at:ts};
   if(newSt) co.prepLog.push({lbl,st:newSt,by:co.prepBy,at:ts});
