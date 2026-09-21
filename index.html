@@ -2346,10 +2346,26 @@ function signMgmt(){
 
 async function completeCO(){
   try{localStorage.removeItem('inprogress_'+co.fn);}catch(e){}
-  co.v.st='rented';co.v.dmgd=co.dmgd||[];
-  // Save checkout record
-  const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&i!=='__OPT_ITEM__'&&!co.prepItems[l]).map(([i,l])=>l);
+  co.v.st='rented'; co.v.dmgd=co.dmgd||[];
+
+  const _pst=l=>{const v=co.prepItems[l];return v?.st||v||'';};
+  const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&i!=='__OPT_ITEM__'&&!l.startsWith('__QTY__')&&!_pst(l)).map(([i,l])=>l);
   const uncMech=L_MECH.filter(([i,l])=>!co.mechItems[l]).map(([i,l])=>l);
+
+  // Build equipment list for handover doc
+  const equipLines=[];
+  let inEquip=false;
+  for(const [ico,lbl,det] of L_PREP){
+    if(ico==='__SECTION__'&&lbl.startsWith('🏕')) inEquip=true;
+    if(!inEquip) continue;
+    if(ico==='__SECTION__'||ico==='__OPTIONAL__') continue;
+    const realLbl=lbl.startsWith('__QTY__')?lbl.replace('__QTY__',''):lbl;
+    const st=(_pst(lbl))||(_pst(realLbl));
+    const qty=co.prepItems[realLbl];
+    if(st&&st!=='na') equipLines.push({lbl:realLbl,st,qty:typeof qty==='object'?'':qty||''});
+  }
+
+  // Save checkout record
   await SB.from('checkouts').insert({
     booking_id:co.fn+'_'+co.v.pu, fleet_no:co.fn, client:co.clientName,
     prep_by:co.prepBy, prep_by_all:co.prepByAll||[co.prepBy], prep_log:co.prepLog||[],
@@ -2357,45 +2373,210 @@ async function completeCO(){
     handover_by:co.mechBy, customer_name:co.clientName,
     customer_signed_at:co.custSig?new Date().toISOString():null,
     manager_name:co.mgmtBy, manager_signed_at:co.mgmtSig?new Date().toISOString():null,
-    odo_out:co.v.odo, unchecked_prep:uncPrep, unchecked_mech:uncMech,
+    odo_out:co.odometerOut||co.v.odo, unchecked_prep:uncPrep, unchecked_mech:uncMech,
     damage_panels:co.dmgd, created_at:new Date().toISOString(),
-  });
-  await SB.from('vehicles').update({status:'rented',updated_at:new Date().toISOString()}).eq('fleet_no',co.fn);
-  // Accountability report
+  }).catch(()=>{});
+  await SB.from('vehicles').update({status:'rented',updated_at:new Date().toISOString()}).eq('fleet_no',co.fn).catch(()=>{});
+
+  // Build handover HTML document for client
+  const hasDmg=co.dmgd&&co.dmgd.length>0;
+  const dmgPhotos=co.dmgPhotos||[];
+  const equipPhotos=co.prepPhotos||[];
+
+  const handoverHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    body{font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:20px;color:#1a1a1a;font-size:13px;}
+    h1{color:#145c30;font-size:20px;margin-bottom:4px;}
+    h2{color:#145c30;font-size:14px;border-bottom:2px solid #145c30;padding-bottom:4px;margin-top:20px;}
+    .logo{font-size:22px;font-weight:900;color:#145c30;letter-spacing:-1px;}
+    .logo span{color:#e07b00;}
+    .meta{display:flex;gap:20px;flex-wrap:wrap;margin:10px 0;background:#f4f9f4;border-radius:8px;padding:12px 16px;}
+    .meta-item{flex:1;min-width:120px;}
+    .meta-label{font-size:9px;text-transform:uppercase;color:#888;font-weight:700;}
+    .meta-value{font-size:14px;font-weight:800;color:#1a1a1a;}
+    .equip-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;}
+    .equip-tag{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:#e8f5e9;color:#145c30;border:1px solid #a5d6a7;}
+    .equip-tag.warn{background:#fff3e0;color:#e07b00;border-color:#ffcc80;}
+    .dmg-tag{display:inline-block;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:700;background:#fff3e0;color:#b45309;border:1px solid #fcd34d;margin:3px;}
+    .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0;}
+    .photo-grid img{width:100%;border-radius:6px;border:1px solid #ddd;}
+    .sig-box{background:#f4f9f4;border:2px solid #145c30;border-radius:8px;padding:12px;margin-top:10px;}
+    .sig-box img{max-width:200px;border:1px solid #ccc;border-radius:4px;}
+    .footer{margin-top:24px;padding-top:12px;border-top:1px solid #ddd;font-size:10px;color:#888;text-align:center;}
+    .badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+    .badge.ok{background:#e8f5e9;color:#145c30;}
+    .badge.warn{background:#fff3e0;color:#b45309;}
+    .no-dmg{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:7px;padding:8px 12px;color:#145c30;font-weight:700;font-size:12px;}
+    table{width:100%;border-collapse:collapse;margin:8px 0;}
+    td,th{padding:6px 10px;border:1px solid #e0e0e0;font-size:12px;}
+    th{background:#f4f9f4;font-weight:700;color:#145c30;text-align:left;}
+  </style></head><body>
+  <div class="logo">Go Rent <span>4×4</span> Namibia</div>
+  <h1>Vehicle Handover Document</h1>
+  <p style="color:#666;font-size:11px;">Generated: ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} · ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</p>
+
+  <div class="meta">
+    <div class="meta-item"><div class="meta-label">Vehicle</div><div class="meta-value">${co.fn}</div></div>
+    <div class="meta-item"><div class="meta-label">Registration</div><div class="meta-value">${co.v.reg}</div></div>
+    <div class="meta-item"><div class="meta-label">Client</div><div class="meta-value">${co.clientName||co.v.cl}</div></div>
+    <div class="meta-item"><div class="meta-label">Pickup</div><div class="meta-value">${co.v.pu||'—'}</div></div>
+    <div class="meta-item"><div class="meta-label">Return</div><div class="meta-value">${co.v.rt||'—'}</div></div>
+    <div class="meta-item"><div class="meta-label">Odometer out</div><div class="meta-value">${(co.odometerOut||co.v.odo||0).toLocaleString()} km</div></div>
+    <div class="meta-item"><div class="meta-label">Fuel level</div><div class="meta-value">⛽ ${co.fuelOut||'Full'} — RETURN SAME</div></div>
+  </div>
+
+  <h2>🏕 Equipment Issued</h2>
+  <div class="equip-grid">
+    ${equipLines.map(e=>`<span class="equip-tag ${e.st==='prob'?'warn':''}">${e.st==='ok'?'✓':'⚠'} ${e.lbl}${e.qty&&isNaN(e.qty)?'':e.qty?' ×'+e.qty:''}</span>`).join('')}
+  </div>
+  ${equipPhotos.length?`
+  <p style="font-size:11px;color:#666;margin:4px 0;">Equipment photos taken at packing:</p>
+  <div class="photo-grid">${equipPhotos.map(src=>`<img src="${src}" alt="equipment">`).join('')}</div>`:''}
+
+  <h2>🔍 Vehicle Condition at Departure</h2>
+  ${hasDmg?`
+  <p style="font-size:11px;color:#888;">Pre-existing damage noted below — <strong>client is NOT liable for this damage</strong>.</p>
+  <div>${co.dmgd.map(d=>`<span class="dmg-tag">${d.view_name}: ${(d.types||[]).map(t=>t==='sc'?'Scratch':t==='de'?'Dent':t==='cr'?'Crack':'Pre-existing').join(' + ')}</span>`).join('')}</div>
+  ${dmgPhotos.length?`<div class="photo-grid" style="margin-top:8px;">${dmgPhotos.map(src=>`<img src="${src}" alt="damage">`).join('')}</div>`:''}`
+  :`<div class="no-dmg">✅ No damage recorded — vehicle departed in clean condition</div>`}
+
+  <h2>✍️ Client Signature</h2>
+  <div class="sig-box">
+    <p style="margin:0 0 8px;font-size:12px;"><strong>${co.clientName||co.v.cl}</strong> confirms receipt of the above equipment, acknowledges the vehicle condition, confirms the fuel level at departure, and agrees:</p>
+    <ul style="font-size:11px;color:#444;margin:6px 0;padding-left:18px;line-height:1.8;">
+      <li>Fuel level: <strong>${co.fuelOut||'Full'}</strong> — must be returned at the same level</li>
+      <li>⛽ DIESEL ONLY — misfuelling costs are entirely at my expense</li>
+      <li>All equipment listed above received in working condition</li>
+      <li>New damage on return is my responsibility</li>
+      <li>I have read and signed the rental agreement</li>
+    </ul>
+    ${co.custSig?`<img src="${co.custSig}" alt="client signature"><p style="font-size:10px;color:#888;margin:4px 0;">Signed: ${co.custAt}</p>`:'<p style="color:#e53e3e;font-weight:700;">No signature captured</p>'}
+  </div>
+
+  <h2>👔 Management Sign-Off</h2>
+  <table>
+    <tr><th>Role</th><th>Name</th><th>Time</th><th>Status</th></tr>
+    <tr><td>Prep & Pack</td><td>${co.prepByAll?.join(' + ')||co.prepBy||'—'}</td><td>${co.prepAt||'—'}</td><td class="badge ok">Signed</td></tr>
+    <tr><td>Equipment</td><td>${co.equipByAll?.join(' + ')||co.prepBy||'—'}</td><td>${co.equipAt||'—'}</td><td class="badge ok">Signed</td></tr>
+    <tr><td>Manager</td><td>${co.mgmtBy||'—'}</td><td>${co.mgmtAt||'—'}</td><td class="badge ok">Cleared</td></tr>
+  </table>
+
+  <div class="footer">
+    Go Rent 4×4 Namibia · info@gorent4x4.com · gorent4x4.com<br>
+    This document was generated automatically at vehicle departure.
+  </div>
+  </body></html>`;
+
+  // Show send options screen
   document.getElementById('co-body').innerHTML=`
-    <div class="done"><div class="done-ico">✅</div>
-      <div class="done-title">Check-Out Complete</div>
-      <div class="done-sub">${co.fn} · ${co.clientName}<br>Fuel: ${co.fuelOut} · Cleared by ${co.mgmtBy}</div>
-    </div>
-    <div class="acc">
-      <div class="acc-hdr">Accountability Record</div>
-      <div class="acc-row ${!uncPrep.length?'good':'bad'}">
-        <div class="acc-ico">🧹</div>
-        <div><div class="acc-name">Prep & Pack — ${co.prepBy}</div>
-        <div class="acc-detail">${co.prepAt}${uncPrep.length?` · ❌ NOT CHECKED: ${uncPrep.join(', ')}`:' · ✅ All items checked'}</div></div>
-        <div><span class="acc-badge ${!uncPrep.length?'ok':'warn'}">${!uncPrep.length?'OK':'Issues'}</span></div>
+    <div style="padding:20px;">
+      <div class="done"><div class="done-ico">✅</div>
+        <div class="done-title">Check-Out Complete</div>
+        <div class="done-sub">${co.fn} · ${co.clientName||co.v.cl}<br>Fuel: ${co.fuelOut} · Cleared by ${co.mgmtBy}</div>
       </div>
-      <div class="acc-row ${!uncMech.length?'good':'bad'}">
-        <div class="acc-ico">🔧</div>
-        <div><div class="acc-name">Mechanical — ${co.mechBy||'—'}</div>
-        <div class="acc-detail">${uncMech.length?'❌ NOT CHECKED: '+uncMech.join(', '):'✅ All items checked'}</div></div>
-        <div><span class="acc-badge ${!uncMech.length?'ok':'warn'}">${!uncMech.length?'OK':'Issues'}</span></div>
+
+      <!-- Send handover doc -->
+      <div style="background:var(--g1);border:2px solid var(--gb);border-radius:var(--rs);padding:14px 16px;margin:14px 0;">
+        <div style="font-size:13px;font-weight:800;color:var(--se);margin-bottom:10px;">📤 Send Handover Document to Client</div>
+        <div style="font-size:11px;color:var(--g5);margin-bottom:12px;">Includes: equipment list · equipment photos · vehicle condition · damage photos · client signature</div>
+
+        <!-- Email -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:5px;">📧 Email</div>
+          <div style="display:flex;gap:8px;">
+            <input id="send-email" type="email" value="${co.clientEmail||''}" placeholder="client@email.com"
+              style="color-scheme:dark;flex:1;padding:9px 12px;border-radius:var(--rs);border:2px solid var(--gb);background:var(--g0);color:var(--tx);font-size:13px;">
+            <button onclick="sendHandoverEmail()" id="btn-email"
+              style="padding:9px 16px;background:var(--sg);border:2px solid var(--gb);border-radius:var(--rs);color:var(--se);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+              📧 Send Email
+            </button>
+          </div>
+        </div>
+
+        <!-- WhatsApp -->
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:5px;">💬 WhatsApp</div>
+          <div style="display:flex;gap:8px;">
+            <input id="send-wa" type="tel" value="${co.clientPhone||''}" placeholder="+264 81 123 4567"
+              style="color-scheme:dark;flex:1;padding:9px 12px;border-radius:var(--rs);border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:13px;">
+            <button onclick="sendHandoverWA()"
+              style="padding:9px 16px;background:#25d366;border:2px solid #128c7e;border-radius:var(--rs);color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+              💬 Send WhatsApp
+            </button>
+          </div>
+          <div style="font-size:10px;color:var(--g5);margin-top:4px;">Opens WhatsApp with a pre-filled message and download link</div>
+        </div>
+
+        <div id="send-status" style="margin-top:10px;"></div>
       </div>
-      <div class="acc-row good">
-        <div class="acc-ico">📋</div>
-        <div><div class="acc-name">Contract — ${co.clientName}</div>
-        <div class="acc-detail">Signed · emailed to ${co.clientEmail||'client'} · filed to Supabase</div></div>
-        <div><span class="acc-badge ok">Signed</span></div>
+
+      <!-- Accountability summary -->
+      <div class="acc">
+        <div class="acc-hdr">Accountability Record</div>
+        <div class="acc-row ${!uncPrep.length?'good':'bad'}">
+          <div class="acc-ico">🧹</div>
+          <div><div class="acc-name">Prep & Pack — ${co.prepByAll?.join(' + ')||co.prepBy||'—'}</div>
+          <div class="acc-detail">${co.prepAt||''}${uncPrep.length?' · ❌ Not checked: '+uncPrep.join(', '):'  · ✅ All checked'}</div></div>
+          <span class="acc-badge ${!uncPrep.length?'ok':'warn'}">${!uncPrep.length?'OK':'Issues'}</span>
+        </div>
+        <div class="acc-row good">
+          <div class="acc-ico">👔</div>
+          <div><div class="acc-name">Manager — ${co.mgmtBy||'—'}</div>
+          <div class="acc-detail">Cleared at ${co.mgmtAt||'—'}</div></div>
+          <span class="acc-badge ok">Cleared</span>
+        </div>
       </div>
-      <div class="acc-row good">
-        <div class="acc-ico">👔</div>
-        <div><div class="acc-name">Manager — ${co.mgmtBy}</div>
-        <div class="acc-detail">Cleared at ${co.mgmtAt}</div></div>
-        <div><span class="acc-badge ok">Cleared</span></div>
-      </div>
-    </div>
-    <button class="btn g" onclick="goPage('ov')">← Back to Overview</button>`;
+
+      <button class="btn g" style="margin-top:14px" onclick="goPage('ov')">← Back to Overview</button>
+    </div>`;
+
+  // Store handover HTML for sending
+  window._handoverHTML=handoverHTML;
   renderOV();
+}
+
+async function sendHandoverEmail(){
+  const email=document.getElementById('send-email')?.value?.trim();
+  if(!email){toast('Enter email address','err');return;}
+  const btn=document.getElementById('btn-email');
+  if(btn){btn.textContent='Sending...';btn.disabled=true;}
+  const status=document.getElementById('send-status');
+
+  try{
+    const resp=await fetch('https://rfzcemsyrcntsunbdvdh.supabase.co/functions/v1/send-contract-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${SB_KEY}`},
+      body:JSON.stringify({
+        to:email,
+        bcc:OFFICE_EMAIL,
+        client_name:co.clientName||co.v.cl,
+        fleet_no:co.fn,
+        pickup_date:co.v.pu,
+        return_date:co.v.rt,
+        subject:`Go Rent 4x4 — Vehicle Handover · ${co.fn} · ${co.clientName||co.v.cl}`,
+        contract_html:window._handoverHTML||'',
+      }),
+    });
+    if(resp.ok){
+      if(status) status.innerHTML='<div class="al ok">✅ Email sent to '+email+'</div>';
+      if(btn){btn.textContent='✅ Sent';btn.style.background='var(--sg)';}
+    } else {
+      throw new Error('Server error '+resp.status);
+    }
+  }catch(e){
+    if(status) status.innerHTML='<div class="al warn">⚠ Email failed — '+e.message+'. Save the PDF below instead.</div>';
+    if(btn){btn.textContent='📧 Retry';btn.disabled=false;}
+  }
+}
+
+function sendHandoverWA(){
+  const phone=document.getElementById('send-wa')?.value?.trim().replace(/\s+/g,'');
+  if(!phone){toast('Enter WhatsApp number','err');return;}
+  const intlPhone=phone.startsWith('+')?phone.replace('+',''):'264'+phone.replace(/^0/,'');
+  const msg=encodeURIComponent(
+    `Hi ${co.clientName||''},\n\nThank you for renting with Go Rent 4×4 Namibia!\n\nVehicle: ${co.fn} (${co.v.reg})\nPickup: ${co.v.pu||'today'} | Return: ${co.v.rt||'—'}\nFuel at departure: ${co.fuelOut} — please return at the same level\n\nEquipment issued:\n${(window._handoverHTML||'').match(/✓ [^<]+/g)?.slice(0,12).join('\n') || 'See attached document'}\n\n⛽ DIESEL ONLY\n\nSafe travels! Call us anytime: +264 81 XXX XXXX\n— Go Rent 4×4 Team`
+  );
+  window.open('https://wa.me/'+intlPhone+'?text='+msg,'_blank');
 }
 
 // ═══════════════════════════════════════════════════════════════
