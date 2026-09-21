@@ -1418,8 +1418,7 @@ function coStep0(){
   </div>
   <div class="fuel-row">
     <div class="fuel-lbl">⛽ Fuel level OUT</div>
-    <div class="fuel-btns">${['Empty','1/4','1/2','3/4','Full'].map(f=>
-      `<button class="fbtn${co.fuelOut===f?' on':''}" onclick="co.fuelOut='${f}';this.closest('.fuel-btns').querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${f}</button>`).join('')}</div>
+    <div class="fuel-btns">${(function(){return ['Empty','1/4','1/2','3/4','Full'].map(function(f){return '<button class="fbtn'+(co.fuelOut===f?' on':'')+'" data-f="'+f+'" onclick="co.fuelOut=this.dataset.f;this.closest(\'.fuel-btns\').querySelectorAll(\'.fbtn\').forEach(function(b){b.classList.remove(\'on\')});this.classList.add(\'on\')" ontouchend="event.preventDefault();co.fuelOut=this.dataset.f;this.closest(\'.fuel-btns\').querySelectorAll(\'.fbtn\').forEach(function(b){b.classList.remove(\'on\')});this.classList.add(\'on\')">'+f+'</button>';}).join('');})()}</div>
   </div>
   <div class="prog-wrap">
     <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
