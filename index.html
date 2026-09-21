@@ -2031,10 +2031,8 @@ function signHandover(){
 
 // ── STEP 4: Management clearance ─────────────────────────────────
 function coStep5_client(){
-  const r=co,v=co.v;
+  const v=co.v;
   co.dmgd=getDmgData();
-  const newDmg=co.dmgd.filter(d=>d.types?.some(t=>t!=='pr'));
-  const hasIssues=newDmg.length;
 
   // Build equipment summary from prepItems
   const equipSummary=[];
@@ -2044,87 +2042,157 @@ function coStep5_client(){
     if(!inEquip) continue;
     if(ico==='__SECTION__'||ico==='__OPTIONAL__') continue;
     const realLbl=lbl.startsWith('__QTY__')?lbl.replace('__QTY__',''):lbl;
-    const st=co.prepItems[lbl]||co.prepItems[realLbl]||'na';
-    if(st!=='na') equipSummary.push({lbl:realLbl,st});
+    const st=(co.prepItems[lbl]?.st)||co.prepItems[lbl]||(co.prepItems[realLbl]?.st)||co.prepItems[realLbl]||'';
+    if(st&&st!=='na') equipSummary.push({lbl:realLbl,st,qty:co.prepItems[realLbl]||''});
   }
+
+  if(!co.handoverChecks) co.handoverChecks={};
+  const hc=co.handoverChecks;
+
+  // Handover checklist sections
+  const HO_SECTIONS=[
+    {key:'route', ico:'🗺️', title:'Route & Itinerary',
+     items:[
+       {k:'map',     lbl:'Map discussed',               det:'Route, highlights, distances reviewed with client'},
+       {k:'itinerary',lbl:'Itinerary discussed',         det:'Daily plan, campsites, check-in times confirmed'},
+       {k:'nogozone',lbl:'No-go areas & road conditions',det:'Restricted zones, seasonal road closures explained'},
+       {k:'offroad',  lbl:'Off-road conditions',         det:'Track difficulty, water crossings, sand driving tips'},
+     ]},
+    {key:'docs', ico:'📋', title:'Documents & Payment',
+     items:[
+       {k:'contract', lbl:'Rental contract signed',      det:'Client has read and signed — copy provided'},
+       {k:'payment',  lbl:'Payment confirmed',           det:'Deposit & balance settled, receipt issued'},
+       {k:'xb',       lbl:'Cross-border docs',           det:'All country letters present, valid for destination'},
+       {k:'insurance',lbl:'Insurance explained',         det:'Coverage, excess, what is/is not covered'},
+       {k:'idcheck',  lbl:'Passport & licence verified', det:'Matches contract, valid for all drivers'},
+     ]},
+    {key:'vehicle', ico:'🚗', title:'Vehicle Walkthrough',
+     items:[
+       {k:'vehexplained',lbl:'Vehicle explained',        det:'4WD system, diff lock, controls, warning lights'},
+       {k:'lights',      lbl:'Headlights demonstrated',  det:'High beam, fog lights, driving lights operation'},
+       {k:'4wdexp',      lbl:'4WD Hi & Lo explained',    det:'When to use each mode, how to engage safely'},
+       {k:'fueldiesel',  lbl:'Diesel only confirmed',    det:'Filler cap shown, DIESEL ONLY confirmed verbally'},
+       {k:'dashcam',     lbl:'Dash cam & GPS explained', det:'Operation, tracking, speed monitoring noted'},
+       {k:'stickers',    lbl:'All stickers applied',     det:'Phone mounts, stickers, speed limit reminders in place'},
+       {k:'bumpers',     lbl:'Bumpers fastened',         det:'Front & rear bumpers checked and secured'},
+       {k:'canopylocked',lbl:'Canopy locks keyed',       det:'All canopy locks locked and keys with client'},
+     ]},
+    {key:'tyres', ico:'🛞', title:'Tyres & Recovery',
+     items:[
+       {k:'sparewheel',  lbl:'Spare wheel locations shown',det:'Both spares located, how to access explained'},
+       {k:'tyrechange',  lbl:'Tyre change demonstrated', det:'Jack, spanner, process explained step by step'},
+       {k:'compressor',  lbl:'Compressor explained',     det:'Location, how to inflate, correct PSI discussed'},
+       {k:'recoverykit', lbl:'Recovery kit shown',       det:'Tow strap, shovel, hi-lift, sand tracks if applicable'},
+     ]},
+    {key:'camping', ico:'🏕️', title:'Equipment & Camping',
+     items:[
+       {k:'tentshown',   lbl:'Tent setup demonstrated',  det:'Open/close operation, ladder, straps, latches'},
+       {k:'equipshown',  lbl:'All equipment shown',      det:'Fridge, stove, boxes, cooler box, binoculars'},
+       {k:'fridgetemp',  lbl:'Fridge temperature set',   det:'Correct temp set, solenoid wiring explained'},
+       {k:'gaz',         lbl:'Gas stove explained',      det:'Ignition, safety, gas level checked'},
+       {k:'water',       lbl:'Water can / jerrycans',    det:'Filled and secured, location confirmed'},
+     ]},
+    {key:'safety', ico:'🆘', title:'Safety & Rules',
+     items:[
+       {k:'speedlimits', lbl:'Speed limits explained',   det:'Paved, gravel & game reserve limits — GPS monitors'},
+       {k:'alcohol',     lbl:'No alcohol while driving', det:'Zero tolerance policy confirmed'},
+       {k:'emergency',   lbl:'Emergency contacts given', det:'Go Rent number, roadside assist, police — card in vehicle'},
+       {k:'firstaid',    lbl:'First aid kit location',   det:'Location shown, contents briefly explained'},
+       {k:'fireext',     lbl:'Fire extinguisher location',det:'Location shown, how to operate'},
+       {k:'breakdown',   lbl:'Breakdown procedure',      det:'Call Go Rent first, stay with vehicle, no unauthorised repairs'},
+     ]},
+  ];
+
+  const totalItems=HO_SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
+  const doneItems=HO_SECTIONS.reduce((s,sec)=>s+sec.items.filter(it=>hc[it.k]==='ok').length,0);
+  const pct=Math.round(doneItems/totalItems*100);
 
   return `
   <div class="step-intro">
     <div class="step-ico">✍️</div>
-    <div><div class="step-title">Step 5 — Client Handover Sign-Off</div>
-    <div class="step-sub">${v.cl} reviews and accepts responsibility for fuel, equipment and vehicle condition</div></div>
+    <div>
+      <div class="step-title">Step 6 — Client Handover</div>
+      <div class="step-sub">${v.cl} · ${co.fn} · ${v.reg} — go through each section with the client</div>
+    </div>
   </div>
 
-  <div style="background:#0a1520;border:3px solid ${hasIssues?'var(--am)':'var(--gb)'};border-radius:var(--r);overflow:hidden;margin-bottom:14px">
-    <div style="background:linear-gradient(135deg,#0f3d26,#145c30);padding:13px 16px;border-bottom:2px solid var(--gb)">
-      <div style="font-size:16px;font-weight:800;color:#fff">✍️ ${v.cl} — Handover Declaration</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:2px">${r.fn} · ${v.reg} · Departure: ${v.pu||'today'}</div>
-    </div>
+  <!-- Progress -->
+  <div class="prog-wrap" style="margin-bottom:14px;">
+    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:var(--se)"></div></div>
+    <div class="prog-lbl"><span class="prog-n">${doneItems}/${totalItems}</span> items covered
+    ${pct===100?'<span style="color:var(--se);font-weight:700;margin-left:8px;">✅ Handover complete!</span>':''}</div>
+  </div>
 
-    <!-- Fuel -->
-    <div style="padding:12px 16px;border-bottom:1px solid var(--g2)">
-      <div style="font-size:12px;font-weight:700;color:var(--tx);margin-bottom:8px">⛽ Fuel at Departure</div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="background:var(--g1);border:2px solid var(--gb);border-radius:8px;padding:8px 16px;text-align:center;">
-          <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:2px;">Level</div>
-          <div style="font-size:20px;font-weight:800;color:var(--se);">${co.fuelOut||'Full'}</div>
+  <!-- Handover checklist sections -->
+  ${HO_SECTIONS.map(sec=>{
+    const secDone=sec.items.filter(it=>hc[it.k]==='ok').length;
+    const allDone=secDone===sec.items.length;
+    return `<div style="border:2px solid ${allDone?'var(--gb)':'var(--g3)'};border-radius:var(--rs);margin-bottom:10px;overflow:hidden;background:var(--g1);">
+      <div style="padding:9px 14px;background:${allDone?'rgba(34,197,94,.1)':'var(--g2)'};display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">${sec.ico}</span>
+          <span style="font-size:12px;font-weight:800;color:${allDone?'var(--se)':'var(--tx)'};">${sec.title}</span>
         </div>
-        <div style="font-size:11px;color:var(--g5);line-height:1.6;">Vehicle must be <strong style="color:var(--se)">returned with the same fuel level</strong>.<br>Shortfall will be charged from the fuel deposit.</div>
+        <span style="font-size:10px;font-weight:700;background:${allDone?'var(--sg)':'var(--g0)'};color:${allDone?'var(--se)':'var(--g5)'};padding:2px 8px;border-radius:8px;border:1px solid ${allDone?'var(--gb)':'var(--g3)'};">${secDone}/${sec.items.length}</span>
+      </div>
+      <div style="padding:6px 10px;display:flex;flex-direction:column;gap:4px;">
+        ${sec.items.map(it=>{
+          const st=hc[it.k]||'';
+          return `<div onclick="tapHO('${it.k}')" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:${st==='ok'?'rgba(34,197,94,.08)':'var(--g0)'};border:1px solid ${st==='ok'?'var(--gb)':'var(--g3)'};">
+            <div style="width:28px;height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;background:${st==='ok'?'var(--sg)':'var(--g2)'};border:2px solid ${st==='ok'?'var(--se)':'var(--g4)'};">
+              ${st==='ok'?'<span style="font-size:13px;">✓</span>':'<span style="font-size:11px;color:var(--g5);">○</span>'}
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:12px;font-weight:700;color:${st==='ok'?'var(--se)':'var(--tx)'};">${it.lbl}</div>
+              <div style="font-size:10px;color:var(--g5);margin-top:1px;">${it.det}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('')}
+
+  <!-- Fuel + vehicle condition summary -->
+  <div style="background:var(--g1);border:2px solid var(--gb);border-radius:var(--rs);padding:12px 14px;margin-bottom:12px;">
+    <div style="font-size:11px;font-weight:800;color:var(--se);margin-bottom:8px;">⛽ Fuel & Condition at Departure</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      <div style="background:var(--g0);border-radius:7px;padding:8px;text-align:center;">
+        <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">Fuel level</div>
+        <div style="font-size:16px;font-weight:800;color:var(--se);">${co.fuelOut||'Full'}</div>
+        <div style="font-size:9px;color:var(--g5);">must return same</div>
+      </div>
+      <div style="background:var(--g0);border-radius:7px;padding:8px;text-align:center;">
+        <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">ODO out</div>
+        <div style="font-size:16px;font-weight:800;color:var(--tx);">${(co.odometerOut||v.odo||0).toLocaleString()}</div>
+        <div style="font-size:9px;color:var(--g5);">km</div>
+      </div>
+      <div style="background:var(--g0);border-radius:7px;padding:8px;text-align:center;">
+        <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">Equipment</div>
+        <div style="font-size:16px;font-weight:800;color:var(--se);">${equipSummary.filter(e=>e.st==='ok').length}</div>
+        <div style="font-size:9px;color:var(--g5);">items issued</div>
       </div>
     </div>
+  </div>
 
-    <!-- Equipment list -->
-    <div style="padding:12px 16px;border-bottom:1px solid var(--g2)">
-      <div style="font-size:12px;font-weight:700;color:var(--tx);margin-bottom:8px">🏕 Equipment Issued</div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
-        ${equipSummary.map(e=>`<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:${e.st==='ok'?'var(--sg)':'var(--ag)'};color:${e.st==='ok'?'var(--se)':'var(--al)'};border:1px solid ${e.st==='ok'?'var(--gb)':'var(--am)'};">${e.st==='ok'?'✓':'⚠'} ${e.lbl}</span>`).join('')}
-      </div>
-      ${co.prepPhotos.length?`
-      <div style="font-size:11px;font-weight:700;color:var(--tx);margin-bottom:6px">📷 Equipment photos taken at packing:</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px">
-        ${co.prepPhotos.map(src=>`<div style="aspect-ratio:1;border-radius:7px;overflow:hidden;border:1px solid var(--g3);cursor:pointer" onclick="showImg('${src}')"><img src="${src}" style="width:100%;height:100%;object-fit:cover"></div>`).join('')}
-      </div>
-      <div style="font-size:9px;color:var(--g5);margin-top:5px">By signing you confirm receipt of all equipment shown above</div>`:
-      '<div style="font-size:10px;color:var(--g5);">No equipment photos taken</div>'}
+  <!-- Equipment issued tags -->
+  ${equipSummary.length?`
+  <div style="background:var(--g1);border:1px solid var(--g2);border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;">
+    <div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:7px;">🏕 Equipment issued to client</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;">
+      ${equipSummary.map(e=>`<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:${e.st==='ok'?'var(--sg)':'var(--ag)'};color:${e.st==='ok'?'var(--se)':'var(--al)'};border:1px solid ${e.st==='ok'?'var(--gb)':'var(--am)'};">${e.st==='ok'?'✓':'⚠'} ${e.lbl}</span>`).join('')}
     </div>
+  </div>`:''}
 
-    <!-- Damage record -->
-    <div style="padding:12px 16px;border-bottom:1px solid var(--g2)">
-      <div style="font-size:12px;font-weight:700;color:var(--tx);margin-bottom:8px">🔍 Vehicle Condition at Departure</div>
-      ${co.dmgd&&co.dmgd.length?`
-      <div style="background:var(--ag);border:1px solid var(--am);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:11px;color:var(--al);line-height:1.5">
-        ⭐ Pre-existing damage recorded — <strong>you are NOT liable for this damage</strong>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px">
-        ${co.dmgd.map(d=>`<span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--g6)">${d.view_name}: ${d.types.map(t=>t==='sc'?'Scratch':t==='de'?'Dent':'Pre-existing').join(' + ')}</span>`).join('')}
-      </div>`:`
-      <div style="background:var(--sg);border:1px solid var(--gb);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--se)">✅ No damage recorded — vehicle in clean condition</div>`}
-      ${co.dmgPhotos.length?`
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px">
-        ${co.dmgPhotos.map(src=>`<div style="aspect-ratio:1;border-radius:7px;overflow:hidden;border:1px solid var(--g3);cursor:pointer" onclick="showImg('${src}')"><img src="${src}" style="width:100%;height:100%;object-fit:cover"></div>`).join('')}
-      </div>`:''}
+  <!-- Client signature -->
+  <div style="background:#0a1520;border:3px solid var(--gb);border-radius:var(--r);overflow:hidden;margin-bottom:10px;">
+    <div style="background:linear-gradient(135deg,#0f3d26,#145c30);padding:12px 16px;border-bottom:2px solid var(--gb);">
+      <div style="font-size:15px;font-weight:800;color:#fff;">✍️ ${v.cl} — I confirm the above was explained</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;">I understand my responsibilities and accept the vehicle in the condition described</div>
     </div>
-
-    <!-- Confirmation list -->
-    <div style="padding:12px 16px;border-bottom:1px solid var(--g2)">
-      <div style="font-size:12px;font-weight:700;color:var(--tx);margin-bottom:8px">📋 I confirm and accept:</div>
-      ${[
-        `Fuel level at departure: <strong style="color:var(--se)">${co.fuelOut||'Full'}</strong> — I will return it at the same level`,
-        'I have received all equipment listed above in working condition',
-        'Any new damage found on return will be my responsibility',
-        'Missing or damaged equipment on return will be charged at replacement cost',
-        'I have signed the rental agreement and accept all its terms',
-        'Speed limits and no-go areas apply — GPS tracking is active',
-        '⛽ <strong style="color:var(--rl)">DIESEL ONLY</strong> — misfuelling costs are entirely at my expense',
-        '✅ All stickers applied, bumpers fastened, canopy locks keyed',
-      ].map(t=>`<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:11px;color:var(--g6)"><span style="color:var(--se);flex-shrink:0">✓</span>${t}</div>`).join('')}
-    </div>
-
-    <!-- Signature -->
-    <div style="padding:14px 16px">
+    <div style="padding:12px 16px;">
       ${co.custSig?
         `<div class="signed">✅<div class="signed-name">${v.cl} — Handover accepted</div><div class="signed-time">${co.custAt}</div></div>`:
-        `<div style="font-size:14px;font-weight:800;color:var(--al);margin-bottom:10px">✍️ ${v.cl} — sign to accept vehicle</div>
+        `<div style="font-size:11px;color:var(--g5);margin-bottom:10px;">⛽ DIESEL ONLY · ✅ All equipment received · I accept responsibility for the vehicle and contents</div>
         <div class="sig-area" style="border-color:var(--gb)">
           <div class="sig-hdr" style="background:#071a0f;border-bottom-color:var(--gb)">
             <span class="sig-lbl" style="color:var(--se)">${v.cl} — sign here</span>
@@ -2132,9 +2200,28 @@ function coStep5_client(){
           </div>
           <canvas class="sig-cv" id="co-c-sig" style="height:110px"></canvas>
         </div>
-        <button class="btn g" style="margin-top:10px;font-size:16px;padding:18px" onclick="signHandover()">✍️ I Accept — Sign Vehicle Handover</button>`}
+        <button class="btn g" style="margin-top:10px;font-size:15px;padding:16px" onclick="signHandover()">
+          ✍️ Client Signs — Handover Complete
+        </button>`}
     </div>
   </div>`;
+}
+
+function tapHO(k){
+  if(!co.handoverChecks) co.handoverChecks={};
+  co.handoverChecks[k]=co.handoverChecks[k]==='ok'?'':'ok';
+  const s=document.getElementById('cos');
+  if(s){
+    const sig=hasSig('co-c-sig')?getSig('co-c-sig'):null;
+    s.innerHTML=coStep5_client();
+    setTimeout(()=>{
+      initSig('co-c-sig');
+      if(sig&&sigs['co-c-sig']){
+        const cv=document.getElementById('co-c-sig');
+        if(cv){const img=new Image();img.onload=()=>{sigs['co-c-sig'].ctx.drawImage(img,0,0,cv.offsetWidth,cv.offsetHeight);sigs['co-c-sig'].hasData=true;};img.src=sig;}
+      }
+    },60);
+  }
 }
 
 function coStep6_mgmt(){
