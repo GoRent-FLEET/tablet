@@ -444,18 +444,18 @@ const L_MECH=[
 ];
 const RET_GROUPS=[{"g": "Tent & sleeping", "items": ["Tent + ladder + pins", "Tent mattress & bedding", "Sleeping bags"]}, {"g": "Kitchen", "items": ["Gas stove & burner", "Pots, pans & utensils (complete)", "Cutlery, plates & cups (complete)", "Braai grid"]}, {"g": "Camp furniture", "items": ["Table", "Chairs (correct qty)", "Camping lights", "Binoculars"]}, {"g": "Fridge & fuel", "items": ["Fridge", "Jerrycans (correct qty)"]}, {"g": "Safety & recovery", "items": ["Fire extinguisher", "First aid kit", "Jack & wheel spanner", "Tool kit", "Tow strap", "Shovel & axe", "Jump leads", "Warning triangles x2", "Tyre repair kit"]}, {"g": "Docs & keys", "items": ["Vehicle licence & insurance", "All keys & remote"]}];
 const FLEET=[
-  {fn:'H-015',reg:'N242-221W',cl:'Mark Beckermann',   pu:'2026-07-15',rt:'2026-07-28',pax:4,xb:null,
+  {fn:'H-015',reg:'N242-221W',cl:'Mark Beckermann',   pu:'2026-07-15',rt:'2026-07-28',pax:4,xb:null,quote:'Q-0343',
    camping:true, tent:true, extraFuel:true, sleepingBags:2, fridge:true,
    extras:['Camping chairs x4','Camping table','Braai grid'],
    special:['Baby seat required','Botswana cross-border letter'],
    st:'available',odo:42350,dmgd:[],
    svc:{lastKm:37000,intKm:10000},lic:{expiry:'2027-03-31'},tyres:{lastKm:30000,intKm:30000}},
-  {fn:'H-013',reg:'N242-977W',cl:'Stephane Commo',    pu:'2026-07-15',rt:'2026-07-16',pax:2,xb:null,
+  {fn:'H-013',reg:'N242-977W',cl:'Stephane Commo',    pu:'2026-07-15',rt:'2026-07-16',pax:2,xb:null,quote:'Q-3577',
    camping:false,tent:false,extraFuel:false,sleepingBags:0,fridge:false,
    extras:[],special:[],
    st:'available',odo:38200,dmgd:[],
    svc:{lastKm:30000,intKm:10000},lic:{expiry:'2026-08-31'},tyres:{lastKm:15000,intKm:30000}},
-  {fn:'H-023',reg:'N245-593W',cl:'Grzegorz Adamczewski',pu:'2026-07-16',rt:'2026-07-23',pax:4,xb:null,
+  {fn:'H-023',reg:'N245-593W',cl:'Grzegorz Adamczewski',pu:'2026-07-16',rt:'2026-07-23',pax:4,xb:null,quote:'Q-2414',
    camping:true, tent:true, extraFuel:true, sleepingBags:2, fridge:true,
    extras:['Camping chairs x4','Camping table'],
    special:['Zambia cross-border letter'],
@@ -468,12 +468,12 @@ const FLEET=[
    st:'rented',odo:39200,
    dmgd:[{view:'lhs',size:'M',cells:[{r:4,c:14,t:'pr'},{r:4,c:15,t:'pr'},{r:5,c:14,t:'pr'}]}],
    svc:{lastKm:35000,intKm:10000},lic:{expiry:'2026-10-31'},tyres:{lastKm:20000,intKm:30000}},
-  {fn:'H-016',reg:'N61207W',  cl:'Jacek Lech',        pu:'2026-06-29',rt:'2026-07-15',pax:2,xb:null,
+  {fn:'H-016',reg:'N61207W',  cl:'Jacek Lech',        pu:'2026-06-29',rt:'2026-07-15',pax:2,xb:null,quote:'Q-0600',
    camping:false,tent:false,extraFuel:false,sleepingBags:0,fridge:false,
    extras:[],special:['IDP required — not yet received'],
    st:'rented',odo:39850,dmgd:[],
    svc:{lastKm:36000,intKm:10000},lic:{expiry:'2026-09-30'},tyres:{lastKm:25000,intKm:30000}},
-  {fn:'H-003',reg:'N236-211W',cl:'Brockman',          pu:'2026-07-15',rt:'2026-07-20',pax:2,xb:'Botswana',
+  {fn:'H-003',reg:'N236-211W',cl:'Brockman',          pu:'2026-07-15',rt:'2026-07-20',pax:2,xb:'Botswana',quote:'Q-2308',
    camping:true, tent:true, extraFuel:true, sleepingBags:2, fridge:true,
    extras:['Camping chairs x2'],
    special:['Botswana cross-border letter'],
@@ -648,7 +648,7 @@ function renderOV(){
                 <span style="font-size:9px;color:#e53e3e;font-weight:600;">started ${startedTime} · Tap to continue</span>
               </div>`
             : `<div style="font-size:10px;font-weight:700;margin-top:3px;color:${isOut?'#4a6fa5':'#2a9d5c'};">${isOut?'→ Tap to start check-out':'→ Tap to start check-in'}</div>`}
-          <div style="font-size:11px;color:#888;margin-top:2px;">${isOut?'Pickup':'Drop-off'}: ${m.loc}${m.xb?' · 🌍 '+m.xb:''}</div>
+          <div style="font-size:11px;color:#888;margin-top:2px;">${isOut?'Pickup':'Drop-off'}: ${m.loc}${m.xb?' · 🌍 '+m.xb:''}${m.v.quote?' · '+m.v.quote:''}</div>
           ${tag}${specHTML}${xbHTML}
         </div>
         ${isInProgress ? '<span style="font-size:18px;">🔴</span>' : m.special.length ? '<span style="color:#e07b00;font-size:16px;">⚠</span>' : ''}
@@ -1409,7 +1409,9 @@ function gatherContract(){
   co.contract.fuel_out=co.fuelOut;
   co.contract.pickup_location=document.getElementById('ct-ploc')?.value||'Go Rent 4×4 Workshop, Windhoek';
   co.contract.return_location=document.getElementById('ct-rloc')?.value||'Go Rent 4×4 Workshop, Windhoek';
-  co.contract.deposit_method=document.getElementById("ct-dmethod")?.value||co.contract.deposit_method;
+  co.contract.deposit_method=document.getElementById('ct-dmethod')?.value||co.contract.deposit_method;
+  co.contract.deposit_amount=+document.getElementById('ct-dep')?.value||co.contract.deposit_amount;
+  co.contract.quote_number=document.getElementById('ct-quote')?.value||co.contract.quote_number||co.v.quote||'';
   co.contract.deposit_amount=+document.getElementById('ct-dep')?.value||co.contract.deposit_amount;
   co.contract.fuel_deposit=+document.getElementById('ct-fdep')?.value||co.contract.fuel_deposit||7500;
   co.contract.insurance_option=document.getElementById('ct-ins')?.value||co.contract.insurance_option;
