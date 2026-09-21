@@ -780,6 +780,7 @@ function backToNames(){
 // ── APP STATE ────────────────────────────────────────────────────
 let currentUser=null, currentProfile=null;
 let co={}, ci={}, coStep=0, ciStep=0, clientList=[];
+function ipKey(fn){ return 'ip_'+(APP_USER?APP_USER.name:'x')+'_'+fn; }
 const sigs={};
 let imarks={}, itool='sc', isize='M', iundo=null, retSt={};
 const VIEWS=['lhs','rhs','fl','rear','fr'];
@@ -1001,7 +1002,7 @@ function renderOV(){
     const isPast=daysFrom(date)<0;
     const isExp=expanded===v.fn;
     let inprog=null;
-    try{const r=localStorage.getItem('inprogress_'+v.fn);if(r)inprog=JSON.parse(r);}catch(e){}
+    try{const r=localStorage.getItem(ipKey(v.fn));if(r)inprog=JSON.parse(r);}catch(e){}
     const isInProgress=inprog&&((isOut&&inprog.type==='checkout')||(!isOut&&inprog.type==='checkin'));
     const accent=isOut?'#4a6fa5':'#2a9d5c';
     const accentBg=isOut?'rgba(74,111,165,.12)':'rgba(42,157,92,.12)';
@@ -1154,9 +1155,9 @@ function startCO(fn){
   toast('Starting check-out: '+fn,'ok');
   // Mark as in-progress (preserve existing staff if already set)
   try{
-    const existing=localStorage.getItem('inprogress_'+fn);
+    const existing=localStorage.getItem(ipKey(fn));
     const prev=existing?JSON.parse(existing):{};
-    localStorage.setItem('inprogress_'+fn, JSON.stringify({
+    localStorage.setItem(ipKey(fn), JSON.stringify({
       type:'checkout',fn,cl:v.cl,
       started:prev.started||new Date().toISOString(),
       staff:prev.staff||'',
@@ -1369,7 +1370,7 @@ function signPrep(){
   if(domVal) co.prepBy = domVal;
   if(!co.prepBy){
     try{
-      const raw=localStorage.getItem('inprogress_'+co.fn);
+      const raw=localStorage.getItem(ipKey(co.fn));
       if(raw){const rec=JSON.parse(raw);co.prepBy=rec.staff||'';}
     }catch(e){}
   }
@@ -2688,7 +2689,7 @@ function signMgmt(){
 }
 
 async function completeCO(){
-  try{localStorage.removeItem('inprogress_'+co.fn);}catch(e){}
+  try{localStorage.removeItem(ipKey(co.fn));}catch(e){}
   co.v.st='rented'; co.v.dmgd=co.dmgd||[];
 
   const _pst=l=>{const v=co.prepItems[l];return v?.st||v||'';};
@@ -2929,9 +2930,9 @@ function startCI(fn){
   if(v.st!=='rented'&&daysToReturn>1){toast('Vehicle not due for return yet','err');return;}
   // Mark as in-progress (preserve existing staff if already set)
   try{
-    const existing=localStorage.getItem('inprogress_'+fn);
+    const existing=localStorage.getItem(ipKey(fn));
     const prev=existing?JSON.parse(existing):{};
-    localStorage.setItem('inprogress_'+fn, JSON.stringify({
+    localStorage.setItem(ipKey(fn), JSON.stringify({
       type:'checkin',fn,cl:v.cl,
       started:prev.started||new Date().toISOString(),
       staff:prev.staff||'',
@@ -3153,8 +3154,8 @@ function signRetCheck(){
   ci.fuelIn=document.getElementById('ci-fuel')?.value||ci.fuelIn;
   ci.retSig=getSig('ci-ret-sig');ci.retAt=now();
   try{
-    const raw=localStorage.getItem('inprogress_'+ci.fn);
-    if(raw){const rec=JSON.parse(raw);rec.staff=ci.receivedBy;rec.staffLocked=true;localStorage.setItem('inprogress_'+ci.fn,JSON.stringify(rec));}
+    const raw=localStorage.getItem(ipKey(ci.fn));
+    if(raw){const rec=JSON.parse(raw);rec.staff=ci.receivedBy;rec.staffLocked=true;localStorage.setItem(ipKey(ci.fn),JSON.stringify(rec));}
   }catch(e){}
   toast('Step 1 signed ✅','ok');ciStep=1;drawCI();
 }
@@ -3391,7 +3392,7 @@ async function signMgmtCI(){
 }
 
 async function completeCI(){
-  try{localStorage.removeItem('inprogress_'+ci.fn);}catch(e){}
+  try{localStorage.removeItem(ipKey(ci.fn));}catch(e){}
   const newDmg=ci.dmgd.filter(d=>d.types?.some(t=>t!=='pr'));
   ci.v.st=newDmg.length?'maintenance':'available';
   const allItems=RET_GROUPS.flatMap(g=>g.items);
@@ -3848,7 +3849,7 @@ function selStaff(id,list,val){
   const fn = co.fn||ci.fn||'';
   let lockedStaff = '';
   try{
-    const raw = localStorage.getItem('inprogress_'+fn);
+    const raw = localStorage.getItem(ipKey(fn));
     if(raw){ const rec=JSON.parse(raw); lockedStaff=rec.staff||''; }
   }catch(e){}
 
@@ -3873,8 +3874,8 @@ function selStaff(id,list,val){
     else if('${id}'==='ci-rcv') ci.receivedBy=this.value;
     try{
       const fn=co.fn||ci.fn||'';
-      const raw=localStorage.getItem('inprogress_'+fn);
-      if(raw){const rec=JSON.parse(raw);rec.staff=this.value;rec.staffLocked=true;localStorage.setItem('inprogress_'+fn,JSON.stringify(rec));}
+      const raw=localStorage.getItem(ipKey(fn));
+      if(raw){const rec=JSON.parse(raw);rec.staff=this.value;rec.staffLocked=true;localStorage.setItem(ipKey(fn),JSON.stringify(rec));}
     }catch(e){}
     // Redraw to show locked state
     if(document.getElementById('page-co').classList.contains('on')) drawCO();
@@ -3888,8 +3889,8 @@ function selStaff(id,list,val){
 function unlockStaff(id, fn){
   // Clear the lock so they can re-select
   try{
-    const raw=localStorage.getItem('inprogress_'+fn);
-    if(raw){const rec=JSON.parse(raw);rec.staffLocked=false;rec.staff='';localStorage.setItem('inprogress_'+fn,JSON.stringify(rec));}
+    const raw=localStorage.getItem(ipKey(fn));
+    if(raw){const rec=JSON.parse(raw);rec.staffLocked=false;rec.staff='';localStorage.setItem(ipKey(fn),JSON.stringify(rec));}
   }catch(e){}
   // Clear the co/ci value
   if(id==='co-p-nm') co.prepBy='';
@@ -4641,12 +4642,13 @@ function debugSwitch(){
 
 // ── RESUME PANEL ──────────────────────────────────────────────────
 function checkResume() {
-  // Look for any in-progress vehicles in localStorage
+  // Look for THIS USER's in-progress vehicles only
   var inProgress = [];
+  var prefix = 'ip_' + (APP_USER ? APP_USER.name : 'x') + '_';
   try {
     for (var i = 0; i < localStorage.length; i++) {
       var key = localStorage.key(i);
-      if (key && key.startsWith('inprogress_')) {
+      if (key && key.startsWith(prefix)) {
         var data = JSON.parse(localStorage.getItem(key));
         if (data && data.fn) inProgress.push(data);
       }
