@@ -3008,29 +3008,78 @@ function unlockStaff(id, fn){
   else drawCI();
 }
 function licDiscBanner(v, context){
-  if(!v||!v.lic||!v.lic.expiry) return '';
-  const today=new Date('2026-07-15');
-  const exp=new Date(v.lic.expiry+'T00:00:00');
-  const daysLeft=Math.round((exp-today)/86400000);
-  const expired=daysLeft<0;
-  const warn=daysLeft>=0&&daysLeft<=45;
-  const ok=daysLeft>45;
-  if(context==='in'&&ok) return ''; // check-in: only show if issue
-  const label=expired?'EXPIRED':'expires '+exp.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
-  const bg=expired?'var(--rg)':warn?'var(--ag)':'var(--sg)';
-  const border=expired?'var(--re)':warn?'var(--am)':'var(--gb)';
-  const col=expired?'var(--rl)':warn?'var(--al)':'var(--se)';
-  const icon=expired?'❌':warn?'⚠️':'✅';
-  const sub=expired
-    ? (context==='out'?'⛔ DO NOT CHECK OUT — report to management immediately.':'Notify management immediately.')
-    : ('Expires in '+daysLeft+' day'+(daysLeft!==1?'s':'')+' — notify management'+(context==='out'?' before departure.':'.'));
-  const sub2=ok?'Valid for '+daysLeft+' more day'+(daysLeft!==1?'s':''):'';
-  return '<div style="background:'+bg+';border:2px solid '+border+';border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;">'
-    +'<span style="font-size:22px;">'+icon+'</span>'
-    +'<div><div style="font-size:12px;font-weight:800;color:'+col+';">Licence Disc — '+label+'</div>'
-    +(expired||warn?'<div style="font-size:11px;color:'+col+';margin-top:2px;">'+sub+'</div>':'')
-    +(ok&&context==='out'?'<div style="font-size:11px;color:'+col+';margin-top:2px;">'+sub2+'</div>':'')
-    +'</div></div>';
+  if(!v) return '';
+  // Use overridden expiry if staff has entered one, else fleet default
+  const expiry = (v._licExpiry||'') || (v.lic?.expiry||'');
+  const today = new Date('2026-07-15');
+
+  let statusHTML = '';
+  if(expiry){
+    const exp = new Date(expiry+'T00:00:00');
+    const daysLeft = Math.round((exp-today)/86400000);
+    const expired = daysLeft<0;
+    const warn = daysLeft>=0&&daysLeft<=45;
+    const ok = daysLeft>45;
+    if(context==='in'&&ok) statusHTML=''; // check-in: only banner if problem
+    else {
+      const label = expired?'EXPIRED':'expires '+exp.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+      const bg = expired?'var(--rg)':warn?'var(--ag)':'var(--sg)';
+      const border = expired?'var(--re)':warn?'var(--am)':'var(--gb)';
+      const col = expired?'var(--rl)':warn?'var(--al)':'var(--se)';
+      const icon = expired?'❌':warn?'⚠️':'✅';
+      const sub = expired
+        ?(context==='out'?'⛔ DO NOT CHECK OUT — report to management immediately.':'Notify management immediately.')
+        :('Expires in '+daysLeft+' day'+(daysLeft!==1?'s':'')+' — notify management'+(context==='out'?' before departure.':'.'));
+      const sub2 = ok?'Valid for '+daysLeft+' more day'+(daysLeft!==1?'s':''):'';
+      statusHTML = '<div style="background:'+bg+';border:1px solid '+border+';border-radius:6px;padding:7px 10px;margin-top:6px;display:flex;align-items:center;gap:8px;">'
+        +'<span style="font-size:18px;">'+icon+'</span>'
+        +'<div><div style="font-size:12px;font-weight:800;color:'+col+';">'+label+'</div>'
+        +(expired||warn?'<div style="font-size:10px;color:'+col+';margin-top:1px;">'+sub+'</div>':'')
+        +(ok&&context==='out'?'<div style="font-size:10px;color:'+col+';margin-top:1px;">'+sub2+'</div>':'')
+        +'</div></div>';
+    }
+  }
+
+  // Editable licence disc section
+  const obj = context==='out'?'co.v':'ci.v';
+  const fnRef = context==='out'?'co.fn':'ci.fn';
+  const inputId = 'lic-expiry-'+context;
+
+  return '<div style="background:var(--g1);border:2px solid var(--g3);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">'
+    +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">📋 Licence Disc</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;">'
+      +'<div style="flex:1;">'
+        +'<label style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;display:block;margin-bottom:4px;">Expiry Date</label>'
+        +'<input type="date" id="'+inputId+'" value="'+(expiry||'')+'"'
+          +' oninput="'+obj+'._licExpiry=this.value;'
+            +'const b=document.getElementById(\'lic-banner-'+context+'\');'
+            +'if(b)b.innerHTML=licDiscBanner('+obj+',\''+context+'\');"'
+          +' style="color-scheme:dark;padding:10px 12px;font-size:14px;font-weight:700;background:var(--g0);border:2px solid '+(expiry?'var(--gb)':'var(--re)')+';border-radius:var(--rs);color:var(--tx);width:100%;">'
+      +'</div>'
+      +'<button onclick="saveLicExpiry(\''+fnRef+'\',document.getElementById(\''+inputId+'\').value,\''+context+'\')" '
+        +'style="padding:10px 14px;background:var(--sg);border:2px solid var(--gb);border-radius:var(--rs);color:var(--se);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">'
+        +'💾 Save'
+      +'</button>'
+    +'</div>'
+    +(statusHTML?statusHTML:'<div style="font-size:10px;color:var(--al);margin-top:6px;">⚠ Enter licence disc expiry date above</div>')
+  +'</div>';
+}
+
+async function saveLicExpiry(fn, expiry, context){
+  if(!expiry){toast('Enter expiry date first','err');return;}
+  const v=(context==='out'?co.v:ci.v);
+  v._licExpiry=expiry;
+  v.lic=v.lic||{};
+  v.lic.expiry=expiry;
+  // Save to Supabase vehicles table
+  try{
+    await SB.from('vehicles').update({lic_expiry:expiry,updated_at:new Date().toISOString()}).eq('fleet_no',fn);
+    toast('Licence disc saved ✅','ok');
+  }catch(e){
+    toast('Saved locally — DB update pending','ok');
+  }
+  // Redraw to reflect new status
+  if(context==='out') drawCO(); else drawCI();
 }
 function now(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
 function okSVG(){return`<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(61,220,132,.15)" stroke="#3ddc84" stroke-width="2"/><path d="M7 12l4 4 6-7" stroke="#3ddc84" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
