@@ -1148,7 +1148,10 @@ function renderOV(){
 //  Step 4: Management clears vehicle for departure
 // ═══════════════════════════════════════════════════════════════
 function startCO(fn){
-  const v=FLEET.find(x=>x.fn===fn);if(!v||v.st==='rented'){toast('Not available','err');return;}
+  const v=FLEET.find(function(x){return x.fn===fn;});
+  if(!v){toast('Vehicle '+fn+' not found','err');return;}
+  if(v.st==='rented'){toast('Already checked out','err');return;}
+  toast('Starting check-out: '+fn,'ok');
   // Mark as in-progress (preserve existing staff if already set)
   try{
     const existing=localStorage.getItem('inprogress_'+fn);
