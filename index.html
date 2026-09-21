@@ -1473,10 +1473,26 @@ function renderOV(){
 //  Step 3: Damage inspection — mark, photo, customer signs
 //  Step 4: Management clears vehicle for departure
 // ═══════════════════════════════════════════════════════════════
+// Check-outs you switched away from (kept until the app is closed)
+var CO_DRAFTS={};
+function coChangeVehicle(){
+  if(co&&co.v){co._step=coStep;CO_DRAFTS[co.v.bid||co.fn]=co;}
+  co={};coStep=0;
+  renderCOPicker();
+  var b=document.getElementById('co-body');if(b&&b.scrollIntoView)b.scrollIntoView();
+}
 function startCO(fn){
   const v=pickVeh(fn,'out');
   if(!v){toast('Vehicle '+fn+' not found','err');return;}
   if(v.st==='rented'){toast('Already checked out','err');return;}
+  // Returning to a vehicle you left earlier: carry on where you stopped
+  var _dk=v.bid||fn;
+  if(CO_DRAFTS[_dk]){
+    co=CO_DRAFTS[_dk];delete CO_DRAFTS[_dk];coStep=co._step||0;
+    toast('Continuing check-out: '+fn,'ok');goPage('co');
+    try{drawCO();}catch(err){toast('drawCO error: '+err.message,'err');}
+    return;
+  }
   toast('Starting check-out: '+fn,'ok');
   // Mark as in-progress (preserve existing staff if already set)
   try{
@@ -1587,6 +1603,9 @@ function drawCO(){
   var _backBtn=coStep>0?'<button class="btn s" style="flex:1" onclick="coGoStep(coStep-1)">← Back</button>':'';
   var _nextBtn=coStep<6?'<button class="btn g" style="flex:2" onclick="coGoStep(coStep+1)">Next →</button>':'';
   document.getElementById('co-body').innerHTML=
+    '<div style="display:flex;justify-content:flex-start;margin-bottom:8px;">'
+      +'<button onclick="coChangeVehicle()" style="padding:7px 14px;border-radius:20px;border:1px solid var(--g3);background:var(--g1);color:var(--tx);font-size:13px;font-weight:800;cursor:pointer;">← Choose another vehicle</button>'
+    +'</div>'+
     '<div class="fhdr">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
         '<div>'+
