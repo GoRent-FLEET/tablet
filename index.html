@@ -608,15 +608,19 @@ async function loadClients(){
 }
 
 // ── OVERVIEW ─────────────────────────────────────────────────────
+function ovSetMode(m){window._ovMode=window._ovMode===m?null:m;window._ovExpanded=null;renderOV();}
+function ovSetView(v){window._ovView=v;window._ovMode=null;window._ovExpanded=null;renderOV();}
+function ovExpand(fn){window._ovExpanded=window._ovExpanded===fn?null:fn;renderOV();}
+function ovExpandTo(m,fn){window._ovMode=m;window._ovExpanded=fn;renderOV();}
+
 function renderOV(){
   const TODAY='2026-07-15';
   const todayD=new Date(TODAY);
   const daysFrom=d=>Math.round((new Date(d+'T00:00:00')-todayD)/86400000);
 
-  // Active state
-  const view=window._ovView||'week';       // 'week' | 'past'
-  const mode=window._ovMode||null;         // null | 'out' | 'in'
-  const expanded=window._ovExpanded||null; // fn of expanded card
+  const view=window._ovView||'week';
+  const mode=window._ovMode||null;
+  const expanded=window._ovExpanded||null;
 
   // Clock
   if(window._clockInterval) clearInterval(window._clockInterval);
@@ -630,165 +634,134 @@ function renderOV(){
   const dateStr=nowDT.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
   const timeStr=nowDT.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
-  // Movements this week (next 7 days)
   const weekOut=FLEET.filter(v=>v.pu&&daysFrom(v.pu)>=0&&daysFrom(v.pu)<=7).sort((a,b)=>a.pu>b.pu?1:-1);
   const weekIn =FLEET.filter(v=>v.rt&&daysFrom(v.rt)>=0&&daysFrom(v.rt)<=7).sort((a,b)=>a.rt>b.rt?1:-1);
-
-  // Past 7 days movements
   const pastOut=FLEET.filter(v=>v.pu&&daysFrom(v.pu)>=-7&&daysFrom(v.pu)<0).sort((a,b)=>a.pu<b.pu?1:-1);
   const pastIn =FLEET.filter(v=>v.rt&&daysFrom(v.rt)>=-7&&daysFrom(v.rt)<0).sort((a,b)=>a.rt<b.rt?1:-1);
-
-  // Which list to show when mode is selected
   const activeList=mode==='out'?(view==='week'?weekOut:pastOut):(view==='week'?weekIn:pastIn);
 
-  function bookingCard(v, type){
+  function bookingCard(v,type){
     const isOut=type==='out';
     const date=isOut?v.pu:v.rt;
     const isToday=daysFrom(date)===0;
     const isPast=daysFrom(date)<0;
-    const isExpanded=expanded===v.fn;
+    const isExp=expanded===v.fn;
     let inprog=null;
     try{const r=localStorage.getItem('inprogress_'+v.fn);if(r)inprog=JSON.parse(r);}catch(e){}
     const isInProgress=inprog&&((isOut&&inprog.type==='checkout')||(!isOut&&inprog.type==='checkin'));
-
     const accent=isOut?'#4a6fa5':'#2a9d5c';
     const accentBg=isOut?'rgba(74,111,165,.12)':'rgba(42,157,92,.12)';
     const border=isInProgress?'#e53e3e':isToday?accent:'var(--g3)';
     const bg=isInProgress?'var(--rg)':isToday?accentBg:'var(--g1)';
-
     const fmtDate=d=>new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
-    const dayLabel=isToday?'<span style="font-weight:800;color:'+accent+'">TODAY</span>':
-                   isPast?'<span style="color:var(--g5)">'+fmtDate(date)+'</span>':
-                   '<span style="color:'+accent+'">'+fmtDate(date)+'</span>';
+    const dayLabel=isToday?`<span style="font-weight:800;color:${accent}">TODAY</span>`:
+                   `<span style="color:${isPast?'var(--g5)':accent}">${fmtDate(date)}</span>`;
 
-    // Compact header (always visible)
-    const header='<div onclick="window._ovExpanded=window._ovExpanded===\''+v.fn+'\'?null:\''+v.fn+'\';renderOV()" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:11px 13px;">'
-      +'<div style="width:36px;height:36px;border-radius:8px;background:'+(isInProgress?'#e53e3e':accent)+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
-        +(isInProgress?'<span style="color:#fff;font-size:11px;font-weight:800;">'+(inprog.staff||'?').slice(0,2).toUpperCase()+'</span>':'<span style="font-size:16px;">'+(isOut?'🔑':'🏠')+'</span>')
-      +'</div>'
-      +'<div style="flex:1;min-width:0;">'
-        +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
-          +'<span style="font-size:14px;font-weight:800;color:var(--tx);">'+v.fn+'</span>'
-          +'<span style="font-size:11px;color:var(--g5);">'+v.reg+'</span>'
-          +(v.quote?'<span style="font-size:10px;color:var(--g5);">'+v.quote+'</span>':'')
-        +'</div>'
-        +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:1px;">'+v.cl+'</div>'
-        +'<div style="font-size:11px;margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+dayLabel
-          +(v.camping?'<span style="color:var(--se);font-weight:700;">🏕 '+v.pax+' pax</span>':'<span style="color:var(--g5);">🏨 '+v.pax+' pax</span>')
-          +(v.xb?'<span style="color:var(--al);font-weight:700;">🌍 '+v.xb+'</span>':'')
-        +'</div>'
-        +(isInProgress?'<div style="font-size:10px;font-weight:800;color:#e53e3e;margin-top:3px;">🔴 IN PROGRESS · '+inprog.staff+' · Tap to continue</div>':'')
-      +'</div>'
-      +'<div style="font-size:18px;color:var(--g5);flex-shrink:0;">'+(isExpanded?'▲':'▼')+'</div>'
-    +'</div>';
+    const header=`<div onclick="ovExpand('${v.fn}')" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:11px 13px;">
+      <div style="width:36px;height:36px;border-radius:8px;background:${isInProgress?'#e53e3e':accent};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;font-weight:900;color:#fff;">
+        ${isInProgress?(inprog.staff||'?').slice(0,2).toUpperCase():(isOut?'▶':'◀')}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:14px;font-weight:800;color:var(--tx);">${v.fn}</span>
+          <span style="font-size:11px;color:var(--g5);">${v.reg}</span>
+          ${v.quote?`<span style="font-size:10px;color:var(--g5);">${v.quote}</span>`:''}
+        </div>
+        <div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:1px;">${v.cl}</div>
+        <div style="font-size:11px;margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          ${dayLabel}
+          ${v.camping?`<span style="color:var(--se);font-weight:700;">🏕 ${v.pax} pax</span>`:`<span style="color:var(--g5);">🏨 ${v.pax} pax</span>`}
+          ${v.xb?`<span style="color:var(--al);font-weight:700;">🌍 ${v.xb}</span>`:''}
+        </div>
+        ${isInProgress?`<div style="font-size:10px;font-weight:800;color:#e53e3e;margin-top:3px;">🔴 IN PROGRESS · ${inprog.staff} · Tap to continue</div>`:''}
+      </div>
+      <div style="font-size:18px;color:var(--g5);flex-shrink:0;">${isExp?'▲':'▼'}</div>
+    </div>`;
 
-    // Expanded detail panel
-    const detail=!isExpanded?'':'<div style="border-top:1px solid var(--g2);padding:12px 14px;background:var(--g0);">'
-      // Transfer & flight
-      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'
-        +[
+    const detail=!isExp?'':(`<div style="border-top:1px solid var(--g2);padding:12px 14px;background:var(--g0);">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        ${[
           ['✈️','Flight',v.flight||'—'],
-          ['📍','Transfer / Location',v.transfer?(v.transfer+(v.location?' · '+v.location:'')):(v.location||'—')],
-          ['📧','Email',v.email?'<a href="mailto:'+v.email+'" style="color:var(--se);text-decoration:none;">'+v.email+'</a>':'—'],
-          ['💬','WhatsApp',v.phone?'<a href="https://wa.me/'+v.phone.replace(/[\s+]/g,'')+'" target="_blank" style="color:var(--se);text-decoration:none;">'+v.phone+'</a>':'—'],
-        ].map(([ico,lbl,val])=>'<div style="background:var(--g1);border-radius:7px;padding:8px 10px;border:1px solid var(--g2);">'
-          +'<div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">'+ico+' '+lbl+'</div>'
-          +'<div style="font-size:11px;font-weight:700;color:var(--tx);">'+val+'</div>'
-        +'</div>').join('')
-      +'</div>'
-      // Camping / equipment summary
-      +'<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">'
-        +(v.camping?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🏕 Camping</span>':'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--g2);color:var(--g5);">🏨 No camping</span>')
-        +(v.tent?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">⛺ Tent</span>':'')
-        +(v.fridge?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🧊 Fridge</span>':'')
-        +(v.sleepingBags?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🛏 '+v.sleepingBags+' sleeping bags</span>':'')
-        +(v.extraFuel?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⛽ Extra fuel</span>':'')
-        +((v.extras||[]).map(e=>'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--g2);color:var(--g6);">'+e+'</span>').join(''))
-      +'</div>'
-      // Special requests
-      +((v.special||[]).length?'<div style="background:var(--ag);border:1px solid var(--am);border-radius:7px;padding:7px 10px;margin-bottom:10px;">'
-        +'<div style="font-size:9px;font-weight:700;color:var(--al);text-transform:uppercase;margin-bottom:4px;">⚠ Special Requests</div>'
-        +(v.special||[]).map(s=>'<div style="font-size:11px;color:var(--al);font-weight:700;">· '+s+'</div>').join('')
-      +'</div>':'')
-      // Blocked
-      +(v.blocked?'<div style="background:var(--rg);border:1px solid var(--re);border-radius:7px;padding:7px 10px;margin-bottom:10px;font-size:11px;font-weight:700;color:var(--rl);">⛔ '+v.blocked+'</div>':'')
-      // Action button
-      +(isOut
-        ?'<button onclick="startCO(\''+v.fn+'\')" style="width:100%;padding:13px;background:'+(v.blocked?'var(--g2)':'var(--se)')+';border:2px solid '+(v.blocked?'var(--g3)':'var(--gb)')+';border-radius:var(--rs);color:'+(v.blocked?'var(--g5)':'#0a1a10')+';font-size:14px;font-weight:800;cursor:'+(v.blocked?'not-allowed':'pointer')+';">'
-          +(isInProgress?'🔴 Continue Check-Out →':'▶ Start Check-Out')
-        +'</button>'
-        :'<button onclick="startCI(\''+v.fn+'\')" style="width:100%;padding:13px;background:var(--se);border:2px solid var(--gb);border-radius:var(--rs);color:#0a1a10;font-size:14px;font-weight:800;cursor:pointer;">'
-          +(isInProgress?'🔴 Continue Check-In →':'◀ Start Check-In')
-        +'</button>')
-    +'</div>';
+          ['📍','Transfer',v.transfer?(v.transfer+(v.location?' · '+v.location:'')):(v.location||'—')],
+          ['📧','Email',v.email?`<a href="mailto:${v.email}" style="color:var(--se);text-decoration:none;">${v.email}</a>`:'—'],
+          ['💬','WhatsApp',v.phone?`<a href="https://wa.me/${v.phone.replace(/[\s+]/g,'')}" target="_blank" style="color:var(--se);text-decoration:none;">${v.phone}</a>`:'—'],
+        ].map(([ico,lbl,val])=>`<div style="background:var(--g1);border-radius:7px;padding:8px 10px;border:1px solid var(--g2);">
+          <div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">${ico} ${lbl}</div>
+          <div style="font-size:11px;font-weight:700;color:var(--tx);">${val}</div>
+        </div>`).join('')}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">
+        ${v.camping?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🏕 Camping</span>':'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--g2);color:var(--g5);">🏨 No camping</span>'}
+        ${v.tent?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">⛺ Tent</span>':''}
+        ${v.fridge?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🧊 Fridge</span>':''}
+        ${v.sleepingBags?`<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🛏 ${v.sleepingBags} sleeping bags</span>`:''}
+        ${v.extraFuel?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⛽ Extra fuel</span>':''}
+        ${(v.extras||[]).map(e=>`<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--g2);color:var(--g6);">${e}</span>`).join('')}
+      </div>
+      ${(v.special||[]).length?`<div style="background:var(--ag);border:1px solid var(--am);border-radius:7px;padding:7px 10px;margin-bottom:10px;">
+        <div style="font-size:9px;font-weight:700;color:var(--al);text-transform:uppercase;margin-bottom:4px;">⚠ Special Requests</div>
+        ${(v.special||[]).map(s=>`<div style="font-size:11px;color:var(--al);font-weight:700;">· ${s}</div>`).join('')}
+      </div>`:''}
+      ${v.blocked?`<div style="background:var(--rg);border:1px solid var(--re);border-radius:7px;padding:7px 10px;margin-bottom:10px;font-size:11px;font-weight:700;color:var(--rl);">⛔ ${v.blocked}</div>`:''}
+      <button onclick="${isOut?`startCO('${v.fn}')`:`startCI('${v.fn}')`}" style="width:100%;padding:13px;background:${v.blocked&&isOut?'var(--g2)':accent};border:2px solid ${v.blocked&&isOut?'var(--g3)':'var(--gb)'};border-radius:var(--rs);color:${v.blocked&&isOut?'var(--g5)':'#0a1a10'};font-size:14px;font-weight:800;cursor:${v.blocked&&isOut?'not-allowed':'pointer'};">
+        ${isInProgress?(isOut?'🔴 Continue ▶ CHECK-OUT':'🔴 Continue ◀ CHECK-IN'):(isOut?'▶ Start CHECK-OUT':'◀ Start CHECK-IN')}
+      </button>
+    </div>`);
 
-    return '<div style="border:2px solid '+border+';border-radius:10px;margin-bottom:8px;background:'+bg+';overflow:hidden;">'
-      +header+detail+'</div>';
+    return `<div style="border:2px solid ${border};border-radius:10px;margin-bottom:8px;background:${bg};overflow:hidden;">${header}${detail}</div>`;
   }
 
   const body=document.getElementById('ov-body');
   if(!body) return;
 
-  // Header with clock + date
-  const headerHTML='<div style="background:linear-gradient(135deg,var(--g1),var(--g0));border-bottom:2px solid var(--gb);padding:14px 16px;">'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
-      +'<div>'
-        +'<div style="font-size:11px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Today</div>'
-        +'<div style="font-size:15px;font-weight:800;color:var(--se);letter-spacing:-.2px;">'+dateStr+'</div>'
-      +'</div>'
-      +'<div style="text-align:right;background:var(--g0);border:2px solid var(--gb);border-radius:10px;padding:8px 14px;">'
-        +'<div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;">Time</div>'
-        +'<div id="ov-clock" style="font-size:22px;font-weight:800;color:var(--se);font-variant-numeric:tabular-nums;letter-spacing:-.5px;">'+timeStr+'</div>'
-      +'</div>'
-    +'</div>'
-    // Week / Past tabs
-    +'<div style="display:flex;gap:8px;margin-bottom:10px;">'
-      +'<button onclick="window._ovView=\'week\';window._ovMode=null;window._ovExpanded=null;renderOV()" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid '+(view==='week'?'#4a6fa5':'var(--g3)')+';background:'+(view==='week'?'rgba(74,111,165,.15)':'var(--g1)')+';color:'+(view==='week'?'#7ba3d4':'var(--g5)')+';">📅 This Week <span style="font-size:10px;opacity:.7;">'+(weekOut.length+weekIn.length)+'</span></button>'
-      +'<button onclick="window._ovView=\'past\';window._ovMode=null;window._ovExpanded=null;renderOV()" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid '+(view==='past'?'#2a9d5c':'var(--g3)')+';background:'+(view==='past'?'rgba(42,157,92,.15)':'var(--g1)')+';color:'+(view==='past'?'var(--se)':'var(--g5)')+';">📋 Past 7 Days <span style="font-size:10px;opacity:.7;">'+(pastOut.length+pastIn.length)+'</span></button>'
-    +'</div>'
-    // Check-Out / Check-In selector
-    +'<div style="display:flex;gap:8px;">'
-      +'<button onclick="window._ovMode=window._ovMode===\'out\'?null:\'out\';window._ovExpanded=null;renderOV()" style="flex:1;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid '+(mode==='out'?'#4a6fa5':'var(--g3)')+';background:'+(mode==='out'?'rgba(74,111,165,.15)':'var(--g1)')+';color:'+(mode==='out'?'#7ba3d4':'var(--g5)')+';">▶ CHECK-OUT <span style="font-size:11px;background:'+(mode==='out'?'#4a6fa5':'var(--g2)')+';color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">'+(view==='week'?weekOut.length:pastOut.length)+'</span></button>'
-      +'<button onclick="window._ovMode=window._ovMode===\'in\'?null:\'in\';window._ovExpanded=null;renderOV()" style="flex:1;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid '+(mode==='in'?'#2a9d5c':'var(--g3)')+';background:'+(mode==='in'?'rgba(42,157,92,.15)':'var(--g1)')+';color:'+(mode==='in'?'var(--se)':'var(--g5)')+';">◀ CHECK-IN <span style="font-size:11px;background:'+(mode==='in'?'#2a9d5c':'var(--g2)')+';color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">'+(view==='week'?weekIn.length:pastIn.length)+'</span></button>'
-    +'</div>'
-  +'</div>';
+  const all=(view==='week'?[...weekOut,...weekIn]:[...pastOut,...pastIn]).sort((a,b)=>{
+    const da=a.pu||a.rt; const db=b.pu||b.rt; return da>db?1:-1;
+  });
 
-  // Body content
-  let contentHTML='';
-  if(!mode){
-    // No mode selected — show a summary overview
-    const all=(view==='week'?[...weekOut,...weekIn]:[...pastOut,...pastIn]).sort((a,b)=>{
-      const da=a.pu||a.rt; const db=b.pu||b.rt; return da>db?1:-1;
-    });
-    contentHTML='<div style="padding:12px;">'
-      +'<div style="font-size:11px;color:var(--g5);text-align:center;margin-bottom:12px;">Select 🔑 Check-Out or 🏠 Check-In above to see vehicles</div>'
-      // Mini overview of all movements
-      +all.map(v=>{
-        const isOut=weekOut.includes(v)||pastOut.includes(v);
-        const date=isOut?v.pu:v.rt;
-        const isToday=daysFrom(date)===0;
-        const accent=isOut?'#4a6fa5':'#2a9d5c';
-        return '<div onclick="window._ovMode=\''+(isOut?'out':'in')+'\';window._ovExpanded=\''+v.fn+'\';renderOV()" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1px solid '+(isToday?accent:'var(--g2)')+';background:'+(isToday?(isOut?'rgba(74,111,165,.1)':'rgba(42,157,92,.1)'):'var(--g1)')+';margin-bottom:6px;">'
-          +'<span style="font-size:18px;">'+(isOut?'🔑':'🏠')+'</span>'
-          +'<div style="flex:1;">'
-            +'<div style="font-size:13px;font-weight:800;color:var(--tx);">'+v.fn+' · '+v.cl+'</div>'
-            +'<div style="font-size:10px;color:var(--g5);">'+(isOut?'▶ CHECK-OUT':'◀ CHECK-IN')+' · '+new Date(date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}).toUpperCase()+(isToday?' <strong style="color:'+accent+'">TODAY</strong>':'')+'</div>'
-          +'</div>'
-          +'<span style="font-size:11px;font-weight:700;color:var(--g5);">Details ›</span>'
-        +'</div>';
-      }).join('')
-    +'</div>';
-  } else {
-    // Mode selected — show that type's vehicles
-    contentHTML='<div style="padding:12px;">'
-      +(activeList.length
-        ? activeList.map(v=>bookingCard(v,mode)).join('')
-        : '<div style="text-align:center;color:var(--g5);padding:24px;font-size:12px;">No '+(mode==='out'?'check-outs':'check-ins')+' in '+(view==='week'?'the next 7 days':'the past 7 days')+'</div>')
-    +'</div>';
-  }
+  const summaryRows=all.map(v=>{
+    const isOut=weekOut.includes(v)||pastOut.includes(v);
+    const date=isOut?v.pu:v.rt;
+    const isToday=daysFrom(date)===0;
+    const accent=isOut?'#4a6fa5':'#2a9d5c';
+    return `<div onclick="ovExpandTo('${isOut?'out':'in'}','${v.fn}')" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1px solid ${isToday?accent:'var(--g3)'};background:${isToday?(isOut?'rgba(74,111,165,.1)':'rgba(42,157,92,.1)'):'var(--g1)'};margin-bottom:6px;">
+      <span style="font-size:18px;font-weight:900;color:${accent};">${isOut?'▶':'◀'}</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:800;color:var(--tx);">${v.fn} · ${v.cl}</div>
+        <div style="font-size:10px;color:${isToday?accent:'var(--g5)'};">${isOut?'▶ CHECK-OUT':'◀ CHECK-IN'} · ${new Date(date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}).toUpperCase()}${isToday?' · <strong style="color:'+accent+'">TODAY</strong>':''}</div>
+      </div>
+      <span style="font-size:11px;font-weight:700;color:var(--g5);">Details ›</span>
+    </div>`;
+  }).join('');
 
-  body.innerHTML=headerHTML+contentHTML;
+  body.innerHTML=`
+  <div style="background:linear-gradient(135deg,var(--g1),var(--g0));border-bottom:2px solid var(--gb);padding:14px 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Today</div>
+        <div style="font-size:15px;font-weight:800;color:var(--se);letter-spacing:-.2px;">${dateStr}</div>
+      </div>
+      <div style="text-align:right;background:var(--g0);border:2px solid var(--gb);border-radius:10px;padding:8px 14px;">
+        <div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;">Time</div>
+        <div id="ov-clock" style="font-size:22px;font-weight:800;color:var(--se);font-variant-numeric:tabular-nums;letter-spacing:-.5px;">${timeStr}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <button onclick="ovSetView('week')" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid ${view==='week'?'#4a6fa5':'var(--g3)'};background:${view==='week'?'rgba(74,111,165,.15)':'var(--g1)'};color:${view==='week'?'#7ba3d4':'var(--g5)'};">📅 This Week <span style="font-size:10px;opacity:.7;">${weekOut.length+weekIn.length}</span></button>
+      <button onclick="ovSetView('past')" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid ${view==='past'?'#2a9d5c':'var(--g3)'};background:${view==='past'?'rgba(42,157,92,.15)':'var(--g1)'};color:${view==='past'?'var(--se)':'var(--g5)'};">📋 Past 7 Days <span style="font-size:10px;opacity:.7;">${pastOut.length+pastIn.length}</span></button>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="ovSetMode('out')" style="flex:1;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid ${mode==='out'?'#4a6fa5':'var(--g3)'};background:${mode==='out'?'rgba(74,111,165,.15)':'var(--g1)'};color:${mode==='out'?'#7ba3d4':'var(--g5)'};">▶ CHECK-OUT <span style="font-size:11px;background:${mode==='out'?'#4a6fa5':'var(--g2)'};color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">${view==='week'?weekOut.length:pastOut.length}</span></button>
+      <button onclick="ovSetMode('in')" style="flex:1;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid ${mode==='in'?'#2a9d5c':'var(--g3)'};background:${mode==='in'?'rgba(42,157,92,.15)':'var(--g1)'};color:${mode==='in'?'var(--se)':'var(--g5)'};">◀ CHECK-IN <span style="font-size:11px;background:${mode==='in'?'#2a9d5c':'var(--g2)'};color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">${view==='week'?weekIn.length:pastIn.length}</span></button>
+    </div>
+  </div>
+  <div style="padding:12px;">
+    ${!mode
+      ? `<div style="font-size:11px;color:var(--g5);text-align:center;margin-bottom:12px;">Select ▶ CHECK-OUT or ◀ CHECK-IN above</div>${summaryRows}`
+      : (activeList.length ? activeList.map(v=>bookingCard(v,mode)).join('') : `<div style="text-align:center;color:var(--g5);padding:24px;font-size:12px;">No ${mode==='out'?'check-outs':'check-ins'} in ${view==='week'?'the next 7 days':'the past 7 days'}</div>`)
+    }
+  </div>`;
 }
+
 
 
 
