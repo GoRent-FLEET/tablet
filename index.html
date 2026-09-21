@@ -818,15 +818,19 @@ function renderCOPicker(){
     var isToday=v.pu===today;
     var badge=isToday?'<span style="background:#4a6fa5;color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">TODAY</span>':'<span style="background:var(--g2);color:var(--g5);font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">UPCOMING</span>';
     var dt=new Date(v.pu+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
-    rows+='<div onclick="startCO(''+v.fn+'')" style="background:var(--g1);border:2px solid '+(isToday?'#4a6fa5':'var(--g3)')+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;touch-action:manipulation;">'
+    var col=isToday?'#4a6fa5':'var(--g3)';
+    rows+='<div data-fn="'+v.fn+'" class="picker-row" style="background:var(--g1);border:2px solid '+col+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;touch-action:manipulation;">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;">'
       +'<div><div style="font-size:16px;font-weight:900;color:var(--se);">'+v.fn+'</div>'
       +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+v.cl+'</div>'
-      +'<div style="font-size:11px;color:var(--g5);margin-top:3px;">'+v.reg+' · '+dt+'</div></div>'
+      +'<div style="font-size:11px;color:var(--g5);margin-top:3px;">'+v.reg+' &middot; '+dt+'</div></div>'
       +'<div>'+badge+'</div></div></div>';
   });
   if(!upcoming.length) rows='<div style="padding:40px;text-align:center;color:var(--g5);font-size:13px;">No check-outs in the next 7 days</div>';
-  body.innerHTML='<div style="padding:16px;"><div style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;">▶ Select Vehicle to Check Out</div>'+rows+'</div>';
+  body.innerHTML='<div style="padding:16px;"><div style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;">&#9654; Select Vehicle to Check Out</div>'+rows+'</div>';
+  body.querySelectorAll('.picker-row').forEach(function(el){
+    el.addEventListener('click',function(){ startCO(this.dataset.fn); });
+  });
 }
 
 function renderCIPicker(){
@@ -843,15 +847,19 @@ function renderCIPicker(){
     var isToday=v.rt===today;
     var badge=isToday?'<span style="background:#2a9d5c;color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">TODAY</span>':'<span style="background:var(--g2);color:var(--g5);font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">UPCOMING</span>';
     var dt=new Date(v.rt+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
-    rows+='<div onclick="startCI(''+v.fn+'')" style="background:var(--g1);border:2px solid '+(isToday?'#2a9d5c':'var(--g3)')+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;touch-action:manipulation;">'
+    var col=isToday?'#2a9d5c':'var(--g3)';
+    rows+='<div data-fn="'+v.fn+'" class="picker-row-ci" style="background:var(--g1);border:2px solid '+col+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;touch-action:manipulation;">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;">'
       +'<div><div style="font-size:16px;font-weight:900;color:var(--se);">'+v.fn+'</div>'
       +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+v.cl+'</div>'
-      +'<div style="font-size:11px;color:var(--g5);margin-top:3px;">'+v.reg+' · Return: '+dt+'</div></div>'
+      +'<div style="font-size:11px;color:var(--g5);margin-top:3px;">'+v.reg+' &middot; Return: '+dt+'</div></div>'
       +'<div>'+badge+'</div></div></div>';
   });
   if(!returning.length) rows='<div style="padding:40px;text-align:center;color:var(--g5);font-size:13px;">No check-ins in the next 7 days</div>';
-  body.innerHTML='<div style="padding:16px;"><div style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;">◀ Select Vehicle to Check In</div>'+rows+'</div>';
+  body.innerHTML='<div style="padding:16px;"><div style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;">&#9664; Select Vehicle to Check In</div>'+rows+'</div>';
+  body.querySelectorAll('.picker-row-ci').forEach(function(el){
+    el.addEventListener('click',function(){ startCI(this.dataset.fn); });
+  });
 }
 
 
