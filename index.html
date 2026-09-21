@@ -658,52 +658,39 @@ function renderOV(){
     const dayLabel=isToday?`<span style="font-weight:800;color:${accent}">TODAY</span>`:
                    `<span style="color:${isPast?'var(--g5)':accent}">${fmtDate(date)}</span>`;
 
-    const header=`<div onclick="ovExpand('${v.fn}')" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:11px 13px;">
-      <div style="width:36px;height:36px;border-radius:8px;background:${isInProgress?'#e53e3e':accent};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;font-weight:900;color:#fff;">
-        ${isInProgress?(inprog.staff||'?').slice(0,2).toUpperCase():(isOut?'▶':'◀')}
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          <span style="font-size:14px;font-weight:800;color:var(--tx);">${v.fn}</span>
-          <span style="font-size:11px;color:var(--g5);">${v.reg}</span>
-          ${v.quote?`<span style="font-size:10px;color:var(--g5);">${v.quote}</span>`:''}
-        </div>
-        <div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:1px;">${v.cl}</div>
-        <div style="font-size:11px;margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          ${dayLabel}
-          ${v.camping?`<span style="color:var(--se);font-weight:700;">🏕 ${v.pax} pax</span>`:`<span style="color:var(--g5);">🏨 ${v.pax} pax</span>`}
-          ${v.xb?`<span style="color:var(--al);font-weight:700;">🌍 ${v.xb}</span>`:''}
-        </div>
-        ${isInProgress?`<div style="font-size:10px;font-weight:800;color:#e53e3e;margin-top:3px;">🔴 IN PROGRESS · ${inprog.staff} · Tap to continue</div>`:''}
-      </div>
-      <div style="font-size:18px;color:var(--g5);flex-shrink:0;">${isExp?'▲':'▼'}</div>
-    </div>`;
+    // Store fn/type as data attributes on the action button - avoids all quote issues
+    const actionBtn=isExp?`<button data-fn="${v.fn}" data-type="${type}"
+      onclick="this.dataset.type==='out'?startCO(this.dataset.fn):startCI(this.dataset.fn)"
+      style="width:100%;padding:14px;background:${v.blocked&&isOut?'var(--g2)':accent};border:2px solid ${v.blocked&&isOut?'var(--g3)':'var(--gb)'};border-radius:var(--rs);color:${v.blocked&&isOut?'var(--g5)':'#0a1a10'};font-size:15px;font-weight:800;cursor:${v.blocked&&isOut?'not-allowed':'pointer'};margin-top:4px;">
+      ${isInProgress?(isOut?'🔴 Continue ▶ CHECK-OUT':'🔴 Continue ◀ CHECK-IN'):(isOut?'▶ Start CHECK-OUT':'◀ Start CHECK-IN')} — ${v.fn}
+    </button>`:'';
 
     const detail=!isExp?'':(`<div style="border-top:1px solid var(--g2);padding:12px 14px;background:var(--g0);">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-        <div style="background:var(--g1);border-radius:8px;padding:10px 12px;border:1px solid var(--g2);margin-bottom:2px;">
-          <div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:8px;">✈️ Flight Details</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-            <div style="background:var(--g0);border-radius:7px;padding:8px 10px;border-left:3px solid var(--se);">
-              <div style="font-size:9px;font-weight:700;color:var(--se);text-transform:uppercase;margin-bottom:3px;">▶ Inbound (arrival)</div>
-              <div style="font-size:12px;font-weight:800;color:var(--tx);">${v.flightIn||'—'}</div>
-            </div>
-            <div style="background:var(--g0);border-radius:7px;padding:8px 10px;border-left:3px solid var(--bl);">
-              <div style="font-size:9px;font-weight:700;color:#7ba3d4;text-transform:uppercase;margin-bottom:3px;">◀ Outbound (departure)</div>
-              <div style="font-size:12px;font-weight:800;color:var(--tx);">${v.flightOut||'—'}</div>
-            </div>
+      <div style="background:var(--g1);border-radius:8px;padding:10px 12px;border:1px solid var(--g2);margin-bottom:8px;">
+        <div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:8px;">✈️ Flight Details</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div style="background:var(--g0);border-radius:7px;padding:8px 10px;border-left:3px solid var(--se);">
+            <div style="font-size:9px;font-weight:700;color:var(--se);text-transform:uppercase;margin-bottom:3px;">▶ Inbound arrival</div>
+            <div style="font-size:12px;font-weight:800;color:var(--tx);">${v.flightIn||'—'}</div>
+          </div>
+          <div style="background:var(--g0);border-radius:7px;padding:8px 10px;border-left:3px solid #4a6fa5;">
+            <div style="font-size:9px;font-weight:700;color:#7ba3d4;text-transform:uppercase;margin-bottom:3px;">◀ Outbound departure</div>
+            <div style="font-size:12px;font-weight:800;color:var(--tx);">${v.flightOut||'—'}</div>
           </div>
         </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
         ${[
-          ['📍','Transfer / Location',v.transfer?(v.transfer+(v.location?' · '+v.location:'')):(v.location||'—')],
+          ['📍','Transfer',v.transfer?(v.transfer+(v.location?' · '+v.location:'')):(v.location||'—')],
           ['📧','Email',v.email?`<a href="mailto:${v.email}" style="color:var(--se);text-decoration:none;">${v.email}</a>`:'—'],
           ['💬','WhatsApp',v.phone?`<a href="https://wa.me/${v.phone.replace(/[\s+]/g,'')}" target="_blank" style="color:var(--se);text-decoration:none;">${v.phone}</a>`:'—'],
-        ].map(([ico,lbl,val])=>`<div style="background:var(--g1);border-radius:7px;padding:8px 10px;border:1px solid var(--g2);">
-          <div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">${ico} ${lbl}</div>
+          ['📋','Quote',v.quote||'—'],
+        ].map(([ico,lbl,val])=>`<div style="background:var(--g1);border-radius:7px;padding:7px 10px;border:1px solid var(--g2);">
+          <div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:2px;">${ico} ${lbl}</div>
           <div style="font-size:11px;font-weight:700;color:var(--tx);">${val}</div>
         </div>`).join('')}
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
         ${v.camping?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🏕 Camping</span>':'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--g2);color:var(--g5);">🏨 No camping</span>'}
         ${v.tent?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">⛺ Tent</span>':''}
         ${v.fridge?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🧊 Fridge</span>':''}
@@ -711,17 +698,37 @@ function renderOV(){
         ${v.extraFuel?'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⛽ Extra fuel</span>':''}
         ${(v.extras||[]).map(e=>`<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--g2);color:var(--g6);">${e}</span>`).join('')}
       </div>
-      ${(v.special||[]).length?`<div style="background:var(--ag);border:1px solid var(--am);border-radius:7px;padding:7px 10px;margin-bottom:10px;">
+      ${(v.special||[]).length?`<div style="background:var(--ag);border:1px solid var(--am);border-radius:7px;padding:7px 10px;margin-bottom:8px;">
         <div style="font-size:9px;font-weight:700;color:var(--al);text-transform:uppercase;margin-bottom:4px;">⚠ Special Requests</div>
         ${(v.special||[]).map(s=>`<div style="font-size:11px;color:var(--al);font-weight:700;">· ${s}</div>`).join('')}
       </div>`:''}
-      ${v.blocked?`<div style="background:var(--rg);border:1px solid var(--re);border-radius:7px;padding:7px 10px;margin-bottom:10px;font-size:11px;font-weight:700;color:var(--rl);">⛔ ${v.blocked}</div>`:''}
-      <button onclick="doAction('${v.fn}',${isOut})" style="width:100%;padding:13px;background:${v.blocked&&isOut?'var(--g2)':accent};border:2px solid ${v.blocked&&isOut?'var(--g3)':'var(--gb)'};border-radius:var(--rs);color:${v.blocked&&isOut?'var(--g5)':'#0a1a10'};font-size:14px;font-weight:800;cursor:${v.blocked&&isOut?'not-allowed':'pointer'};">
-        ${isInProgress?(isOut?'🔴 Continue ▶ CHECK-OUT':'🔴 Continue ◀ CHECK-IN'):(isOut?'▶ Start CHECK-OUT':'◀ Start CHECK-IN')}
-      </button>
+      ${v.blocked?`<div style="background:var(--rg);border:1px solid var(--re);border-radius:7px;padding:7px 10px;margin-bottom:8px;font-size:11px;font-weight:700;color:var(--rl);">⛔ ${v.blocked}</div>`:''}
+      ${actionBtn}
     </div>`);
 
-    return `<div style="border:2px solid ${border};border-radius:10px;margin-bottom:8px;background:${bg};overflow:hidden;">${header}${detail}</div>`;
+    return `<div style="border:2px solid ${border};border-radius:10px;margin-bottom:8px;background:${bg};overflow:hidden;">
+      <div onclick="ovExpand('${v.fn}')" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:11px 13px;">
+        <div style="width:36px;height:36px;border-radius:8px;background:${isInProgress?'#e53e3e':accent};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;font-weight:900;color:#fff;">
+          ${isInProgress?(inprog.staff||'?').slice(0,2).toUpperCase():(isOut?'▶':'◀')}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:14px;font-weight:800;color:var(--tx);">${v.fn}</span>
+            <span style="font-size:11px;color:var(--g5);">${v.reg}</span>
+            ${v.quote?`<span style="font-size:10px;color:var(--g5);">${v.quote}</span>`:''}
+          </div>
+          <div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:1px;">${v.cl}</div>
+          <div style="font-size:11px;margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            ${dayLabel}
+            ${v.camping?`<span style="color:var(--se);font-weight:700;">🏕 ${v.pax} pax</span>`:`<span style="color:var(--g5);">🏨 ${v.pax} pax</span>`}
+            ${v.xb?`<span style="color:var(--al);font-weight:700;">🌍 ${v.xb}</span>`:''}
+          </div>
+          ${isInProgress?`<div style="font-size:10px;font-weight:800;color:#e53e3e;margin-top:3px;">🔴 IN PROGRESS · ${inprog.staff}</div>`:''}
+        </div>
+        <div style="font-size:18px;color:var(--g5);flex-shrink:0;">${isExp?'▲':'▼'}</div>
+      </div>
+      ${detail}
+    </div>`;
   }
 
   const body=document.getElementById('ov-body');
