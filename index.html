@@ -684,9 +684,9 @@ function tapPin(d){
     if(staff){
       APP_USER = staff;
       try{localStorage.setItem('gorent_user',JSON.stringify(staff));}catch(e){}
-      if(msg){ msg.style.color='var(--se)'; msg.textContent='✅ Logging in as '+name+'...'; }
+      if(msg){ msg.style.color='var(--se)'; msg.style.fontSize='16px'; msg.textContent='✅ Logged in as '+name+' — Successful!'; }
       _pin='';
-      setTimeout(function(){ showApp(); }, 1000);
+      setTimeout(function(){ showApp(); }, 1500);
     } else {
       if(msg){ msg.style.color='var(--rl)'; msg.textContent='❌ Wrong PIN — try again'; }
       _pin='';
