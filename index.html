@@ -269,6 +269,15 @@ input[type=file]{display:none;}
 .ins-emsg{font-size:9px;color:var(--g4);font-style:italic;}
 
 /* REPORTS */
+/* LOGIN PAGE */
+#page-login{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);padding:20px;}
+#page-login.on{display:flex;}
+.pdot{display:inline-block;width:16px;height:16px;border-radius:50%;border:2px solid var(--g4);margin:0 6px;transition:background .15s,border-color .15s;}
+.pdot.filled{background:var(--se);border-color:var(--se);}
+.pin-btn{width:72px;height:72px;border-radius:50%;border:2px solid var(--g3);background:var(--g1);color:var(--tx);font-size:22px;font-weight:700;cursor:pointer;transition:background .1s,border-color .1s;}
+.pin-btn:active{background:var(--g3);}
+#nav-user{font-size:11px;font-weight:700;color:var(--se);padding:0 6px;white-space:nowrap;}
+#nav-logout{font-size:11px;font-weight:700;padding:5px 10px;border-radius:6px;border:1px solid var(--g3);background:transparent;color:var(--g5);cursor:pointer;}
 .rpt-card{background:var(--g1);border:2px solid var(--g2);border-radius:var(--r);padding:13px;margin-bottom:8px;cursor:pointer;}
 .rpt-card:hover{border-color:var(--g3);}
 .rpt-fn{font-size:16px;font-weight:800;color:var(--tx);}
@@ -315,13 +324,42 @@ input[type=file]{display:none;}
     <button class="nb on" id="nb-ov" onclick="goPage('ov')">📊 Dashboard</button>
     <button class="nb" id="nb-co" onclick="goPage('co')">🚗 Check-Out</button>
     <button class="nb" id="nb-ci" onclick="goPage('ci')">🏠 Check-In</button>
-    <button class="nb" id="nb-rp" onclick="goPage('rp')">📋 Reports</button>
+    <span id="nav-user" style="font-size:11px;font-weight:700;color:var(--se);padding:0 6px;margin-left:auto;white-space:nowrap;"></span><button id="nav-logout" onclick="logoutUser()" style="display:none;font-size:11px;font-weight:700;padding:5px 10px;border-radius:6px;border:1px solid var(--g3);background:transparent;color:var(--g5);cursor:pointer;margin-right:4px;">Sign Out</button><button class="nb" id="nb-rp" onclick="goPage('rp')">📋 Reports</button>
     <div id="nav-user" style="display:none"></div>
   </div>
   <div class="toast" id="toast"></div>
   <div id="upload-banner"></div>
   <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
-    <div class="page on" id="page-ov"><div class="scroll" id="ov-body"></div></div>
+    <div id="page-login">
+  <div style="text-align:center;margin-bottom:32px;">
+    <div style="font-size:30px;font-weight:900;color:#fff;letter-spacing:-1px;">Go&nbsp;Rent <span style="color:var(--se);">4×4</span></div>
+    <div style="font-size:12px;color:var(--g5);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;">Fleet Management</div>
+  </div>
+  <div style="background:var(--g1);border:2px solid var(--g2);border-radius:16px;padding:28px 24px;width:100%;max-width:300px;text-align:center;">
+    <div style="font-size:13px;font-weight:700;color:var(--g5);margin-bottom:20px;">Enter your 4-digit code</div>
+    <div id="pin-dots" style="margin-bottom:24px;">
+      <span class="pdot"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span>
+    </div>
+    <input id="pin-input" type="text" style="display:none;" maxlength="4">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;">
+      <button class="pin-btn" onclick="tapPin('1')">1</button>
+      <button class="pin-btn" onclick="tapPin('2')">2</button>
+      <button class="pin-btn" onclick="tapPin('3')">3</button>
+      <button class="pin-btn" onclick="tapPin('4')">4</button>
+      <button class="pin-btn" onclick="tapPin('5')">5</button>
+      <button class="pin-btn" onclick="tapPin('6')">6</button>
+      <button class="pin-btn" onclick="tapPin('7')">7</button>
+      <button class="pin-btn" onclick="tapPin('8')">8</button>
+      <button class="pin-btn" onclick="tapPin('9')">9</button>
+      <button class="pin-btn" onclick="clearPin()" style="font-size:16px;">⌫</button>
+      <button class="pin-btn" onclick="tapPin('0')">0</button>
+      <button class="pin-btn" style="opacity:0;pointer-events:none;"></button>
+    </div>
+    <div id="pin-error" style="font-size:12px;color:var(--rl);min-height:18px;margin-top:8px;font-weight:700;"></div>
+  </div>
+  <div style="margin-top:20px;font-size:10px;color:var(--g4);text-align:center;">Contact management if you don't have a code</div>
+</div>
+<div class="page on" id="page-ov"><div class="scroll" id="ov-body"></div></div>
     <div class="page" id="page-co"><div class="scroll" id="co-body"><div style="padding:40px;text-align:center;color:var(--g5)">Select a vehicle from Overview</div></div></div>
     <div class="page" id="page-ci"><div class="scroll" id="ci-body"><div style="padding:40px;text-align:center;color:var(--g5)">Select a returning vehicle from Overview</div></div></div>
     <div class="page" id="page-rp"><div class="scroll" id="rp-body"></div></div>
@@ -516,8 +554,78 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const SB=supabase.createClient(SB_URL,SB_KEY);
 
 // ── STAFF ────────────────────────────────────────────────────────
-const STAFF_PREP=['Simon','Joe','Nelson','Robert','Peter'];
-const STAFF_HO  =['Simon','Joe','Nelson','Robert','Peter'];
+const STAFF_ROSTER=[
+  {name:'Simon',  code:'1001', role:'prep'},
+  {name:'Joe',    code:'2002', role:'prep'},
+  {name:'Nelson', code:'3003', role:'prep'},
+  {name:'Robert', code:'4004', role:'prep'},
+  {name:'Peter',  code:'5005', role:'prep'},
+  {name:'Manager',code:'9999', role:'manager'},
+];
+const STAFF_PREP=STAFF_ROSTER.map(s=>s.name);
+const STAFF_HO  =STAFF_ROSTER.map(s=>s.name);
+
+// ── CURRENT LOGIN ──────────────────────────────────────────────
+let APP_USER = null; // {name, code, role} - set on login
+function initAppUser(){
+  try{
+    const saved=localStorage.getItem('gorent_user');
+    if(saved){APP_USER=JSON.parse(saved);}
+  }catch(e){}
+}
+function loginUser(code){
+  const staff=STAFF_ROSTER.find(s=>s.code===code.trim());
+  if(!staff){return false;}
+  APP_USER=staff;
+  try{localStorage.setItem('gorent_user',JSON.stringify(staff));}catch(e){}
+  return true;
+}
+function logoutUser(){
+  APP_USER=null;
+  try{localStorage.removeItem('gorent_user');}catch(e){}
+  showLogin();
+}
+function showLogin(){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
+  document.getElementById('page-login').classList.add('on');
+  document.getElementById('nav-user').textContent='';
+  document.getElementById('nav-logout').style.display='none';
+  document.getElementById('pin-input').value='';
+  document.getElementById('pin-error').textContent='';
+  document.getElementById('pin-dots').innerHTML='<span class="pdot"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span>';
+}
+function showApp(){
+  document.getElementById('page-login').classList.remove('on');
+  document.getElementById('nav-user').textContent='👤 '+APP_USER.name;
+  document.getElementById('nav-logout').style.display='';
+  goPage('ov');
+}
+function tapPin(d){
+  const inp=document.getElementById('pin-input');
+  if(inp.value.length>=4) return;
+  inp.value+=d;
+  // Update dots
+  const dots=document.getElementById('pin-dots').querySelectorAll('.pdot');
+  dots.forEach((dot,i)=>dot.classList.toggle('filled',i<inp.value.length));
+  if(inp.value.length===4){
+    setTimeout(()=>{
+      if(loginUser(inp.value)){
+        showApp();
+      } else {
+        document.getElementById('pin-error').textContent='Incorrect code — try again';
+        inp.value='';
+        dots.forEach(dot=>dot.classList.remove('filled'));
+        setTimeout(()=>{document.getElementById('pin-error').textContent='';},2000);
+      }
+    },200);
+  }
+}
+function clearPin(){
+  const inp=document.getElementById('pin-input');
+  inp.value=inp.value.slice(0,-1);
+  const dots=document.getElementById('pin-dots').querySelectorAll('.pdot');
+  dots.forEach((dot,i)=>dot.classList.toggle('filled',i<inp.value.length));
+}
 
 // ── APP STATE ────────────────────────────────────────────────────
 let currentUser=null, currentProfile=null;
@@ -534,6 +642,7 @@ initIM();
 
 // ── NAV ──────────────────────────────────────────────────────────
 function goPage(p){
+  if(!APP_USER){showLogin();return;}
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.nb').forEach(e=>e.classList.remove('on'));
   document.getElementById('page-'+p)?.classList.add('on');
@@ -972,7 +1081,9 @@ function coStep0(){
 }
 
 function tapPrep(i){
-  const nm=document.getElementById('co-p-nm')?.value;if(nm)co.prepBy=nm;
+  const nm=document.getElementById('co-p-nm')?.value;
+  if(nm) co.prepBy=nm;
+  else if(APP_USER) co.prepBy=APP_USER.name;
   if(!co.prepBy){toast('Select your name first','err');return;}
   if(L_PREP[i][0]==='__SECTION__'||L_PREP[i][0]==='__OPTIONAL__')return;
   if(L_PREP[i][1]?.startsWith('__QTY__'))return;
@@ -3474,6 +3585,14 @@ function searchReports(q){/* filter locally */}
 
 // ── HELPERS ───────────────────────────────────────────────────────
 function selStaff(id,list,val){
+  // Auto-fill with logged-in user if no value set yet
+  if(!val && APP_USER) val=APP_USER.name;
+  // Auto-update co/ci state
+  if(!val&&APP_USER){
+    if(id==='co-p-nm') co.prepBy=APP_USER.name;
+    else if(id==='co-h-nm') co.mechBy=APP_USER.name;
+    else if(id==='ci-rcv') ci.receivedBy=APP_USER.name;
+  }
   // If already locked in localStorage, show locked state
   const fn = co.fn||ci.fn||'';
   let lockedStaff = '';
