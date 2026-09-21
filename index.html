@@ -1267,125 +1267,6 @@ function renderOV(){
     +'</div>'
 
     +'</div>';
-
-  // Show vehicle detail overlay if a vehicle is expanded
-  if(window._ovExpanded){
-    var fn=window._ovExpanded;
-    var v=FLEET.find(function(x){return x.fn===fn;});
-    if(v){
-      var isOut=(window._ovMode==='out');
-      var clientVisible=canSeeClientInfo();
-      var overlay=document.createElement('div');
-      overlay.style.cssText='position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;';
-      overlay.onclick=function(ev){if(ev.target===overlay){window._ovExpanded=null;renderOV();}};
-
-      var licExp=(v.lic&&v.lic.expiry)||'';
-      var licDiff=licExp?Math.round((new Date(licExp+'T00:00:00')-new Date())/86400000):99;
-      var licBadge=licExp?('<span style="font-size:11px;font-weight:800;padding:2px 9px;border-radius:8px;background:'+(licDiff<30?'#fde8e8':licDiff<60?'#fff3cd':'#e8f5ee')+';color:'+(licDiff<30?'#c53030':licDiff<60?'#b7791f':'#276749')+';">'+(licDiff<0?'⚠ EXPIRED':'Disc: '+new Date(licExp+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}))+'</span>'):'';
-      var campBadge=v.camping?('<span style="background:#e6f4ea;color:#276749;font-size:12px;font-weight:800;padding:3px 10px;border-radius:8px;">🏕 '+v.pax+' Pax Camping</span>'):('<span style="background:#f5f5f5;color:#888;font-size:12px;font-weight:800;padding:3px 10px;border-radius:8px;">🚫 No Camping</span>');
-      var xbBadge=v.xb?('<span style="background:#fff3cd;color:#b7791f;font-size:12px;font-weight:800;padding:3px 10px;border-radius:8px;">🌍 '+v.xb+'</span>'):'';
-      var specBadges=(v.special&&v.special.length?v.special.map(function(sp){return '<span style="background:#fde8e8;color:#c53030;font-size:11px;font-weight:800;padding:2px 9px;border-radius:8px;">⚠ '+sp+'</span>';}).join(''):'');
-
-      // Collection & dropoff
-      var puDate=v.pu?new Date(v.pu+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):'—';
-      var rtDate=v.rt?new Date(v.rt+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):'—';
-
-      var html='<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">'
-        // Handle bar
-        +'<div style="text-align:center;padding:10px 0 0;"><div style="width:40px;height:4px;background:#e0e0e0;border-radius:2px;display:inline-block;"></div></div>'
-        // Header
-        +'<div style="background:#1a3a2a;padding:14px 18px 12px;">'
-        +'<div style="display:flex;align-items:flex-start;justify-content:space-between;">'
-        +'<div>'
-        +'<div style="font-size:22px;font-weight:900;color:#fff;">'+v.fn+' <span style="font-size:14px;font-weight:700;color:rgba(255,255,255,.6);">'+v.reg+'</span></div>'
-        +'<div style="font-size:15px;font-weight:700;color:rgba(255,255,255,.85);margin-top:2px;">'+v.cl+'</div>'
-        +'<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px;">📅 '+v.pu+' → '+v.rt+'</div>'
-        +'</div>'
-        +'<button onclick="window._ovExpanded=null;renderOV();" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:32px;height:32px;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;touch-action:manipulation;">✕</button>'
-        +'</div>'
-        // Status pills
-        +'<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;">'+licBadge+campBadge+xbBadge+specBadges+'</div>'
-        +'<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;">'
-        +'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);">ODO: '+v.odo+' km</span>'
-        +(v.svc?'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);">Svc in '+(v.svc.lastKm+v.svc.intKm-v.odo)+' km</span>':'')
-        +'</div>'
-        +'</div>'
-        // Body
-        +'<div style="padding:14px 16px;">'
-
-        // Collection & Drop-off
-        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'
-        +'<div style="background:#f0fff4;border:1px solid #9ae6b4;border-radius:10px;padding:10px 12px;">'
-        +'<div style="font-size:10px;font-weight:800;color:#276749;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">▶ Collection</div>'
-        +'<div style="font-size:13px;font-weight:800;color:#1a1a1a;">'+(v.puLocation||'Go Rent Office')+'</div>'
-        +'<div style="font-size:11px;color:#666;margin-top:2px;">'+puDate+'</div>'
-        +'</div>'
-        +'<div style="background:#eff6ff;border:1px solid #90cdf4;border-radius:10px;padding:10px 12px;">'
-        +'<div style="font-size:10px;font-weight:800;color:#2b6cb0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">◀ Drop-off</div>'
-        +'<div style="font-size:13px;font-weight:800;color:#1a1a1a;">'+(v.doLocation||'Go Rent Office')+'</div>'
-        +'<div style="font-size:11px;color:#666;margin-top:2px;">'+rtDate+'</div>'
-        +'</div>'
-        +'</div>';
-
-      // Flight & transfer (client info)
-      if(clientVisible&&(v.flightIn||v.flightOut)){
-        html+='<div style="background:#f5f0ff;border:1px solid #d6bcfa;border-radius:10px;padding:12px 14px;margin-bottom:12px;">'
-          +'<div style="font-size:11px;font-weight:800;color:#553c9a;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">✈️ Flight Details</div>'
-          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
-        if(v.flightIn){
-          var arrParts=v.flightIn.split('·');
-          html+='<div style="background:#fff;border-radius:8px;padding:8px 10px;border-top:3px solid #2a9d5c;">'
-            +'<div style="font-size:10px;font-weight:800;color:#276749;text-transform:uppercase;margin-bottom:3px;">▶ ARRIVAL</div>'
-            +'<div style="font-size:14px;font-weight:900;color:#1a1a1a;">'+arrParts[0].trim()+'</div>'
-            +(arrParts[1]?'<div style="font-size:11px;color:#666;">'+arrParts[1].trim()+'</div>':'')
-            +'</div>';
-        }
-        if(v.flightOut){
-          var depParts=v.flightOut.split('·');
-          html+='<div style="background:#fff;border-radius:8px;padding:8px 10px;border-top:3px solid #4a6fa5;">'
-            +'<div style="font-size:10px;font-weight:800;color:#2b6cb0;text-transform:uppercase;margin-bottom:3px;">◀ DEPARTURE</div>'
-            +'<div style="font-size:14px;font-weight:900;color:#1a1a1a;">'+depParts[0].trim()+'</div>'
-            +(depParts[1]?'<div style="font-size:11px;color:#666;">'+depParts[1].trim()+'</div>':'')
-            +'</div>';
-        }
-        html+='</div>';
-        if(v.transfer){
-          var tColor=v.transferPays==='included'?'#276749':'#b7791f';
-          var tBg=v.transferPays==='included'?'#e6f4ea':'#fff3cd';
-          html+='<div style="margin-top:8px;background:#fff;border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:8px;">'
-            +'<span style="font-size:16px;">🚐</span>'
-            +'<div><div style="font-size:13px;font-weight:800;color:#1a1a1a;">'+v.transfer+'</div>'
-            +(v.location?'<div style="font-size:11px;color:#666;">📍 '+v.location+'</div>':'')
-            +(v.transferPays?'<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:'+tBg+';color:'+tColor+';">'+(v.transferPays==='included'?'✅ Included':'💳 Client pays')+'</span>':'')
-            +'</div></div>';
-        }
-        html+='</div>';
-      }
-
-      // Client contact (if allowed)
-      if(clientVisible&&(v.email||v.phone||v.quote)){
-        html+='<div style="background:#f7fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:12px;">'
-          +'<div style="font-size:11px;font-weight:800;color:#4a5568;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">👤 Client Contact</div>'
-          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
-        if(v.quote) html+='<div><div style="font-size:10px;color:#888;">Quote</div><div style="font-size:13px;font-weight:800;">'+v.quote+'</div></div>';
-        if(v.email) html+='<div><div style="font-size:10px;color:#888;">Email</div><a href="mailto:'+v.email+'" style="font-size:12px;font-weight:700;color:#4a6fa5;text-decoration:none;">'+v.email+'</a></div>';
-        if(v.phone) html+='<div><div style="font-size:10px;color:#888;">WhatsApp</div><a href="https://wa.me/'+v.phone.replace(/[\s+]/g,'')+'" style="font-size:12px;font-weight:700;color:#2a9d5c;text-decoration:none;">'+v.phone+'</a></div>';
-        html+='</div></div>';
-      }
-
-      var actionFn=isOut?'startCO':'startCI';
-      var btnBg=isOut?'#4a6fa5':'#2a9d5c';
-      var btnLbl=isOut?'▶ Start Check-Out':'◄ Start Check-In';
-      html+='<button data-fn="'+fn+'" data-action="'+(isOut?'co':'ci')+'" '
-        +'ontouchend="event.preventDefault();'+(isOut?'startCO':'startCI')+'(this.dataset.fn);" '
-        +'onclick="'+(isOut?'startCO':'startCI')+'(this.dataset.fn);" '
-        +'style="width:100%;padding:16px;background:'+btnBg+';border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:900;cursor:pointer;touch-action:manipulation;margin-top:4px;">'
-        +btnLbl+'</button>';
-
-      overlay.innerHTML=html;
-      body.appendChild(overlay);
-    }
-  }
 }
 
 
@@ -1442,8 +1323,8 @@ const CO_STEPS=[
   {n:1,ico:'🔧',lbl:'Engine',     sub:'Under the bonnet'},
   {n:2,ico:'🔩',lbl:'Mechanical', sub:'Mechanical check'},
   {n:3,ico:'⛺',lbl:'Camping',    sub:'Camping equipment'},
-  {n:4,ico:'📋',lbl:'Contract',   sub:'Sign agreement'},
-  {n:5,ico:'🔍',lbl:'Inspection', sub:'Vehicle inspection'},
+  {n:4,ico:'🔍',lbl:'Inspection', sub:'Vehicle inspection'},
+  {n:5,ico:'📋',lbl:'Contract',   sub:'Sign agreement'},
   {n:6,ico:'🤝',lbl:'Handover',   sub:'Client handover'},
   {n:7,ico:'👔',lbl:'Management', sub:'Clear to go'},
 ];
@@ -1467,7 +1348,7 @@ function drawCO(){
                   s.n===3?co.equipBy:s.n===4?'':s.n===5?co.dmgBy:
                   s.n===6?co.custBy:co.mgmtBy)||'';
     const active=s.n===coStep;
-    const restricted=isPrepOnly()&&(s.n===4||s.n===7);
+    const restricted=isPrepOnly()&&(s.n===5||s.n===7);
     return `<div class="stg ${active?'active':done?'done':restricted?'restricted':''}" onclick="coGoStep(${s.n})" style="position:relative;overflow:hidden;${restricted?'opacity:.4;cursor:not-allowed;':''}">
       ${done&&!active&&stepBy?`<div style="font-size:7px;font-weight:900;color:var(--se);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 2px;background:var(--sg);line-height:11px;letter-spacing:-.2px;">${stepBy}</div>`:'<div style="line-height:3px;">&nbsp;</div>'}
       <div style="font-size:13px;line-height:1.2;">${done&&!active?'✅':s.ico}</div>
@@ -1483,8 +1364,8 @@ function drawCO(){
     else if(coStep===1){_stepLine=3; body=coStepBonnet();}  // Under bonnet
     else if(coStep===2){_stepLine=4; body=coStepMech();}    // Mechanical
     else if(coStep===3){_stepLine=5; body=coStep1_equip();} // Camping equipment
-    else if(coStep===4){_stepLine=6; body=coStep1();}       // Client ID / contract
-    else if(coStep===5){_stepLine=7; body=coStep4_dmg();}   // Vehicle inspection
+    else if(coStep===4){_stepLine=6; body=coStep4_dmg();}   // Vehicle inspection
+    else if(coStep===5){_stepLine=7; body=coStep1();}       // Client ID / contract
     else if(coStep===6){_stepLine=8; body=coStep5_client();} // Handover
     else{_stepLine=9; body=coStep6_mgmt();}                 // Management
     _stepLine=9;
@@ -1558,7 +1439,7 @@ function drawCO(){
 
 function coGoStep(t){
   // Prep-only staff cannot access Contract (step 4) or Management (step 7)
-  if(isPrepOnly() && (t===4 || t===7)){
+  if(isPrepOnly() && (t===5 || t===7)){
     toast('🔒 Access restricted — contact management','err');
     return;
   }
@@ -1634,31 +1515,26 @@ function coStep0(){
     const st=_pst(lbl);const by=_pby(lbl);const at=_pat(lbl);
     const isQtyItem=lbl.startsWith('__QTY__');
     const realLbl=isQtyItem?lbl.replace('__QTY__',''):lbl;
-    const naSVG=()=>`<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(90,112,144,.15)" stroke="#5a7090" stroke-width="2"/><path d="M8 12h8" stroke="#5a7090" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+    function naSVG(){return '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(90,112,144,.15)" stroke="#5a7090" stroke-width="2"/><path d="M8 12h8" stroke="#5a7090" stroke-width="2.5" stroke-linecap="round"/></svg>';}
     return `<div class="ci ${st==='ok'?'ok':st==='prob'?'prob':''}" onclick="tapPrep(${i})">
-      <div class="ci-icon">${ico==='__OPT_ITEM__'?`<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>`:ico}</div>
+      <div class="ci-icon">${ico==='__OPT_ITEM__'?'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>':ico}</div>
       <div class="ci-text">
         <div class="ci-lbl">${realLbl}</div>
-        <div class="ci-det">${det}${by?` <span style="font-size:13px;color:var(--se);font-weight:700;margin-left:6px;">✓ ${by}${at?' · '+at:''}</span>`:''}</div>
+        <div class="ci-det">${det}${by?' <span style="font-size:13px;color:var(--se);font-weight:700;margin-left:6px;">✓ '+by+(at?' · '+at:'')+'</span>':''}</div>
       </div>
       <div class="ci-st">${st==='ok'?okSVG():st==='prob'?probSVG():st==='na'?naSVG():uncSVG()}</div>
     </div>`;
   }).join('')}</div>
-  ${probs.length?`<div class="al warn">⚠ Problems noted: ${probs.join(' · ')}</div>`:''}
-  ${staffOnStep.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">
-    <div style="font-size:13px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on this step</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;">
-      ${staffOnStep.map(n=>{const cnt=(co.prepLog?co.prepLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:14px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:13px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}
-    </div>
-  </div>`:''}
+  ${probs.length?'<div class="al warn">⚠ Problems noted: '+probs.join(' · ')+'</div>':''}
+  ${(function(){if(staffOnStep.length<=1)return '';var chips=staffOnStep.map(function(n){var cnt=(co.prepLog?co.prepLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:14px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:13px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('');return '<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;"><div style="font-size:13px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on this step</div><div style="display:flex;flex-wrap:wrap;gap:6px;">'+chips+'</div></div>';})()}
   ${photoHTML('co.prepPhotos','📷 Vehicle Photos','Photograph the vehicle exterior — all sides. Proof of condition before departure.',4)}
   ${co.prepSig?
-    `<div class="signed">✅<div class="signed-name">${co.prepBy} — Vehicle check signed</div><div class="signed-time">${co.prepAt}</div></div>`:
-    `<div class="liab">⚠️ By signing, <strong>${co.prepBy||'[select name above]'}</strong> confirms all items they personally checked above.
-    ${staffOnStep.length>1?'<br><span style="color:var(--al);">'+staffOnStep.filter(n=>n!==co.prepBy).join(' + ')+'</span> also contributed to this step — both names will be recorded.':''}<br>
-    Every ⬜ grey item = <strong>NOT CHECKED = personal liability.</strong></div>
-    <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">${co.prepBy||'Your'} signature</span><span class="sig-clr" onclick="clrSig('co-p-sig')">Clear</span></div><canvas class="sig-cv" id="co-p-sig"></canvas></div>
-    <button class="btn g" onclick="signPrep()">✓ Sign & Confirm — Vehicle Check Complete</button>`}`;
+    '<div class="signed">✅<div class="signed-name">'+co.prepBy+' — Vehicle check signed</div><div class="signed-time">'+co.prepAt+' — Vehicle check signed</div></div>':
+    '<div class="liab">⚠️ By signing, <strong>'+(co.prepBy||'[select name above]')+'</strong> confirms all items they personally checked above.'
+    +(staffOnStep.length>1?'<br><span style="color:var(--al);">'+staffOnStep.filter(function(n){return n!==co.prepBy;}).join(' + ')+'</span> also contributed to this step — both names will be recorded.':'')
+    +'<br>Every ⬜ grey item = <strong>NOT CHECKED = personal liability.</strong></div>'
+    +'<div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">'+(co.prepBy||'Your')+' signature</span><span class="sig-clr" onclick="clrSig(\'co-p-sig\')">' + 'Clear</span></div><canvas class="sig-cv" id="co-p-sig"></canvas></div>'
+    +'<button class="btn g" onclick="signPrep()">✓ Sign & Confirm — Vehicle Check Complete</button>'}`;
 }
 
 function tapPrep(i){
@@ -1851,7 +1727,7 @@ function coStep1_equip(){
     const isQtyItem=lbl.startsWith('__QTY__');
     const realLbl=isQtyItem?lbl.replace('__QTY__',''):lbl;
     const maxQty=isQtyItem?parseInt(det)||5:0;
-    const naSVG=()=>`<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(90,112,144,.15)" stroke="#5a7090" stroke-width="2"/><path d="M8 12h8" stroke="#5a7090" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+    function naSVG(){return '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(90,112,144,.15)" stroke="#5a7090" stroke-width="2"/><path d="M8 12h8" stroke="#5a7090" stroke-width="2.5" stroke-linecap="round"/></svg>';}
     // Find real index in L_PREP
     const li=L_PREP.findIndex(x=>x[0]===ico&&x[1]===lbl&&x[2]===det);
     if(isQtyItem){
@@ -1863,7 +1739,7 @@ function coStep1_equip(){
           <select onchange="co.prepItems['${realLbl}']=this.value;if(!co.prepBy){toast('Select your name first','err');this.value='';return;}const s=document.getElementById('cos');if(s){const sig=hasSig('co-p-sig')?getSig('co-p-sig'):null;s.innerHTML=coStep1_equip();setTimeout(()=>{initSig('co-equip-sig');if(sig&&sigs['co-equip-sig']){const cv=document.getElementById('co-equip-sig');if(cv){const img=new Image();img.onload=()=>{sigs['co-equip-sig'].ctx.drawImage(img,0,0,cv.offsetWidth,cv.offsetHeight);sigs['co-equip-sig'].hasData=true;};img.src=sig;}}},60);}"
             style="color-scheme:dark;padding:8px 10px;border-radius:var(--rs);border:2px solid ${qtyNum>0?'var(--gb)':'var(--g3)'};background:${qtyNum>0?'var(--sg)':'var(--g1)'};color:${qtyNum>0?'var(--se)':'var(--g5)'};font-size:14px;font-weight:700;min-width:70px;">
             <option value="">Qty</option>
-            ${Array.from({length:maxQty},(_,k)=>`<option value="${k+1}" ${qtyVal==k+1?'selected':''}>${k+1}</option>`).join('')}
+            ${Array.from({length:maxQty},function(_,k){return '<option value="'+(k+1)+'" '+(qtyVal==k+1?'selected':'')+'>'+  (k+1)+'</option>';}).join('')}
           </select>
           <div class="ci-st">${qtyNum>0?okSVG():uncSVG()}</div>
         </div>
@@ -1871,28 +1747,22 @@ function coStep1_equip(){
     }
     const eby=_eby(realLbl);const eat=_eat(realLbl);
     return `<div class="ci ${st==='ok'?'ok':st==='prob'?'prob':''}" onclick="tapPrepIdx(${li})">
-      <div class="ci-icon">${ico==='__OPT_ITEM__'?`<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>`:ico}</div>
+      <div class="ci-icon">${ico==='__OPT_ITEM__'?'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>':ico}</div>
       <div class="ci-text">
         <div class="ci-lbl">${realLbl}${isOptItem?'<span style="font-size:13px;color:var(--g5);margin-left:6px;background:var(--g2);padding:1px 6px;border-radius:8px;">optional</span>':''}</div>
-        <div class="ci-det">${det}${eby?` <span style="font-size:13px;color:var(--se);font-weight:700;margin-left:6px;">✓ ${eby}${eat?' · '+eat:''}</span>`:''}</div>
+        <div class="ci-det">${det}${eby?' <span style="font-size:13px;color:var(--se);font-weight:700;margin-left:6px;">✓ '+eby+(eat?' · '+eat:'')+'</span>':''}</div>
       </div>
       <div class="ci-st">${st==='ok'?okSVG():st==='prob'?probSVG():st==='na'?naSVG():uncSVG()}</div>
     </div>`;
   }).join('')}</div>
-  ${probs.length?`<div class="al warn">⚠ Problems noted: ${probs.join(' · ')}</div>`:''}
-  ${equipStaff.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">
-    <div style="font-size:13px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on equipment check</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;">
-      ${equipStaff.map(n=>{const cnt=(co.prepLog?co.prepLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:14px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:13px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}
-    </div>
-  </div>`:''}
+  ${probs.length?'<div class="al warn">⚠ Problems noted: '+probs.join(' · ')+'</div>':''}
+  ${(function(){if(equipStaff.length<=1)return '';var chips=equipStaff.map(function(n){var cnt=(co.prepLog?co.prepLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:14px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:13px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' packed</div></div></div>';}).join('');return '<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;"><div style="font-size:13px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on this step</div><div style="display:flex;flex-wrap:wrap;gap:6px;">'+chips+'</div></div>';})()}
   ${photoHTML('co.prepPhotos','📷 Equipment Photos','Photograph all packed equipment — tent, boxes, loose items. Client sees these at handover.',6)}
   ${co.equipSig?
-    `<div class="signed">✅<div class="signed-name">${co.prepBy} — Equipment check signed</div><div class="signed-time">${co.equipAt}</div></div>`:
-    `<div class="liab">⚠️ By signing, <strong>${co.prepBy||'[prep staff]'}</strong> confirms all ✅ green items are packed and loaded.<br>
-    Every ⬜ grey = <strong>NOT CHECKED = personal liability.</strong></div>
-    <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">Your signature</span><span class="sig-clr" onclick="clrSig('co-equip-sig')">Clear</span></div><canvas class="sig-cv" id="co-equip-sig"></canvas></div>
-    <button class="btn g" onclick="signEquip()">✓ Sign & Confirm — Equipment Packed</button>`}`;
+    '<div class="signed">✅<div class="signed-name">'+co.prepBy+' — Equipment check signed</div><div class="signed-time">'+co.equipAt+' — Equipment check signed</div></div>':
+    '<div class="liab">⚠️ By signing, <strong>'+(co.prepBy||'[prep staff]')+'</strong> confirms all ✅ green items are packed and loaded.<br>Every ⬜ grey = <strong>NOT CHECKED = personal liability.</strong></div>'
+    +'<div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">Your signature</span><span class="sig-clr" onclick="clrSig(\'co-equip-sig\')">Clear</span></div><canvas class="sig-cv" id="co-equip-sig"></canvas></div>'
+    +'<button class="btn g" onclick="signEquip()">✓ Sign & Confirm — Equipment Packed</button>'}`;
 }
 
 function tapPrepIdx(i){
@@ -2078,7 +1948,7 @@ function coStep1(){
   <div class="step-intro">
     <div class="step-ico">📷</div>
     <div>
-      <div class="step-title">Step 2 — Client &amp; Driver Details</div>
+      <div class="step-title">Step 4 — Client &amp; Driver Details</div>
       <div class="step-sub">Office staff: verify full legal names against passports, fill in all details and photograph documents for ALL drivers before handover</div>
     </div>
   </div>
@@ -2096,7 +1966,7 @@ function coStep1(){
   ${co.drivers.map((d,i)=>driverCard(d,i)).join('')}
 
   <div class="al info" style="font-size:14px;line-height:1.6;">
-    📋 The booking name (e.g. "Beckermann") is just a reference — the <strong>full legal name from the passport</strong> must be entered here. It will appear on the contract (Section 1.3 &amp; 1.5) and the client must type it exactly when signing in Step 3.
+    📋 The booking name (e.g. "Beckermann") is just a reference — the <strong>full legal name from the passport</strong> must be entered here. It will appear on the contract (Section 1.3 &amp; 1.5) and the client must type it exactly when signing in Step 5.
   </div>`;
 }
 
@@ -2321,7 +2191,7 @@ function coStep2(){
   if(co.contractSigned){
     return `<div class="step-intro">
       <div class="step-ico">📋</div>
-      <div><div class="step-title">Step 3 — Contract</div><div class="step-sub">Signed and filed</div></div>
+      <div><div class="step-title">Step 5 — Contract</div><div class="step-sub">Signed and filed</div></div>
     </div>
     <div class="signed">✅<div class="signed-name">${co.clientName} — Contract signed</div><div class="signed-time">${co.contractAt||''}</div></div>
     <div class="al ok">Contract emailed to ${co.clientEmail||'client'} and saved to Supabase</div>`;
@@ -2331,7 +2201,7 @@ function coStep2(){
   return `
   <div class="step-intro">
     <div class="step-ico">📋</div>
-    <div><div class="step-title">Step 3 — Rental Contract</div>
+    <div><div class="step-title">Step 5 — Rental Contract</div>
     <div class="step-sub">Fill in details, client reads contract, then signs</div></div>
   </div>
   <div class="sum-box" style="margin-bottom:12px">
@@ -2815,7 +2685,7 @@ function signHandover(){
   co.dmgd=getDmgData();
   co.mechBy=(function(){var _e=document.getElementById('co-h-nm');return _e?_e.value:undefined;})()||co.mechBy;
   uploadPhotos(co.dmgPhotos,co.fn,co.clientName||co.v.cl,'damage-out');
-  toast('Step 5 signed ✅','ok');coStep=6;drawCO();
+  toast('Step 4 signed ✅','ok');coStep=5;drawCO();
 }
 
 // ── STEP 4: Management clearance ─────────────────────────────────
@@ -3557,7 +3427,7 @@ function ciStep0_CI(){
     const isQtyItem=lbl.startsWith('__QTY__');
     const realLbl=isQtyItem?lbl.replace('__QTY__',''):lbl;
     const maxQty=isQtyItem?parseInt(det)||5:0;
-    const naSVG=()=>`<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(90,112,144,.15)" stroke="#5a7090" stroke-width="2"/><path d="M8 12h8" stroke="#5a7090" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+    function naSVG(){return '<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(90,112,144,.15)" stroke="#5a7090" stroke-width="2"/><path d="M8 12h8" stroke="#5a7090" stroke-width="2.5" stroke-linecap="round"/></svg>';}
     if(isQtyItem){
       const qtyVal=ci.retItems[realLbl]||'';
       const qtyNum=parseInt(qtyVal)||0;
@@ -3575,7 +3445,7 @@ function ciStep0_CI(){
       </div>`;
     }
     return `<div class="ci ${st==='ok'?'ok':st==='prob'?'prob':''}" onclick="tapRetItem(${i})">
-      <div class="ci-icon">${ico==='__OPT_ITEM__'?`<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>`:ico}</div>
+      <div class="ci-icon">${ico==='__OPT_ITEM__'?'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>':ico}</div>
       <div class="ci-text">
         <div class="ci-lbl">${realLbl}${isOptItem?'<span style="font-size:13px;color:var(--g5);margin-left:6px;background:var(--g2);padding:1px 6px;border-radius:8px;">optional</span>':''}</div>
         <div class="ci-det">${det}</div>
@@ -3584,7 +3454,7 @@ function ciStep0_CI(){
     </div>`;
   }).join('')}</div>
 
-  ${probs.length?`<div class="al warn">⚠ Problems noted: ${probs.join(' · ')}</div>`:''}
+  ${probs.length?'<div class="al warn">⚠ Problems noted: '+probs.join(' · ')+'</div>':''}
   ${retStaff.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;"><div style="font-size:13px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on return check</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${retStaff.map(n=>{const cnt=(ci.retLog?ci.retLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:14px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:13px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}</div></div>`:''}
   ${photoHTML('ci.dmgPhotos','📷 Vehicle Return Photos','Photo the exterior before unloading. Shows client condition matches what they signed.',6)}
 
@@ -3754,7 +3624,7 @@ function ciStep4_CI(){
     <div class="sum-row"><span class="sum-lbl">ODO out / in</span><span class="sum-val ok">${(ci.odometerOut||v.odo).toLocaleString()} → ${r.odoIn.toLocaleString()} km</span></div>
     <div class="sum-row"><span class="sum-lbl">Fuel</span><span class="sum-val ${fuelShort?'warn':'ok'}">${v.fuelOut||'Full'} → ${r.fuelIn} ${fuelShort?'⚠ SHORT':'✓'}</span></div>
     <div class="sum-row"><span class="sum-lbl">New damage</span><span class="sum-val ${newDmg.length?'warn':'ok'}">${newDmg.length?`⚠ ${newDmg.map(d=>d.view_name).join(', ')}`:'✓ None'}</span></div>
-    <div class="sum-row"><span class="sum-lbl">Missing items</span><span class="sum-val ${missing.length?'warn':'ok'}">${missing.length?`⚠ ${missing.slice(0,3).join(', ')}`:'✓ All returned'}</span></div>
+    <div class="sum-row"><span class="sum-lbl">Missing items</span><span class="sum-val ${missing.length?'warn':'ok'}">${missing.length?'⚠ '+missing.slice(0,3).join(', '):'✓ All returned'}</span></div>
     <div class="sum-row"><span class="sum-lbl">Vehicle check</span><span class="sum-val ${r.retSig?'ok':'warn'}">${r.retSig?'✅ Signed by '+r.receivedBy:'⚠ Not signed'}</span></div>
     <div class="sum-row"><span class="sum-lbl">Client signed</span><span class="sum-val ${r.custSig?'ok':'warn'}">${r.custSig?'✅ '+r.custAt:'⚠ Not yet'}</span></div>
     <div class="sum-row"><span class="sum-lbl">Received by</span><span class="sum-val ok">${r.receivedBy||'—'}</span></div>
@@ -3942,7 +3812,7 @@ function rpFleet(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
           <div class="rpt-fn">${v.fn} <span style="font-size:14px;font-weight:400;color:var(--g5)">${v.reg}</span></div>
-          <div class="rpt-cl">${v.st==='rented'?`On road with ${v.cl} · back ${v.rt}`:'Available'}</div>
+          <div class="rpt-cl">${v.st==='rented'?'On road with '+(v.cl||'')+' · back '+(v.rt||''):'Available'}</div>
           <div class="rpt-meta">Odo: ${v.odo.toLocaleString()} km</div>
         </div>
         <span class="bdg ${v.st==='rented'?'b':v.blocked?'r':'g'}">${v.st==='rented'?'Out':v.blocked?'Blocked':'OK'}</span>
