@@ -63,6 +63,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
 .stg-bar.s3{grid-template-columns:1fr 1fr 1fr;}
 .stg{padding:5px 2px;text-align:center;font-size:9px;font-weight:700;color:var(--g5);cursor:pointer;background:var(--g1);border:2px solid var(--g2);border-radius:var(--rs);transition:all .15s;}
 .stg.done{border-color:var(--gb);background:var(--sg);color:var(--se);}
+.stg.restricted{border-color:var(--g2);background:var(--g0);color:var(--g4);opacity:.4;cursor:not-allowed;}
 .stg.active{border-color:var(--pu);background:var(--ps);color:#c4b5fd;}
 .stg.locked{opacity:.3;cursor:not-allowed;}
 
@@ -791,6 +792,9 @@ function canViewReports(){ return APP_USER && (REPORTS_ALLOWED.includes(APP_USER
 const MANAGEMENT=['Manager','Robbie','Peter','Simon','Joe','Christina'];
 function isManagement(){ return !!(APP_USER && MANAGEMENT.includes(APP_USER.name)); }
 function isAdmin(){ return !!(APP_USER && (APP_USER.name==='Peter' || APP_USER.role==='admin')); }
+const PREP_ONLY=['Bonga','Dixon','Vince','Nelson']; // prep staff - no contracts or management
+function isPrepOnly(){ return !!(APP_USER && PREP_ONLY.includes(APP_USER.name)); }
+function canSeeContracts(){ return !!(APP_USER && !PREP_ONLY.includes(APP_USER.name)); }
 // Admin overrides: Peter sees everything management + reports + all client info
 function canSeeClientInfo(){ return !!(APP_USER && (['Manager','Christina','Simon','Nelson','Joe','Robbie','Peter'].includes(APP_USER.name) || isAdmin())); }
 
@@ -1347,7 +1351,8 @@ function drawCO(){
                   s.n===3?co.equipBy:s.n===4?'':s.n===5?co.dmgBy:
                   s.n===6?co.custBy:co.mgmtBy)||'';
     const active=s.n===coStep;
-    return `<div class="stg ${active?'active':done?'done':''}" onclick="coGoStep(${s.n})" style="position:relative;overflow:hidden;">
+    const restricted=isPrepOnly()&&(s.n===4||s.n===7);
+    return `<div class="stg ${active?'active':done?'done':restricted?'restricted':''}" onclick="coGoStep(${s.n})" style="position:relative;overflow:hidden;${restricted?'opacity:.4;cursor:not-allowed;':''}">
       ${done&&!active&&stepBy?`<div style="font-size:7px;font-weight:900;color:var(--se);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 2px;background:var(--sg);line-height:11px;letter-spacing:-.2px;">${stepBy}</div>`:'<div style="line-height:3px;">&nbsp;</div>'}
       <div style="font-size:13px;line-height:1.2;">${done&&!active?'✅':s.ico}</div>
       <div style="font-size:8px;font-weight:800;margin-top:1px;line-height:1.1;">${s.lbl}</div>
@@ -1436,7 +1441,12 @@ function drawCO(){
 }
 
 function coGoStep(t){
-  coStep=Math.max(0,Math.min(6,t));drawCO();
+  // Prep-only staff cannot access Contract (step 4) or Management (step 7)
+  if(isPrepOnly() && (t===4 || t===7)){
+    toast('🔒 Access restricted — contact management','err');
+    return;
+  }
+  coStep=Math.max(0,Math.min(7,t));drawCO();
 }
 
 // ── STEP 0: Prep & Pack ──────────────────────────────────────────
