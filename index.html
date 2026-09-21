@@ -1168,36 +1168,225 @@ function renderOV(){
       +'</div>';
   }).join('');
 
-  body.innerHTML=`
-  <div style="background:linear-gradient(135deg,var(--g1),var(--g0));border-bottom:2px solid var(--gb);padding:14px 16px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <div>
-        <div style="font-size:14px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Today</div>
-        <div style="font-size:15px;font-weight:800;color:var(--se);letter-spacing:-.2px;">${dateStr}</div>
-      </div>
-      <div style="text-align:right;background:var(--g0);border:2px solid var(--gb);border-radius:10px;padding:8px 14px;">
-        <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;">Time</div>
-        <div id="ov-clock" style="font-size:22px;font-weight:800;color:var(--se);font-variant-numeric:tabular-nums;letter-spacing:-.5px;">${timeStr}</div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <button onclick="ovSetView('week')" style="flex:1;padding:9px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:2px solid ${view==='week'?'#4a6fa5':'var(--g3)'};background:${view==='week'?'rgba(74,111,165,.15)':'var(--g1)'};color:${view==='week'?'#7ba3d4':'var(--g5)'};">📅 This Week <span style="font-size:13px;opacity:.7;">${weekOut.length+weekIn.length}</span></button>
-      <button onclick="ovSetView('past')" style="flex:1;padding:9px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:2px solid ${view==='past'?'#2a9d5c':'var(--g3)'};background:${view==='past'?'rgba(42,157,92,.15)':'var(--g1)'};color:${view==='past'?'var(--se)':'var(--g5)'};">📋 Past 7 Days <span style="font-size:13px;opacity:.7;">${pastOut.length+pastIn.length}</span></button>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button onclick="ovSetMode('out')" style="flex:1;padding:10px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:2px solid ${mode==='out'?'#4a6fa5':'var(--g3)'};background:${mode==='out'?'rgba(74,111,165,.15)':'var(--g1)'};color:${mode==='out'?'#7ba3d4':'var(--g5)'};">▶ CHECK-OUT <span style="font-size:14px;background:${mode==='out'?'#4a6fa5':'var(--g2)'};color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">${view==='week'?weekOut.length:pastOut.length}</span></button>
-      <button onclick="ovSetMode('in')" style="flex:1;padding:10px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:2px solid ${mode==='in'?'#2a9d5c':'var(--g3)'};background:${mode==='in'?'rgba(42,157,92,.15)':'var(--g1)'};color:${mode==='in'?'var(--se)':'var(--g5)'};">◀ CHECK-IN <span style="font-size:14px;background:${mode==='in'?'#2a9d5c':'var(--g2)'};color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">${view==='week'?weekIn.length:pastIn.length}</span></button>
-    </div>
-  </div>
-  <div style="padding:12px;">
-    ${!mode
-      ? `<div style="margin-bottom:8px;">
-        <div style="font-size:11px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">${view==='week'?'📅 Next 7 Days — '+all.length+' movement'+(all.length===1?'':'s'):'📋 Past 7 Days — '+all.length+' movement'+(all.length===1?'':'s')}</div>
-        ${all.length===0?'<div style="text-align:center;color:var(--g5);padding:30px;font-size:13px;">No movements ${view===\'week\'?\'in the next 7 days\':\'in the past 7 days\'}</div>':summaryRows}
-      </div>`
-      : (activeList.length ? activeList.map(v=>bookingCard(v,mode)).join('') : `<div style="text-align:center;color:var(--g5);padding:24px;font-size:14px;">No ${mode==='out'?'check-outs':'check-ins'} in ${view==='week'?'the next 7 days':'the past 7 days'}</div>`)
+  // ── Build grouped date sections ──────────────────────────────
+  function groupByDate(list, dateKey) {
+    var groups = {};
+    list.forEach(function(v) {
+      var d = v[dateKey];
+      if (!groups[d]) groups[d] = [];
+      groups[d].push(v);
+    });
+    return groups;
+  }
+
+  function fmtGroupDate(d) {
+    var diff = daysFrom(d);
+    if (diff === 0) return 'TODAY';
+    if (diff === 1) return 'TOMORROW';
+    if (diff === -1) return 'YESTERDAY';
+    return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+  }
+
+  function movCard(v, type) {
+    var isOut = type === 'out';
+    var date = isOut ? v.pu : v.rt;
+    var diff = daysFrom(date);
+    var isToday = diff === 0;
+    var isPast = diff < 0;
+    var accent = isOut ? '#4a6fa5' : '#2a9d5c';
+    var campLabel = v.camping ? 'Camping '+v.pax+' PAX' : 'No Camping';
+    var campColor = v.camping ? 'var(--se)' : 'var(--g5)';
+    var special = v.special && v.special.length ? v.special[0] : null;
+    var hasRemote = special && (special.toLowerCase().indexOf('remote') >= 0 || special.toLowerCase().indexOf('vic falls') >= 0 || special.toLowerCase().indexOf('cross') >= 0);
+    var bg = hasRemote ? 'rgba(229,62,62,.07)' : 'var(--g0)';
+    var border = hasRemote ? '#e53e3e' : 'var(--g2)';
+    var loc = isOut ? (v.puLocation||'Windhoek') : (v.doLocation||'Windhoek');
+    var locLabel = isOut ? 'Pickup' : 'Drop-off';
+    var transferLabel = v.transfer ? (v.transferPays==='included' ? 'Transfer on US' : 'Client to pay for transfer') : '';
+    var transferColor = v.transferPays==='included' ? 'var(--se)' : 'var(--al)';
+    var html = '<div style="background:'+bg+';border:1px solid '+border+';border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;touch-action:manipulation;" '
+      + 'onclick="ovExpandTo(\''+type+'\',\''+v.fn+'\')" '
+      + 'ontouchend="event.preventDefault();ovExpandTo(\''+type+'\',\''+v.fn+'\')">'
+      + '<div style="display:flex;align-items:flex-start;gap:10px;">'
+      + '<div style="width:34px;height:34px;border-radius:8px;background:'+(isOut?'rgba(74,111,165,.15)':'rgba(42,157,92,.15)')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+      + '<span style="font-size:16px;">'+(isOut?'↗':'↙')+'</span>'
+      + '</div>'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-size:14px;font-weight:900;color:var(--tx);margin-bottom:2px;">'+v.fn+' — '+(isOut?'OUT':'BACK')+' · '+v.cl+'</div>'
+      + '<div style="font-size:12px;color:var(--g5);margin-bottom:4px;">'+locLabel+': '+loc+' · Quote '+( v.quote||'—')+'</div>'
+      + (hasRemote ? '<div style="font-size:11px;font-weight:900;color:#e53e3e;letter-spacing:.3px;margin-bottom:3px;">REMOTE ARRANGEMENTS</div>' : '')
+      + '<div style="font-size:12px;font-weight:800;color:'+campColor+';">'+campLabel+'</div>'
+      + (transferLabel ? '<div style="font-size:12px;font-weight:700;color:'+transferColor+';margin-top:2px;">'+transferLabel+'</div>' : '')
+      + '</div>'
+      + (hasRemote ? '<span style="font-size:16px;">⚠️</span>' : '')
+      + '</div>'
+      + '</div>';
+    return html;
+  }
+
+  function flightCard(v, direction) {
+    // direction: 'in' = arrival, 'out' = departure
+    var isArrival = direction === 'in';
+    var flight = isArrival ? v.flightIn : v.flightOut;
+    var date = isArrival ? v.pu : v.rt;
+    if (!flight) return '';
+    var parts = flight.split('·');
+    var flightNum = parts[0] ? parts[0].trim() : flight;
+    var time = parts[1] ? parts[1].trim() : '';
+    var transferLabel = v.transfer ? (v.transferPays==='included' ? 'Transfer on US' : 'Client to pay for transfer') : '';
+    var transferColor = v.transferPays==='included' ? 'var(--se)' : 'var(--al)';
+    return '<div style="background:var(--g0);border:1px solid var(--g2);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;touch-action:manipulation;" '
+      + 'onclick="ovExpandTo(\''+(isArrival?'out':'in')+'\',\''+v.fn+'\')" '
+      + 'ontouchend="event.preventDefault();ovExpandTo(\''+(isArrival?'out':'in')+'\',\''+v.fn+'\')"">'
+      + '<div style="display:flex;align-items:flex-start;gap:10px;">'
+      + '<div style="width:34px;height:34px;border-radius:8px;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+      + '<span style="font-size:16px;">'+(isArrival?'🛬':'🛫')+'</span>'
+      + '</div>'
+      + '<div style="flex:1;">'
+      + '<div style="font-size:14px;font-weight:900;color:var(--tx);margin-bottom:2px;">'+v.cl+' · '+flightNum+'</div>'
+      + (time ? '<div style="font-size:13px;font-weight:800;color:var(--tx);margin-bottom:3px;">'+time+'</div>' : '')
+      + '<div style="font-size:12px;color:var(--g5);margin-bottom:3px;">Vehicle '+v.fn+' · Quote '+(v.quote||'—')+'</div>'
+      + (transferLabel ? '<div style="font-size:12px;font-weight:800;color:'+transferColor+';">Transfer: '+transferLabel+'</div>' : '')
+      + '</div>'
+      + '</div>'
+      + '</div>';
+  }
+
+  function dateSection(label, count, cards) {
+    var isToday = label === 'TODAY';
+    return '<div style="margin-bottom:14px;">'
+      + '<div style="font-size:12px;font-weight:900;color:'+(isToday?'var(--al)':'var(--g5)')+';letter-spacing:.6px;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid '+(isToday?'var(--al)':'var(--g3)')+';">'
+      + label + ' · ' + count + ' ' + (count===1?'MOVEMENT':'MOVEMENTS')
+      + '</div>'
+      + cards
+      + '</div>';
+  }
+
+  // Build the three columns
+  var allDates = [];
+  var allVehicles = all.map(function(v) {
+    var isOut = weekOut.includes(v)||pastOut.includes(v);
+    return {v:v, type: isOut?'out':'in', date: isOut?v.pu:v.rt};
+  });
+
+  // Group movements by date
+  var movByDate = {};
+  allVehicles.forEach(function(item) {
+    if (!movByDate[item.date]) movByDate[item.date] = [];
+    movByDate[item.date].push(item);
+  });
+
+  // Arrivals (flightIn) grouped by pu date
+  var arrByDate = {};
+  all.forEach(function(v) {
+    var isOut = weekOut.includes(v)||pastOut.includes(v);
+    if (isOut && v.flightIn) {
+      var d = v.pu;
+      if (!arrByDate[d]) arrByDate[d] = [];
+      arrByDate[d].push(v);
     }
-  </div>`;
+  });
+
+  // Departures (flightOut) grouped by rt date
+  var depByDate = {};
+  all.forEach(function(v) {
+    var isIn = weekIn.includes(v)||pastIn.includes(v);
+    if (isIn && v.flightOut) {
+      var d = v.rt;
+      if (!depByDate[d]) depByDate[d] = [];
+      depByDate[d].push(v);
+    }
+  });
+
+  var sortedDates = Object.keys(movByDate).sort();
+  var sortedArrDates = Object.keys(arrByDate).sort();
+  var sortedDepDates = Object.keys(depByDate).sort();
+
+  var movHTML = '';
+  sortedDates.forEach(function(d) {
+    var items = movByDate[d];
+    var cards = items.map(function(item){ return movCard(item.v, item.type); }).join('');
+    movHTML += dateSection(fmtGroupDate(d), items.length, cards);
+  });
+
+  var arrHTML = '';
+  sortedArrDates.forEach(function(d) {
+    var items = arrByDate[d];
+    var cards = items.map(function(v){ return flightCard(v,'in'); }).join('');
+    arrHTML += dateSection(fmtGroupDate(d), items.length, cards);
+  });
+
+  var depHTML = '';
+  sortedDepDates.forEach(function(d) {
+    var items = depByDate[d];
+    var cards = items.map(function(v){ return flightCard(v,'out'); }).join('');
+    depHTML += dateSection(fmtGroupDate(d), items.length, cards);
+  });
+
+  var todayMovCount = (movByDate[TODAY]||[]).length;
+  var todayArrCount = (arrByDate[TODAY]||[]).length;
+  var todayDepCount = (depByDate[TODAY]||[]).length;
+
+  body.innerHTML = '<div style="background:var(--g0);border-bottom:2px solid var(--gb);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">'
+    + '<div>'
+    + '<div style="font-size:11px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;">'+dateStr+'</div>'
+    + '</div>'
+    + '<div style="background:var(--g1);border:2px solid var(--gb);border-radius:10px;padding:6px 12px;text-align:right;">'
+    + '<div id="ov-clock" style="font-size:20px;font-weight:900;color:var(--se);font-variant-numeric:tabular-nums;">'+timeStr+'</div>'
+    + '</div>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px;padding:10px 12px;background:var(--g0);border-bottom:1px solid var(--g2);">'
+    + '<button ontouchend="event.preventDefault();ovSetView(\'week\')" onclick="ovSetView(\'week\')" style="flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;border:2px solid '+(view==='week'?'#4a6fa5':'var(--g3)')+';background:'+(view==='week'?'rgba(74,111,165,.15)':'var(--g1)')+';color:'+(view==='week'?'#7ba3d4':'var(--g5)')+';">📅 Next 7 Days</button>'
+    + '<button ontouchend="event.preventDefault();ovSetView(\'past\')" onclick="ovSetView(\'past\')" style="flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;border:2px solid '+(view==='past'?'var(--se)':'var(--g3)')+';background:'+(view==='past'?'rgba(42,157,92,.15)':'var(--g1)')+';color:'+(view==='past'?'var(--se)':'var(--g5)')+';">📋 Past 7 Days</button>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;height:calc(100% - 100px);overflow:hidden;">'
+
+    // Column 1: Vehicle Movements
+    + '<div style="border-right:1px solid var(--g2);overflow-y:auto;-webkit-overflow-scrolling:touch;">'
+    + '<div style="padding:10px 10px 6px;border-bottom:1px solid var(--g2);background:var(--g1);">'
+    + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'
+    + '<span style="font-size:16px;">⇄</span>'
+    + '<span style="font-size:13px;font-weight:900;color:var(--tx);">Vehicle movements</span>'
+    + '</div>'
+    + '<div style="display:flex;align-items:center;gap:6px;">'
+    + '<span style="font-size:11px;font-weight:900;padding:3px 10px;border-radius:12px;background:var(--al);color:#000;">'+todayMovCount+' today</span>'
+    + '<span style="font-size:11px;color:var(--g5);">Next 7 days</span>'
+    + '</div>'
+    + '</div>'
+    + '<div style="padding:10px;">'+(movHTML||'<div style="padding:20px;text-align:center;color:var(--g5);font-size:12px;">No movements</div>')+'</div>'
+    + '</div>'
+
+    // Column 2: Arrival Movements
+    + '<div style="border-right:1px solid var(--g2);overflow-y:auto;-webkit-overflow-scrolling:touch;">'
+    + '<div style="padding:10px 10px 6px;border-bottom:1px solid var(--g2);background:var(--g1);">'
+    + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'
+    + '<span style="font-size:16px;">🛬</span>'
+    + '<span style="font-size:13px;font-weight:900;color:var(--tx);">Arrival movements</span>'
+    + '</div>'
+    + '<div style="display:flex;align-items:center;gap:6px;">'
+    + '<span style="font-size:11px;font-weight:900;padding:3px 10px;border-radius:12px;background:var(--al);color:#000;">'+todayArrCount+' today</span>'
+    + '<span style="font-size:11px;color:var(--g5);">Next 7 days</span>'
+    + '</div>'
+    + '</div>'
+    + '<div style="padding:10px;">'+(arrHTML||'<div style="padding:20px;text-align:center;color:var(--g5);font-size:12px;">No arrivals</div>')+'</div>'
+    + '</div>'
+
+    // Column 3: Departure Movements
+    + '<div style="overflow-y:auto;-webkit-overflow-scrolling:touch;">'
+    + '<div style="padding:10px 10px 6px;border-bottom:1px solid var(--g2);background:var(--g1);">'
+    + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'
+    + '<span style="font-size:16px;">🛫</span>'
+    + '<span style="font-size:13px;font-weight:900;color:var(--tx);">Departure movements</span>'
+    + '</div>'
+    + '<div style="display:flex;align-items:center;gap:6px;">'
+    + '<span style="font-size:11px;font-weight:900;padding:3px 10px;border-radius:12px;background:var(--al);color:#000;">'+todayDepCount+' today</span>'
+    + '<span style="font-size:11px;color:var(--g5);">Next 7 days</span>'
+    + '</div>'
+    + '</div>'
+    + '<div style="padding:10px;">'+(depHTML||'<div style="padding:20px;text-align:center;color:var(--g5);font-size:12px;">No departures</div>')+'</div>'
+    + '</div>'
+
+    + '</div>';
 }
 
 
