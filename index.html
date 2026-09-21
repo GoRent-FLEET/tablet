@@ -608,6 +608,7 @@ async function loadClients(){
 }
 
 // ── OVERVIEW ─────────────────────────────────────────────────────
+function doAction(fn,isOut){if(isOut)startCO(fn);else startCI(fn);}
 function ovSetMode(m){window._ovMode=window._ovMode===m?null:m;window._ovExpanded=null;renderOV();}
 function ovSetView(v){window._ovView=v;window._ovMode=null;window._ovExpanded=null;renderOV();}
 function ovExpand(fn){window._ovExpanded=window._ovExpanded===fn?null:fn;renderOV();}
@@ -703,7 +704,7 @@ function renderOV(){
         ${(v.special||[]).map(s=>`<div style="font-size:11px;color:var(--al);font-weight:700;">· ${s}</div>`).join('')}
       </div>`:''}
       ${v.blocked?`<div style="background:var(--rg);border:1px solid var(--re);border-radius:7px;padding:7px 10px;margin-bottom:10px;font-size:11px;font-weight:700;color:var(--rl);">⛔ ${v.blocked}</div>`:''}
-      <button onclick="${isOut?`startCO('${v.fn}')`:`startCI('${v.fn}')`}" style="width:100%;padding:13px;background:${v.blocked&&isOut?'var(--g2)':accent};border:2px solid ${v.blocked&&isOut?'var(--g3)':'var(--gb)'};border-radius:var(--rs);color:${v.blocked&&isOut?'var(--g5)':'#0a1a10'};font-size:14px;font-weight:800;cursor:${v.blocked&&isOut?'not-allowed':'pointer'};">
+      <button onclick="doAction('${v.fn}',${isOut})" style="width:100%;padding:13px;background:${v.blocked&&isOut?'var(--g2)':accent};border:2px solid ${v.blocked&&isOut?'var(--g3)':'var(--gb)'};border-radius:var(--rs);color:${v.blocked&&isOut?'var(--g5)':'#0a1a10'};font-size:14px;font-weight:800;cursor:${v.blocked&&isOut?'not-allowed':'pointer'};">
         ${isInProgress?(isOut?'🔴 Continue ▶ CHECK-OUT':'🔴 Continue ◀ CHECK-IN'):(isOut?'▶ Start CHECK-OUT':'◀ Start CHECK-IN')}
       </button>
     </div>`);
