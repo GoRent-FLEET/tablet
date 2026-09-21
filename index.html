@@ -635,12 +635,13 @@ function showLogin(){
 }
 function selectLoginName(name){
   window._loginName = name;
+  window._pinDigits = [];
   document.getElementById('login-name-view').style.display='none';
   const pv = document.getElementById('login-pin-view');
   pv.style.display='flex';
   document.getElementById('login-who').textContent = name;
-  document.getElementById('pin-input').value='';
-  document.getElementById('pin-error').textContent='';
+  const pe = document.getElementById('pin-error');
+  if(pe) pe.textContent='';
   _updateDots();
 }
 function showApp(){
@@ -649,47 +650,48 @@ function showApp(){
   document.getElementById('nav-logout').style.display='';
   goPage('ov');
 }
+// PIN stored as simple array - no hidden input needed
+window._pinDigits = [];
+
 function _updateDots(){
-  const inp=document.getElementById('pin-input');
-  if(!inp) return;
-  const dots=document.getElementById('pin-dots').querySelectorAll('.pdot');
-  dots.forEach((dot,i)=>dot.classList.toggle('filled',i<inp.value.length));
+  const dots = document.getElementById('pin-dots');
+  if(!dots) return;
+  dots.querySelectorAll('.pdot').forEach((dot,i)=>dot.classList.toggle('filled', i < window._pinDigits.length));
 }
+
 function tapPin(d){
-  const inp=document.getElementById('pin-input');
-  if(!inp||inp.value.length>=4) return;
-  inp.value+=d;
+  if(window._pinDigits.length >= 4) return;
+  window._pinDigits.push(d);
   _updateDots();
-  if(inp.value.length===4){
-    setTimeout(()=>{
-      const name = window._loginName;
-      const code = inp.value.trim();
-      const staff = STAFF_ROSTER.find(s=>s.name===name && s.code===code);
-      if(staff){
-        APP_USER=staff;
-        try{localStorage.setItem('gorent_user',JSON.stringify(staff));}catch(e){}
-        showApp();
-      } else {
-        document.getElementById('pin-error').textContent='Incorrect PIN — try again';
-        inp.value='';
-        _updateDots();
-        setTimeout(()=>{document.getElementById('pin-error').textContent='';},2000);
-      }
-    },300);
+  if(window._pinDigits.length === 4){
+    const name = window._loginName;
+    const code = window._pinDigits.join('');
+    const staff = STAFF_ROSTER.find(s => s.name === name && s.code === code);
+    if(staff){
+      APP_USER = staff;
+      try{ localStorage.setItem('gorent_user', JSON.stringify(staff)); }catch(e){}
+      window._pinDigits = [];
+      showApp();
+    } else {
+      document.getElementById('pin-error').textContent = 'Incorrect PIN — try again';
+      window._pinDigits = [];
+      _updateDots();
+      setTimeout(()=>{ const el=document.getElementById('pin-error'); if(el) el.textContent=''; }, 2000);
+    }
   }
 }
+
 function clearPin(){
-  const inp=document.getElementById('pin-input');
-  if(!inp) return;
-  inp.value=inp.value.slice(0,-1);
+  window._pinDigits.pop();
   _updateDots();
 }
 function backToNames(){
-  window._loginName=null;
+  window._loginName = null;
+  window._pinDigits = [];
   document.getElementById('login-pin-view').style.display='none';
   document.getElementById('login-name-view').style.display='';
-  document.getElementById('pin-input').value='';
-  document.getElementById('pin-error').textContent='';
+  const pe = document.getElementById('pin-error');
+  if(pe) pe.textContent='';
   _updateDots();
 }
 
