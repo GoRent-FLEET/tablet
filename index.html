@@ -1211,7 +1211,19 @@ function drawCO(){
     </div>`;
   }).join('');
 
-  const body=coStep===0?coStep0():coStep===1?coStep1_equip():coStep===2?coStep1():coStep===3?coStep2():coStep===4?coStep4_dmg():coStep===5?coStep5_client():coStep6_mgmt();
+  var body='';
+  try{
+    if(coStep===0) body=coStep0();
+    else if(coStep===1) body=coStep1_equip();
+    else if(coStep===2) body=coStep1();
+    else if(coStep===3) body=coStep2();
+    else if(coStep===4) body=coStep4_dmg();
+    else if(coStep===5) body=coStep5_client();
+    else body=coStep6_mgmt();
+  }catch(stepErr){
+    body='<div style="padding:20px;color:red;font-size:14px;font-weight:700;">Step '+coStep+' error: '+stepErr.message+'</div>';
+    toast('Step error: '+stepErr.message,'err');
+  }
 
   document.getElementById('co-body').innerHTML=`
     <div class="fhdr">
