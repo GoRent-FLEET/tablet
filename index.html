@@ -709,7 +709,7 @@ function pinTap(d) {
       if (nl) nl.style.display = '';
       // Show/hide Reports tab based on role
       var nbrp = document.getElementById('nb-rp');
-      if(nbrp) nbrp.style.display = REPORTS_ALLOWED.includes(matched.name) ? '' : 'none';
+      if(nbrp) nbrp.style.display = (REPORTS_ALLOWED.includes(matched.name) || matched.name==='Peter') ? '' : 'none';
       // Switch page immediately
       document.querySelectorAll('.page').forEach(function(e){ e.classList.remove('on'); });
       document.querySelectorAll('.nb').forEach(function(e){ e.classList.remove('on'); });
@@ -787,9 +787,12 @@ initIM();
 
 // ── NAV ──────────────────────────────────────────────────────────
 const REPORTS_ALLOWED=['Manager','Simon','Peter','Nelson','Joe','Vince','Robbie'];
-function canViewReports(){ return APP_USER && REPORTS_ALLOWED.includes(APP_USER.name); }
+function canViewReports(){ return APP_USER && (REPORTS_ALLOWED.includes(APP_USER.name) || isAdmin()); }
 const MANAGEMENT=['Manager','Robbie','Peter','Simon','Joe','Christina'];
 function isManagement(){ return !!(APP_USER && MANAGEMENT.includes(APP_USER.name)); }
+function isAdmin(){ return !!(APP_USER && (APP_USER.name==='Peter' || APP_USER.role==='admin')); }
+// Admin overrides: Peter sees everything management + reports + all client info
+function canSeeClientInfo(){ return !!(APP_USER && (['Manager','Christina','Simon','Nelson','Joe','Robbie','Peter'].includes(APP_USER.name) || isAdmin())); }
 
 function goPage(p){
   if(!APP_USER){showLogin();return;}
