@@ -2325,11 +2325,15 @@ function drawCI(){
 
 function ciStep0_CI(){
   const r=ci,v=r.v;
+  const _rst=l=>{const x=ci.retItems[l];return x?.st||x||'';};
+  const _rby=l=>{const x=ci.retItems[l];return x?.by||'';};
+  const _rat=l=>{const x=ci.retItems[l];return x?.at||'';};
   // Use L_PREP as the return checklist — same items as check-out
-  const done=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&(l.startsWith('__QTY__')?ci.retItems[l.replace('__QTY__','')]:ci.retItems[l])&&(ci.retItems[l]!=='na')).length;
+  const done=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&(l.startsWith('__QTY__')?_rst(l.replace('__QTY__','')):_rst(l))&&(_rst(l)!=='na')).length;
   const checkable=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__').length;
   const pct=Math.round(done/checkable*100);
-  const probs=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&ci.retItems[l]==='prob').map(([i,l])=>l);
+  const probs=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_rst(l)==='prob').map(([i,l])=>l);
+  const retStaff=Object.keys(ci.retCheckedBy||{});
   const km=r.odoIn-(ci.odometerOut||v.odo);
 
   return `
@@ -2384,7 +2388,7 @@ function ciStep0_CI(){
         </div>
       </div>`;
     }
-    const st=ci.retItems[lbl]||'';
+    const st=_rst(lbl);const rby=_rby(lbl);const rat=_rat(lbl);
     const isOptItem=ico==='__OPT_ITEM__';
     const isQtyItem=lbl.startsWith('__QTY__');
     const realLbl=isQtyItem?lbl.replace('__QTY__',''):lbl;
@@ -2395,7 +2399,7 @@ function ciStep0_CI(){
       const qtyNum=parseInt(qtyVal)||0;
       return `<div class="ci ${qtyNum>0?'ok':''}" style="cursor:default;">
         <div class="ci-icon">${ico}</div>
-        <div class="ci-text"><div class="ci-lbl">${realLbl}</div><div class="ci-det">${det}</div></div>
+        <div class="ci-text"><div class="ci-lbl">${realLbl}</div><div class="ci-det">${det}${rby?` <span style="font-size:9px;color:var(--se);font-weight:700;margin-left:6px;">✓ ${rby}${rat?" · "+rat:""}</span>`:""}</div></div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
           <select onchange="ci.retItems['${realLbl}']=this.value;if(!r.receivedBy){toast('Select your name first','err');this.value='';return;}const s=document.getElementById('ci-step-body');if(s){s.innerHTML=ciStep0_CI();setTimeout(()=>initSig('ci-ret-sig'),60);}"
             style="color-scheme:dark;padding:8px 10px;border-radius:var(--rs);border:2px solid ${qtyNum>0?'var(--gb)':'var(--g3)'};background:${qtyNum>0?'var(--sg)':'var(--g1)'};color:${qtyNum>0?'var(--se)':'var(--g5)'};font-size:14px;font-weight:700;min-width:70px;">
@@ -2417,6 +2421,7 @@ function ciStep0_CI(){
   }).join('')}</div>
 
   ${probs.length?`<div class="al warn">⚠ Problems noted: ${probs.join(' · ')}</div>`:''}
+  ${retStaff.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;"><div style="font-size:10px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on return check</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${retStaff.map(n=>{const cnt=ci.retLog?.filter(e=>e.by===n).length||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:12px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:10px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}</div></div>`:''}
   ${photoHTML('ci.dmgPhotos','📷 Vehicle Return Photos','Photo the exterior before unloading. Shows client condition matches what they signed.',6)}
 
   ${r.retSig?
