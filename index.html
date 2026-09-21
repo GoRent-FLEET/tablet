@@ -1125,15 +1125,47 @@ function renderOV(){
     const isOut=weekOut.includes(v)||pastOut.includes(v);
     const date=isOut?v.pu:v.rt;
     const isToday=daysFrom(date)===0;
+    const isPast=daysFrom(date)<0;
     const accent=isOut?'#4a6fa5':'#2a9d5c';
-    return `<div onclick="ovExpandTo('${isOut?'out':'in'}','${v.fn}')" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1px solid ${isToday?accent:'var(--g3)'};background:${isToday?(isOut?'rgba(74,111,165,.1)':'rgba(42,157,92,.1)'):'var(--g1)'};margin-bottom:6px;">
-      <span style="font-size:18px;font-weight:900;color:${accent};">${isOut?'▶':'◀'}</span>
-      <div style="flex:1;">
-        <div style="font-size:15px;font-weight:800;color:var(--tx);">${v.fn} · ${v.cl}</div>
-        <div style="font-size:13px;color:${isToday?accent:'var(--g5)'};">${isOut?'▶ CHECK-OUT':'◀ CHECK-IN'} · ${new Date(date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}).toUpperCase()}${isToday?' · <strong style="color:'+accent+'">TODAY</strong>':''}</div>
-      </div>
-      <span style="font-size:14px;font-weight:700;color:var(--g5);">Details ›</span>
-    </div>`;
+    const accentLight=isOut?'rgba(74,111,165,.12)':'rgba(42,157,92,.12)';
+    const fmtDate=new Date(date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+    const dayBadge=isToday
+      ? '<span style="font-size:11px;font-weight:900;padding:3px 10px;border-radius:12px;background:'+accent+';color:#fff;">TODAY</span>'
+      : isPast
+        ? '<span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:12px;background:var(--g2);color:var(--g5);">'+fmtDate+'</span>'
+        : '<span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:12px;background:'+accentLight+';color:'+accent+';">'+fmtDate+'</span>';
+    const campBadge=v.camping
+      ? '<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🏕 '+v.pax+' Pax</span>'
+      : '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;background:var(--g2);color:var(--g5);">🏨 No Camping</span>';
+    const xbBadge=v.xb?'<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;background:rgba(245,166,35,.15);color:var(--al);">🌍 '+v.xb+'</span>':'';
+    let inprog=null;
+    try{const r=localStorage.getItem(ipKey(v.fn));if(r)inprog=JSON.parse(r);}catch(e){}
+    const isIP=inprog&&((isOut&&inprog.type==='checkout')||(!isOut&&inprog.type==='checkin'));
+    const ipBadge=isIP?'<span style="font-size:11px;font-weight:900;padding:2px 8px;border-radius:8px;background:rgba(229,62,62,.15);color:#e53e3e;">🔴 IN PROGRESS</span>':'';
+    const border=isIP?'#e53e3e':isToday?accent:'var(--g3)';
+    const bg=isIP?'rgba(229,62,62,.06)':isToday?accentLight:'var(--g1)';
+    return '<div onclick="ovExpandTo(\''+( isOut?'out':'in')+'\',' +'\''+ v.fn+'\''+')" style="cursor:pointer;border-radius:12px;border:2px solid '+border+';background:'+bg+';margin-bottom:10px;overflow:hidden;touch-action:manipulation;">'
+      +'<div style="padding:12px 14px;">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+      +'<div style="display:flex;align-items:center;gap:8px;">'
+      +'<span style="font-size:22px;font-weight:900;color:'+accent+';">'+(isOut?'▶':'◀')+'</span>'
+      +'<div>'
+      +'<div style="font-size:17px;font-weight:900;color:var(--tx);">'+v.fn+'<span style="font-size:12px;font-weight:700;color:var(--g5);margin-left:6px;">'+v.reg+'</span></div>'
+      +'<div style="font-size:13px;font-weight:700;color:var(--g5);margin-top:1px;">'+v.cl+'</div>'
+      +'</div>'
+      +'</div>'
+      +dayBadge
+      +'</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:5px;">'
+      +campBadge+xbBadge+ipBadge
+      +(v.special&&v.special.length?'<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;background:rgba(229,62,62,.12);color:#e53e3e;">⚠ '+v.special.length+' Special</span>':'')
+      +'</div>'
+      +'<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--g2);display:flex;justify-content:space-between;align-items:center;">'
+      +'<div style="font-size:12px;color:var(--g5);">'+(isOut?'▶ CHECK-OUT':'◀ CHECK-IN')+(v.transfer?' · 🚐 '+v.transfer:'')+'</div>'
+      +'<span style="font-size:13px;font-weight:700;color:var(--g5);">Tap for details ›</span>'
+      +'</div>'
+      +'</div>'
+      +'</div>';
   }).join('');
 
   body.innerHTML=`
@@ -1159,7 +1191,10 @@ function renderOV(){
   </div>
   <div style="padding:12px;">
     ${!mode
-      ? `<div style="font-size:14px;color:var(--g5);text-align:center;margin-bottom:12px;">Select ▶ CHECK-OUT or ◀ CHECK-IN above</div>${summaryRows}`
+      ? `<div style="margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">${view==='week'?'📅 Next 7 Days — '+all.length+' movement'+(all.length===1?'':'s'):'📋 Past 7 Days — '+all.length+' movement'+(all.length===1?'':'s')}</div>
+        ${all.length===0?'<div style="text-align:center;color:var(--g5);padding:30px;font-size:13px;">No movements ${view===\'week\'?\'in the next 7 days\':\'in the past 7 days\'}</div>':summaryRows}
+      </div>`
       : (activeList.length ? activeList.map(v=>bookingCard(v,mode)).join('') : `<div style="text-align:center;color:var(--g5);padding:24px;font-size:14px;">No ${mode==='out'?'check-outs':'check-ins'} in ${view==='week'?'the next 7 days':'the past 7 days'}</div>`)
     }
   </div>`;
