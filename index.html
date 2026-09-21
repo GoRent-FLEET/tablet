@@ -277,6 +277,12 @@ input[type=file]{display:none;}
 .pin-btn{width:72px;height:72px;border-radius:50%;border:2px solid var(--g3);background:var(--g1);color:var(--tx);font-size:22px;font-weight:700;cursor:pointer;transition:background .1s,border-color .1s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 .pin-btn:active{background:var(--g3);}
 .name-btn{padding:16px 10px;border-radius:12px;border:2px solid var(--g3);background:var(--g1);color:var(--tx);font-size:17px;font-weight:800;cursor:pointer;transition:background .15s,border-color .15s;letter-spacing:.3px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.resume-panel{position:fixed;bottom:0;left:0;right:0;background:var(--g1);border-top:3px solid var(--se);border-radius:18px 18px 0 0;padding:16px;z-index:100;box-shadow:0 -8px 40px rgba(0,0,0,.4);transform:translateY(100%);transition:transform .3s ease;max-height:70vh;overflow-y:auto;}
+.resume-panel.open{transform:translateY(0);}
+.resume-card{display:flex;align-items:center;gap:12px;background:var(--g0);border:2px solid var(--g3);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.resume-card:active{background:var(--g2);}
+.resume-card.co-card{border-color:#4a6fa5;}
+.resume-card.ci-card{border-color:#2a9d5c;}
 .name-btn:active,.name-btn:hover{background:var(--g2);border-color:var(--se);}
 .mgr-btn{background:var(--ag);border-color:var(--am);color:var(--al);}
 .mgr-btn:active,.mgr-btn:hover{background:var(--am);color:#000;}
@@ -919,6 +925,8 @@ async function showApp(){
   try { await loadFleetFromDB(); } catch(e){ console.warn('loadFleet:',e); }
   try { await loadClients(); } catch(e){ console.warn('loadClients:',e); }
   try { renderOV(); } catch(e){ console.warn('renderOV2:',e); }
+  // Check for in-progress vehicles and show resume panel
+  setTimeout(function(){ try{ checkResume(); }catch(e){} }, 500);
 }
 async function restoreSession(){
   // Check for saved login
@@ -4627,6 +4635,86 @@ function debugSwitch(){
   alert('Done! If you see this but not the app, the app div has a problem.');
   try{ renderOV(); }catch(e){ alert('renderOV error: '+e.message); }
 }
+
+// ── RESUME PANEL ──────────────────────────────────────────────────
+function checkResume() {
+  // Look for any in-progress vehicles in localStorage
+  var inProgress = [];
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+      if (key && key.startsWith('inprogress_')) {
+        var data = JSON.parse(localStorage.getItem(key));
+        if (data && data.fn) inProgress.push(data);
+      }
+    }
+  } catch(e) {}
+  
+  if (inProgress.length === 0) return;
+  
+  // Build list
+  var list = document.getElementById('resume-list');
+  if (!list) return;
+  
+  list.innerHTML = '';
+  inProgress.forEach(function(rec) {
+    var v = FLEET.find(function(x){ return x.fn === rec.fn; });
+    var isOut = rec.type === 'checkout';
+    var card = document.createElement('div');
+    card.className = 'resume-card ' + (isOut ? 'co-card' : 'ci-card');
+    card.setAttribute('data-fn', rec.fn);
+    card.setAttribute('data-type', rec.type);
+    
+    var started = rec.started ? new Date(rec.started).toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    var clientName = rec.cl || (v ? v.cl : '');
+    
+    card.innerHTML = 
+      '<div style="font-size:24px;">' + (isOut ? '▶' : '◀') + '</div>' +
+      '<div style="flex:1;">' +
+        '<div style="font-size:15px;font-weight:900;color:' + (isOut ? '#7ba3d4' : 'var(--se)') + ';">' + rec.fn + '</div>' +
+        '<div style="font-size:12px;font-weight:700;color:var(--tx);margin-top:1px;">' + clientName + '</div>' +
+        '<div style="font-size:10px;color:var(--g5);margin-top:2px;">' + (isOut ? '▶ CHECK-OUT' : '◀ CHECK-IN') + (started ? ' · started ' + started : '') + '</div>' +
+      '</div>' +
+      '<div style="font-size:13px;font-weight:800;color:' + (isOut ? '#7ba3d4' : 'var(--se)') + ';padding:8px 14px;background:var(--g1);border-radius:8px;border:2px solid ' + (isOut ? '#4a6fa5' : 'var(--gb)') + ';">Resume →</div>';
+    
+    card.ontouchend = function(e) { e.preventDefault(); resumeVehicle(this.dataset.fn, this.dataset.type); };
+    card.onclick = function() { resumeVehicle(this.dataset.fn, this.dataset.type); };
+    list.appendChild(card);
+  });
+  
+  // Show panel
+  document.getElementById('resume-panel').classList.add('open');
+  document.getElementById('resume-overlay').style.display = 'block';
+}
+
+function resumeVehicle(fn, type) {
+  closeResumePanel();
+  if (type === 'checkout') {
+    startCO(fn);
+  } else {
+    startCI(fn);
+  }
+}
+
+function closeResumePanel() {
+  var panel = document.getElementById('resume-panel');
+  if (panel) panel.classList.remove('open');
+  var overlay = document.getElementById('resume-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
 </script>
+<!-- RESUME PANEL -->
+<div id="resume-panel" class="resume-panel">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div>
+      <div style="font-size:15px;font-weight:900;color:var(--se);">⚡ Resume where you left off</div>
+      <div style="font-size:11px;color:var(--g5);margin-top:2px;">You have in-progress check-outs/check-ins</div>
+    </div>
+    <button onclick="closeResumePanel()" style="background:var(--g2);border:1px solid var(--g3);border-radius:8px;color:var(--g5);font-size:13px;font-weight:700;padding:6px 12px;cursor:pointer;touch-action:manipulation;">Dismiss</button>
+  </div>
+  <div id="resume-list"></div>
+  <button onclick="closeResumePanel()" style="width:100%;margin-top:4px;padding:12px;background:transparent;border:2px solid var(--g3);border-radius:10px;color:var(--g5);font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;">Start fresh — show all vehicles</button>
+</div>
+<div id="resume-overlay" onclick="closeResumePanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;"></div>
 </body>
 </html>
