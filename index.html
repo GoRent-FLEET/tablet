@@ -573,27 +573,27 @@ const L_MECH=[
 ];
 const RET_GROUPS=[{"g": "Tent & sleeping", "items": ["Tent + ladder + pins", "Tent mattress & bedding", "Sleeping bags"]}, {"g": "Kitchen", "items": ["Gas stove & burner", "Pots, pans & utensils (complete)", "Cutlery, plates & cups (complete)", "Braai grid"]}, {"g": "Camp furniture", "items": ["Table", "Chairs (correct qty)", "Camping lights", "Binoculars"]}, {"g": "Fridge & fuel", "items": ["Fridge", "Jerrycans (correct qty)"]}, {"g": "Safety & recovery", "items": ["Fire extinguisher", "First aid kit", "Jack & wheel spanner", "Tool kit", "Tow strap", "Shovel & axe", "Jump leads", "Warning triangles x2", "Tyre repair kit"]}, {"g": "Docs & keys", "items": ["Vehicle licence & insurance", "All keys & remote"]}];
 const FLEET=[
-  {fn:'H-015',reg:'N242-221W',cl:'Mark Beckermann',   pu:'2026-07-15',rt:'2026-07-28',pax:4,xb:null,quote:'Q-0343',
+  {fn:'H-015',reg:'N242-221W',cl:'Mark Beckermann',   pu:'2026-09-21',rt:'2026-10-04',pax:4,xb:null,quote:'Q-0343',
    flightIn:'FR 1234 · arr 09:30 WDH',flightOut:'FR 1235 · dep 16:00 WDH',transfer:'Airport pickup & dropoff',location:'Windhoek Hosea Kutako (HKIA)',email:'mark.beckermann@email.com',phone:'+49 170 1234567',
    camping:true, tent:true, extraFuel:true, sleepingBags:2, fridge:true,
    extras:['Camping chairs x4','Camping table','Braai grid'],
    special:['Baby seat required','Botswana cross-border letter'],
    st:'available',odo:42350,dmgd:[],
    svc:{lastKm:37000,intKm:10000,date:'2025-11-12'},lic:{expiry:'2027-03-31'},tyres:{lastKm:30000,intKm:22000}},
-  {fn:'H-013',reg:'N242-977W',cl:'Stephane Commo',    pu:'2026-07-15',rt:'2026-07-16',pax:2,xb:null,quote:'Q-3577',
+  {fn:'H-013',reg:'N242-977W',cl:'Stephane Commo',    pu:'2026-09-21',rt:'2026-09-22',pax:2,xb:null,quote:'Q-3577',
    flightIn:'AF 952 · arr 11:45 WDH',flightOut:'AF 953 · dep 14:30 WDH',transfer:'Airport pickup & dropoff',location:'Windhoek Hosea Kutako (HKIA)',email:'s.commo@gmail.com',phone:'+33 6 12 34 56 78',
    camping:false,tent:false,extraFuel:false,sleepingBags:0,fridge:false,
    extras:[],special:[],
    st:'available',odo:38200,dmgd:[],
    svc:{lastKm:30000,intKm:10000,date:'2025-04-03'},lic:{expiry:'2026-08-31'},tyres:{lastKm:15000,intKm:22000}},
-  {fn:'H-023',reg:'N245-593W',cl:'Grzegorz Adamczewski',pu:'2026-07-16',rt:'2026-07-23',pax:4,xb:null,quote:'Q-2414',
+  {fn:'H-023',reg:'N245-593W',cl:'Grzegorz Adamczewski',pu:'2026-09-22',rt:'2026-09-29',pax:4,xb:null,quote:'Q-2414',
    flightIn:'LH 574 · arr 14:20 WDH',flightOut:'LH 575 · dep 10:00 WDH',transfer:'Self drive',location:'Go Rent Office, Windhoek',email:'g.adamczewski@wp.pl',phone:'+48 601 234 567',
    camping:true, tent:true, extraFuel:true, sleepingBags:2, fridge:true,
    extras:['Camping chairs x4','Camping table'],
    special:['Zambia cross-border letter'],
    st:'available',odo:29400,dmgd:[],
    svc:{lastKm:25000,intKm:10000,date:'2025-01-20'},lic:{expiry:'2026-11-30'},tyres:{lastKm:5000,intKm:22000}},
-  {fn:'H-005',reg:'N236-609W',cl:'Pawel Lech',        pu:'2026-06-29',rt:'2026-07-15',pax:4,xb:'Botswana',
+  {fn:'H-005',reg:'N236-609W',cl:'Pawel Lech',        pu:'2026-06-29',rt:'2026-09-21',pax:4,xb:'Botswana',
    flightIn:'LO 88 · arr 08:15 WDH',flightOut:'LO 89 · dep 16:00 WDH',transfer:'Airport dropoff',location:'Windhoek Hosea Kutako (HKIA)',email:'pawel.lech@email.pl',phone:'+48 502 345 678',
    camping:true, tent:true, extraFuel:true, sleepingBags:2, fridge:true,
    extras:['Camping chairs x4','Camping table','Braai grid'],
@@ -601,13 +601,13 @@ const FLEET=[
    st:'rented',odo:39200,
    dmgd:[{view:'lhs',size:'M',cells:[{r:4,c:14,t:'pr'},{r:4,c:15,t:'pr'},{r:5,c:14,t:'pr'}]}],
    svc:{lastKm:35000,intKm:10000,date:'2025-09-05'},lic:{expiry:'2026-10-31'},tyres:{lastKm:20000,intKm:22000}},
-  {fn:'H-016',reg:'N61207W',  cl:'Jacek Lech',        pu:'2026-06-29',rt:'2026-07-15',pax:2,xb:null,quote:'Q-0600',
+  {fn:'H-016',reg:'N61207W',  cl:'Jacek Lech',        pu:'2026-06-29',rt:'2026-09-21',pax:2,xb:null,quote:'Q-0600',
    flightIn:'KQ 107 · arr 09:00 WDH',flightOut:'KQ 106 · dep 17:30 WDH',transfer:'Airport dropoff',location:'Windhoek Hosea Kutako (HKIA)',email:'jacek.lech@email.pl',phone:'+48 603 456 789',
    camping:false,tent:false,extraFuel:false,sleepingBags:0,fridge:false,
    extras:[],special:['IDP required — not yet received'],
    st:'rented',odo:39850,dmgd:[],
    svc:{lastKm:36000,intKm:10000,date:'2025-10-18'},lic:{expiry:'2026-09-30'},tyres:{lastKm:25000,intKm:22000}},
-  {fn:'H-003',reg:'N236-211W',cl:'Brockman',          pu:'2026-07-15',rt:'2026-07-20',pax:2,xb:'Botswana',quote:'Q-2308',
+  {fn:'H-003',reg:'N236-211W',cl:'Brockman',          pu:'2026-09-21',rt:'2026-09-26',pax:2,xb:'Botswana',quote:'Q-2308',
    flightIn:'',flightOut:'',transfer:'Self drive',location:'Go Rent Office, Windhoek',email:'brockman@email.com',phone:'+27 82 345 6789',
    camping:true, tent:true, extraFuel:true, sleepingBags:2, fridge:true,
    extras:['Camping chairs x2'],
@@ -889,7 +889,7 @@ function ovExpand(fn){window._ovExpanded=window._ovExpanded===fn?null:fn;renderO
 function ovExpandTo(m,fn){window._ovMode=m;window._ovExpanded=fn;renderOV();}
 
 function renderOV(){
-  const TODAY='2026-07-15';
+  const TODAY=new Date().toISOString().split('T')[0];
   const todayD=new Date(TODAY);
   const daysFrom=d=>Math.round((new Date(d+'T00:00:00')-todayD)/86400000);
 
