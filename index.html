@@ -1081,8 +1081,8 @@ function renderOV(){
     return '<div onclick="ovExpandTo(\''+type+'\',\''+v.fn+'\')" '
       +'ontouchend="event.preventDefault();ovExpandTo(\''+type+'\',\''+v.fn+'\')" '
       +'style="background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;touch-action:manipulation;display:flex;align-items:flex-start;gap:10px;">'
-      +'<div style="width:36px;height:36px;border-radius:10px;background:'+(isArrival?'#2a7d4f':'#1a5fa5')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
-      +'<div style="flex:1;">'
+      +'<div style="width:36px;height:36px;border-radius:10px;background:'+(isArrival?'#2a7d4f':'#1a5fa5')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">'+(isArrival?'🛬':'🛫')+'</div>'
+      +'<div style="flex:1;min-width:0;">'
       +'<div style="font-size:14px;font-weight:800;color:#1a1a1a;margin-bottom:1px;">'+v.cl+' · '+num+'</div>'
       +(time?'<div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:3px;">'+time+'</div>':'')
       +'<div style="font-size:12px;color:#666;margin-bottom:3px;">Vehicle '+v.fn+' · Quote '+(v.quote||'—')+'</div>'
@@ -1216,7 +1216,7 @@ function renderOV(){
         +chips+'</div>';
     })():'')
         // 3 columns
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;flex:1;overflow:hidden;background:#f5f5f7;">'
+    +'<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);flex:1;overflow:hidden;background:#f5f5f7;">'
 
     // Column 1: Vehicle movements
     +'<div style="display:flex;flex-direction:column;border-right:1px solid #e0e0e0;background:#f5f5f7;overflow:hidden;">'
