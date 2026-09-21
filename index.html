@@ -3241,7 +3241,7 @@ function startCI(fn){
     if(prev.staff){ci.receivedBy=prev.staff;}
   }catch(e){}
   RET_GROUPS.forEach(g=>g.items.forEach(i=>{retSt[i]='ok';}));
-  ci={v,fn,receivedBy:'',odoIn:v.odo+1200,odometerOut:(co&&co.odometerOut)||v.odo,fuelIn:'Full',notes:'',
+  ci={v,fn,receivedBy:'',odoIn:v.odo+1200,odometerOut:(co&&co.odometerOut)||v.odo,fuelIn:'Full',fuelNote:'',notes:'',
       dmgd:[],dmgPhotos:[],custSig:null,custAt:'',
       mgmtName:'',mgmtSig:null,mgmtAt:'',deposit:'Full deposit returned',mgmtNotes:'',
       retItems:{},retSig:null,retAt:''};
@@ -3350,6 +3350,13 @@ function ciStep0_CI(){
       <div style="font-size:14px;margin-top:4px;font-weight:700;color:${r.fuelIn===v.fuelOut?'var(--se)':'var(--rl)'};">
         ${r.fuelIn===v.fuelOut?'✅ Matches departure':'⚠ Out: '+(v.fuelOut||'Full')+' → In: '+r.fuelIn+' — fuel charge applies'}
       </div>
+      ${r.fuelIn&&r.fuelIn!=='Full'?`
+      <div style="margin-top:10px;">
+        <div style="font-size:12px;font-weight:800;color:var(--al);margin-bottom:5px;">📝 Fuel note (required)</div>
+        <textarea id="ci-fuel-note" placeholder="e.g. Client returned with 1/2 tank — fuel charge to be invoiced. Authorised by..." 
+          style="width:100%;padding:10px 12px;background:var(--g0);border:2px solid var(--al);border-radius:var(--rs);color:var(--tx);font-size:14px;font-family:var(--font);resize:none;height:80px;box-sizing:border-box;"
+          oninput="ci.fuelNote=this.value">${r.fuelNote||''}</textarea>
+      </div>`:''}
     </div>
   </div>
 
