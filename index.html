@@ -822,6 +822,16 @@ function isManagement(){ return !!(APP_USER && MANAGEMENT.includes(APP_USER.name
 function isAdmin(){ return !!(APP_USER && (APP_USER.name==='Peter' || APP_USER.role==='admin')); }
 const PREP_ONLY=['Bonga','Dixon','Vince']; // prep staff - no contracts or management
 function isPrepOnly(){ return !!(APP_USER && PREP_ONLY.includes(APP_USER.name)); }
+// Which check-out steps each person may do (anyone not listed can do every step)
+// Steps: 0 Prep · 2 Mechanical · 3 Camping · 4 Inspection · 5 Contract · 6 Handover · 7 Management
+var STEP_ACCESS={
+  'Bonga':[0,2,3],'Dixon':[0,2,3],'Vince':[0,2,3],
+  'Christina':[5,7]
+};
+function allowedSteps(){return (APP_USER&&STEP_ACCESS[APP_USER.name])||null;}
+function canDoStep(n){var a=allowedSteps();return !a||a.indexOf(n)>=0;}
+function firstAllowedStep(){var a=allowedSteps();return a?a[0]:0;}
+function canCheckIn(){return !allowedSteps();}
 function canSeeContracts(){ return !!(APP_USER && !PREP_ONLY.includes(APP_USER.name)); }
 // Admin overrides: Peter sees everything management + reports + all client info
 function canSeeClientInfo(){ return !!(APP_USER && (['Manager','Christina','Simon','Nelson','Joe','Robbie','Peter'].includes(APP_USER.name) || isAdmin())); }
@@ -1498,7 +1508,7 @@ function startCO(fn){
   // Returning to a vehicle you left earlier: carry on where you stopped
   var _dk=v.bid||fn;
   if(CO_DRAFTS[_dk]){
-    co=CO_DRAFTS[_dk];delete CO_DRAFTS[_dk];coStep=co._step||0;
+    co=CO_DRAFTS[_dk];delete CO_DRAFTS[_dk];coStep=co._step||0;if(!canDoStep(coStep))coStep=firstAllowedStep();
     toast('Continuing check-out: '+fn,'ok');goPage('co');
     try{drawCO();}catch(err){toast('drawCO error: '+err.message,'err');}
     return;
@@ -1531,7 +1541,7 @@ function startCO(fn){
     custSig:null,custAt:'',
     mgmtBy:'',mgmtSig:null,mgmtAt:'',
   };
-  initIM();coStep=0;goPage('co');
+  initIM();coStep=firstAllowedStep();goPage('co');
   try{ drawCO(); } catch(err){ 
     toast('drawCO error: '+err.message,'err');
     console.error('drawCO error:',err);
@@ -1569,7 +1579,7 @@ function drawCO(){
                   s.n===3?co.equipBy:s.n===4?'':s.n===5?co.dmgBy:
                   s.n===6?co.custBy:co.mgmtBy)||'';
     const active=s.n===coStep;
-    const restricted=isPrepOnly()&&(s.n===5||s.n===7);
+    const restricted=!canDoStep(s.n);
     return `<div class="stg ${active?'active':done?'done':restricted?'restricted':''}" onclick="coGoStep(${s.n})" style="position:relative;overflow:hidden;${restricted?'opacity:.4;cursor:not-allowed;':''}">
       ${done&&!active&&stepBy?`<div style="font-size:7px;font-weight:900;color:var(--se);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 2px;background:var(--sg);line-height:11px;letter-spacing:-.2px;">${stepBy}</div>`:'<div style="line-height:3px;">&nbsp;</div>'}
       <div style="font-size:13px;line-height:1.2;">${done&&!active?'✅':s.ico}</div>
@@ -1680,11 +1690,14 @@ function drawCO(){
 
 function coGoStep(t){
   // Prep-only staff cannot access Contract (step 4) or Management (step 7)
-  if(isPrepOnly() && (t===5 || t===7)){
-    toast('🔒 Access restricted — contact management','err');
-    return;
-  }
   if(t===1) t=(coStep>1)?0:2; // Engine checks now live in Mechanical
+  if(!canDoStep(t)){
+    // Next/Back skip over steps this person may not do; tapping a locked tab is refused
+    var dir=t>coStep?1:-1, n=t, isNav=(t===coStep+1||t===coStep-1||(coStep===0&&t===2)||(coStep===2&&t===0));
+    while(n>=0&&n<=7&&(n===1||!canDoStep(n))) n+=dir;
+    if(!isNav||n<0||n>7){toast('🔒 This step is not available for '+(APP_USER?APP_USER.name:'you'),'err');return;}
+    t=n;
+  }
   coStep=Math.max(0,Math.min(7,t));drawCO();
 }
 
@@ -3504,6 +3517,7 @@ function sendHandoverWA(){
 //  Damage → Equipment → Customer sign → Management → DONE
 // ═══════════════════════════════════════════════════════════════
 function startCI(fn){
+  if(!canCheckIn()){toast('🔒 Check-in is not available for '+(APP_USER?APP_USER.name:'you'),'err');return;}
   const v=pickVeh(fn,'in');if(!v){toast('Vehicle not found','err');return;}
   // Accept if vehicle is rented OR has a return date in the past/today (may not have been updated)
   const today=new Date().toISOString().split('T')[0];
