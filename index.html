@@ -865,7 +865,8 @@ function startCO(fn){
   }catch(e){}
   co={v,fn,
     prepBy:'',prepSig:null,prepAt:'',prepItems:{},prepPhotos:[],fuelOut:'Full',
-    equipSig:null,equipAt:'',
+    prepLog:[],prepCheckedBy:{},
+    equipSig:null,equipAt:'',equipLog:[],
     clientName:v.cl||'',clientEmail:'',clientPassport:null,clientID:null,
     licFront:null,licBack:null,
     contract:null,contractSigned:false,
@@ -946,10 +947,15 @@ function coStep0(){
     if(item[0]==='__SECTION__'&&item[1].startsWith('🏕')) inVeh=false;
     if(inVeh) L_VEH.push(item);
   }
-  const done=L_VEH.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&co.prepItems[l]&&co.prepItems[l]!=='na').length;
+  const _pst=l=>{const v=co.prepItems[l];return v?.st||v||'';};
+  const _pby=l=>{const v=co.prepItems[l];return v?.by||'';};
+  const _pat=l=>{const v=co.prepItems[l];return v?.at||'';};
+  const done=L_VEH.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_pst(l)&&_pst(l)!=='na').length;
   const checkable=L_VEH.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__').length;
   const pct=Math.round(done/checkable*100);
-  const probs=L_VEH.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&co.prepItems[l]==='prob').map(([i,l])=>l);
+  const probs=L_VEH.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_pst(l)==='prob').map(([i,l])=>l);
+  // Staff who have checked items in this section
+  const staffOnStep=Object.keys(co.prepCheckedBy||{}).filter(n=>co.prepLog?.some(e=>e.by===n));
   return `
   <div class="step-intro">
     <div class="step-ico">🚗</div>
@@ -989,23 +995,33 @@ function coStep0(){
         <div style="font-size:10px;color:var(--g5);">${det}</div></div>
       </div>`;
     }
-    const st=co.prepItems[lbl]||'';
+    const st=_pst(lbl);const by=_pby(lbl);const at=_pat(lbl);
     const isQtyItem=lbl.startsWith('__QTY__');
     const realLbl=isQtyItem?lbl.replace('__QTY__',''):lbl;
     const naSVG=()=>`<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(90,112,144,.15)" stroke="#5a7090" stroke-width="2"/><path d="M8 12h8" stroke="#5a7090" stroke-width="2.5" stroke-linecap="round"/></svg>`;
     return `<div class="ci ${st==='ok'?'ok':st==='prob'?'prob':''}" onclick="tapPrep(${i})">
       <div class="ci-icon">${ico==='__OPT_ITEM__'?`<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>`:ico}</div>
-      <div class="ci-text"><div class="ci-lbl">${realLbl}</div><div class="ci-det">${det}</div></div>
+      <div class="ci-text">
+        <div class="ci-lbl">${realLbl}</div>
+        <div class="ci-det">${det}${by?` <span style="font-size:9px;color:var(--se);font-weight:700;margin-left:6px;">✓ ${by}${at?' · '+at:''}</span>`:''}</div>
+      </div>
       <div class="ci-st">${st==='ok'?okSVG():st==='prob'?probSVG():st==='na'?naSVG():uncSVG()}</div>
     </div>`;
   }).join('')}</div>
   ${probs.length?`<div class="al warn">⚠ Problems noted: ${probs.join(' · ')}</div>`:''}
+  ${staffOnStep.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">
+    <div style="font-size:10px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on this step</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+      ${staffOnStep.map(n=>{const cnt=co.prepLog?.filter(e=>e.by===n).length||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:12px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:10px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}
+    </div>
+  </div>`:''}
   ${photoHTML('co.prepPhotos','📷 Vehicle Photos','Photograph the vehicle exterior — all sides. Proof of condition before departure.',4)}
   ${co.prepSig?
     `<div class="signed">✅<div class="signed-name">${co.prepBy} — Vehicle check signed</div><div class="signed-time">${co.prepAt}</div></div>`:
-    `<div class="liab">⚠️ By signing, <strong>${co.prepBy||'[select name above]'}</strong> confirms all ✅ green items are done.<br>
+    `<div class="liab">⚠️ By signing, <strong>${co.prepBy||'[select name above]'}</strong> confirms all items they personally checked above.
+    ${staffOnStep.length>1?'<br><span style="color:var(--al);">'+staffOnStep.filter(n=>n!==co.prepBy).join(' + ')+'</span> also contributed to this step — both names will be recorded.':''}<br>
     Every ⬜ grey item = <strong>NOT CHECKED = personal liability.</strong></div>
-    <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">Your signature</span><span class="sig-clr" onclick="clrSig('co-p-sig')">Clear</span></div><canvas class="sig-cv" id="co-p-sig"></canvas></div>
+    <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">${co.prepBy||'Your'} signature</span><span class="sig-clr" onclick="clrSig('co-p-sig')">Clear</span></div><canvas class="sig-cv" id="co-p-sig"></canvas></div>
     <button class="btn g" onclick="signPrep()">✓ Sign & Confirm — Vehicle Check Complete</button>`}`;
 }
 
@@ -1016,14 +1032,14 @@ function tapPrep(i){
   if(L_PREP[i][1]?.startsWith('__QTY__'))return;
   const lbl=L_PREP[i][1];
   const isOpt=L_PREP[i][0]==='__OPT_ITEM__';
-  const cur=co.prepItems[lbl]||'';
-  // Optional items: grey → ok → prob → na → grey
-  // Regular items:  grey → ok → prob → grey
-  if(isOpt){
-    co.prepItems[lbl]=cur===''?'ok':cur==='ok'?'prob':cur==='prob'?'na':'';
-  } else {
-    co.prepItems[lbl]=cur===''?'ok':cur==='ok'?'prob':'';
-  }
+  const prevSt=(co.prepItems[lbl]?.st)||co.prepItems[lbl]||'';
+  let newSt;
+  if(isOpt) newSt=prevSt===''?'ok':prevSt==='ok'?'prob':prevSt==='prob'?'na':'';
+  else newSt=prevSt===''?'ok':prevSt==='ok'?'prob':'';
+  const ts=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  co.prepItems[lbl]={st:newSt,by:co.prepBy,at:ts};
+  if(newSt) co.prepLog.push({lbl,st:newSt,by:co.prepBy,at:ts});
+  co.prepCheckedBy[co.prepBy]=(co.prepCheckedBy[co.prepBy]||0)+1;
   const s=document.getElementById('cos');
   if(s){
     // Save existing signature before redraw
@@ -1045,7 +1061,6 @@ function tapPrep(i){
 }
 
 function signPrep(){
-  // Get name from DOM if available, else from co state, else from localStorage
   const domVal = document.getElementById('co-p-nm')?.value;
   if(domVal) co.prepBy = domVal;
   if(!co.prepBy){
@@ -1057,8 +1072,12 @@ function signPrep(){
   if(!co.prepBy){toast('Select your name first','err');return;}
   if(!hasSig('co-p-sig')){toast('Sign below to confirm','err');return;}
   co.prepSig=getSig('co-p-sig');co.prepAt=now();
+  // Record all staff who participated
+  const allStaff=Object.keys(co.prepCheckedBy||{});
+  if(!allStaff.includes(co.prepBy)) allStaff.push(co.prepBy);
+  co.prepByAll=allStaff; // save for management summary
   uploadPhotos(co.prepPhotos,co.fn,co.clientName||co.v.cl,'prep');
-  toast('Stage 1 signed ✅','ok');drawCO();
+  toast('Step 1 signed ✅','ok');drawCO();
 }
 
 // ── STEP 1: Equipment (camping gear, boxes, loose items) ─────────────────
@@ -1070,10 +1089,14 @@ function coStep1_equip(){
     if(item[0]==='__SECTION__'&&item[1].startsWith('🏕')) inEquip=true;
     if(inEquip) L_EQUIP.push(item);
   }
-  const done=L_EQUIP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&co.prepItems[l]&&co.prepItems[l]!=='na').length;
+  const _est=l=>{const v=co.prepItems[l];return v?.st||v||'';};
+  const _eby=l=>{const v=co.prepItems[l];return v?.by||'';};
+  const _eat=l=>{const v=co.prepItems[l];return v?.at||'';};
+  const done=L_EQUIP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_est(l)&&_est(l)!=='na').length;
   const checkable=L_EQUIP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__').length;
   const pct=Math.round(done/checkable*100);
-  const probs=L_EQUIP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&co.prepItems[l]==='prob').map(([i,l])=>l);
+  const probs=L_EQUIP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_est(l)==='prob').map(([i,l])=>l);
+  const equipStaff=Object.keys(co.prepCheckedBy||{}).filter(n=>co.prepLog?.some(e=>e.by===n));
 
   return `
   <div class="step-intro">
@@ -1097,7 +1120,7 @@ function coStep1_equip(){
         <div style="font-size:10px;color:var(--g5);">${det}</div></div>
       </div>`;
     }
-    const st=co.prepItems[lbl]||'';
+    const st=_est(lbl);
     const isOptItem=ico==='__OPT_ITEM__';
     const isQtyItem=lbl.startsWith('__QTY__');
     const realLbl=isQtyItem?lbl.replace('__QTY__',''):lbl;
@@ -1120,13 +1143,23 @@ function coStep1_equip(){
         </div>
       </div>`;
     }
+    const eby=_eby(realLbl);const eat=_eat(realLbl);
     return `<div class="ci ${st==='ok'?'ok':st==='prob'?'prob':''}" onclick="tapPrepIdx(${li})">
       <div class="ci-icon">${ico==='__OPT_ITEM__'?`<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>`:ico}</div>
-      <div class="ci-text"><div class="ci-lbl">${realLbl}${isOptItem?'<span style="font-size:9px;color:var(--g5);margin-left:6px;background:var(--g2);padding:1px 6px;border-radius:8px;">optional</span>':''}</div><div class="ci-det">${det}</div></div>
+      <div class="ci-text">
+        <div class="ci-lbl">${realLbl}${isOptItem?'<span style="font-size:9px;color:var(--g5);margin-left:6px;background:var(--g2);padding:1px 6px;border-radius:8px;">optional</span>':''}</div>
+        <div class="ci-det">${det}${eby?` <span style="font-size:9px;color:var(--se);font-weight:700;margin-left:6px;">✓ ${eby}${eat?' · '+eat:''}</span>`:''}</div>
+      </div>
       <div class="ci-st">${st==='ok'?okSVG():st==='prob'?probSVG():st==='na'?naSVG():uncSVG()}</div>
     </div>`;
   }).join('')}</div>
   ${probs.length?`<div class="al warn">⚠ Problems noted: ${probs.join(' · ')}</div>`:''}
+  ${equipStaff.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">
+    <div style="font-size:10px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on equipment check</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+      ${equipStaff.map(n=>{const cnt=co.prepLog?.filter(e=>e.by===n).length||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:12px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:10px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}
+    </div>
+  </div>`:''}
   ${photoHTML('co.prepPhotos','📷 Equipment Photos','Photograph all packed equipment — tent, boxes, loose items. Client sees these at handover.',6)}
   ${co.equipSig?
     `<div class="signed">✅<div class="signed-name">${co.prepBy} — Equipment check signed</div><div class="signed-time">${co.equipAt}</div></div>`:
@@ -1137,7 +1170,6 @@ function coStep1_equip(){
 }
 
 function tapPrepIdx(i){
-  // Same as tapPrep but takes a direct L_PREP index
   if(i<0||i>=L_PREP.length)return;
   const nm=document.getElementById('co-p-nm')?.value;if(nm)co.prepBy=nm;
   if(!co.prepBy){toast('Select your name first','err');return;}
@@ -1145,9 +1177,14 @@ function tapPrepIdx(i){
   if(L_PREP[i][1]?.startsWith('__QTY__'))return;
   const lbl=L_PREP[i][1];
   const isOpt=L_PREP[i][0]==='__OPT_ITEM__';
-  const cur=co.prepItems[lbl]||'';
-  if(isOpt) co.prepItems[lbl]=cur===''?'ok':cur==='ok'?'prob':cur==='prob'?'na':'';
-  else co.prepItems[lbl]=cur===''?'ok':cur==='ok'?'prob':'';
+  const prevSt=(co.prepItems[lbl]?.st)||co.prepItems[lbl]||'';
+  let newSt;
+  if(isOpt) newSt=prevSt===''?'ok':prevSt==='ok'?'prob':prevSt==='prob'?'na':'';
+  else newSt=prevSt===''?'ok':prevSt==='ok'?'prob':'';
+  const ts=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  co.prepItems[lbl]={st:newSt,by:co.prepBy,at:ts};
+  if(newSt) co.prepLog.push({lbl,st:newSt,by:co.prepBy,at:ts});
+  co.prepCheckedBy[co.prepBy]=(co.prepCheckedBy[co.prepBy]||0)+1;
   const s=document.getElementById('cos');
   if(s){
     const existingSig=hasSig('co-equip-sig')?getSig('co-equip-sig'):null;
@@ -1167,6 +1204,9 @@ function signEquip(){
   if(!co.prepBy){toast('Select your name first','err');return;}
   if(!hasSig('co-equip-sig')){toast('Sign below to confirm','err');return;}
   co.equipSig=getSig('co-equip-sig');co.equipAt=now();
+  const allStaff=Object.keys(co.prepCheckedBy||{});
+  if(!allStaff.includes(co.prepBy)) allStaff.push(co.prepBy);
+  co.equipByAll=allStaff;
   toast('Step 2 signed ✅','ok');coStep=2;drawCO();
 }
 
@@ -2110,7 +2150,7 @@ function coStep6_mgmt(){
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
     ${[
-      ['🧹','Prep & Pack',co.prepBy,!!co.prepSig,uncPrep.length+probPrep.length],
+      ['🧹','Prep & Pack',(co.prepByAll&&co.prepByAll.length>1?co.prepByAll.join(' + '):co.prepBy),!!co.prepSig,uncPrep.length+probPrep.length],
       ['🔧','Mechanical',co.mechBy,true,uncMech.length+probMech.length],
       ['📋','Contract',co.clientName,co.contractSigned,0],
       ['✍️','Handover',co.clientName,!!co.custSig,0],
@@ -2152,7 +2192,8 @@ async function completeCO(){
   const uncMech=L_MECH.filter(([i,l])=>!co.mechItems[l]).map(([i,l])=>l);
   await SB.from('checkouts').insert({
     booking_id:co.fn+'_'+co.v.pu, fleet_no:co.fn, client:co.clientName,
-    prep_by:co.prepBy, prep_signed_at:co.prepSig?new Date().toISOString():null, fuel_out:co.fuelOut,
+    prep_by:co.prepBy, prep_by_all:co.prepByAll||[co.prepBy], prep_log:co.prepLog||[],
+    prep_signed_at:co.prepSig?new Date().toISOString():null, fuel_out:co.fuelOut,
     handover_by:co.mechBy, customer_name:co.clientName,
     customer_signed_at:co.custSig?new Date().toISOString():null,
     manager_name:co.mgmtBy, manager_signed_at:co.mgmtSig?new Date().toISOString():null,
@@ -2393,9 +2434,16 @@ function tapRetItem(i){
   if(L_PREP[i][1]?.startsWith('__QTY__'))return;
   const lbl=L_PREP[i][1];
   const isOpt=L_PREP[i][0]==='__OPT_ITEM__';
-  const cur=ci.retItems[lbl]||'';
-  if(isOpt) ci.retItems[lbl]=cur===''?'ok':cur==='ok'?'prob':cur==='prob'?'na':'';
-  else ci.retItems[lbl]=cur===''?'ok':cur==='ok'?'prob':'';
+  const prevSt=(ci.retItems[lbl]?.st)||ci.retItems[lbl]||'';
+  let newSt;
+  if(isOpt) newSt=prevSt===''?'ok':prevSt==='ok'?'prob':prevSt==='prob'?'na':'';
+  else newSt=prevSt===''?'ok':prevSt==='ok'?'prob':'';
+  const ts=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  ci.retItems[lbl]={st:newSt,by:ci.receivedBy,at:ts};
+  if(!ci.retLog) ci.retLog=[];
+  if(!ci.retCheckedBy) ci.retCheckedBy={};
+  if(newSt) ci.retLog.push({lbl,st:newSt,by:ci.receivedBy,at:ts});
+  ci.retCheckedBy[ci.receivedBy]=(ci.retCheckedBy[ci.receivedBy]||0)+1;
   const s=document.getElementById('ci-step-body');
   if(s){
     const existingSig=hasSig('ci-ret-sig')?getSig('ci-ret-sig'):null;
