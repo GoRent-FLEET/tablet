@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#071a0f">
 <title>Go Rent 4×4</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
+*{box-sizing:border-box;margin:0;padding:0;}button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;}
 :root{
   --bg:#0f172a;--g0:#020812;--g1:#0f1a2e;--g2:#1a2740;--g3:#253550;--g4:#3a4f6a;--g5:#5a7090;--g6:#8aa0b8;--tx:#dde8f5;
   --gr:#0a2e1a;--gb:#145c30;--se:#3ddc84;--sg:#071a0f;
@@ -662,14 +662,12 @@ function showApp(){
 var _pin = '';
 
 function _pinRefresh(){
-  // Update 4 dots
   for(var i=0;i<4;i++){
     var dot=document.getElementById('pd'+i);
     if(dot) dot.style.background = i<_pin.length ? 'var(--se)' : 'transparent';
   }
-  // Show digits clearly
   var disp=document.getElementById('pin-display');
-  if(disp) disp.textContent = _pin.split('').map(function(){return '●';}).join(' ');
+  if(disp) disp.textContent = _pin.replace(/./g,'● ').trim();
 }
 
 function tapPin(d){
@@ -679,24 +677,33 @@ function tapPin(d){
   if(_pin.length===4){
     var name = window._loginName||'';
     var code = _pin;
-    var msg = document.getElementById('pin-msg');
     var staff = null;
     for(var i=0;i<STAFF_ROSTER.length;i++){
       if(STAFF_ROSTER[i].name===name && STAFF_ROSTER[i].code===code){
         staff=STAFF_ROSTER[i]; break;
       }
     }
+    _pin='';
     if(staff){
       APP_USER = staff;
       try{localStorage.setItem('gorent_user',JSON.stringify(staff));}catch(e){}
-      if(msg){ msg.style.color='var(--se)'; msg.style.fontSize='16px'; msg.textContent='✅ Logged in as '+name+' — Successful!'; }
-      _pin='';
-      setTimeout(function(){ showApp(); }, 1500);
+      var nameEl=document.getElementById('nav-user-name');
+      if(nameEl) nameEl.textContent='👤 '+staff.name;
+      var lo=document.getElementById('nav-logout');
+      if(lo) lo.style.display='';
+      // Hide login, show dashboard directly - no setTimeout
+      document.querySelectorAll('.page').forEach(function(e){e.classList.remove('on');});
+      document.querySelectorAll('.nb').forEach(function(e){e.classList.remove('on');});
+      var pov=document.getElementById('page-ov');
+      if(pov) pov.classList.add('on');
+      var nbov=document.getElementById('nb-ov');
+      if(nbov) nbov.classList.add('on');
+      renderOV();
     } else {
-      if(msg){ msg.style.color='var(--rl)'; msg.textContent='❌ Wrong PIN — try again'; }
-      _pin='';
+      var msg=document.getElementById('pin-msg');
+      if(msg){msg.style.color='var(--rl)';msg.textContent='❌ Wrong PIN — try again';}
       _pinRefresh();
-      setTimeout(function(){ if(msg) msg.textContent=''; },2000);
+      setTimeout(function(){var m=document.getElementById('pin-msg');if(m)m.textContent='';},2000);
     }
   }
 }
