@@ -1370,6 +1370,29 @@ function drawCO(){
         '</div>'+
       '</div>'+
       _specialHtml+
+    // Vehicle status strip
+    (function(){
+      var licExp=(_cov.lic&&_cov.lic.expiry)||'';
+      var licDiff=licExp?Math.round((new Date(licExp+'T00:00:00')-new Date())/86400000):99;
+      var licCol=licDiff<30?'var(--rl)':licDiff<60?'var(--al)':'rgba(255,255,255,.5)';
+      var licTxt=licExp?(licDiff<0?'⚠ Disc EXPIRED':'Disc: '+new Date(licExp+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'})):'No disc date';
+      var fuelTxt='Fuel: '+(co.fuelOut||_cov.fuelOut||'Full');
+      var fuelCol='rgba(255,255,255,.5)';
+      var odoTxt='ODO: '+(_cov.odo||'—')+' km';
+      var svcKm=(_cov.svc&&_cov.svc.lastKm&&_cov.svc.intKm)?(_cov.svc.lastKm+_cov.svc.intKm-_cov.odo):null;
+      var svcTxt=svcKm!==null?(svcKm<=0?'⚠ Service DUE':'Svc in '+svcKm+' km'):'';
+      var svcCol=svcKm!==null&&svcKm<=0?'var(--rl)':svcKm!==null&&svcKm<1000?'var(--al)':'rgba(255,255,255,.5)';
+      var tyreKm=(_cov.tyres&&_cov.tyres.lastKm&&_cov.tyres.intKm)?(_cov.tyres.lastKm+_cov.tyres.intKm-_cov.odo):null;
+      var tyreTxt=tyreKm!==null?(tyreKm<=0?'⚠ Tyres DUE':'Tyres in '+tyreKm+' km'):'';
+      var tyreCol=tyreKm!==null&&tyreKm<=0?'var(--rl)':tyreKm!==null&&tyreKm<2000?'var(--al)':'rgba(255,255,255,.5)';
+      return '<div style="display:flex;flex-wrap:wrap;gap:5px;padding:6px 14px 8px;border-top:1px solid rgba(255,255,255,.1);">'
+        +'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+licCol+';">'+licTxt+'</span>'
+        +'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+fuelCol+';">'+fuelTxt+'</span>'
+        +'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);">'+odoTxt+'</span>'
+        +(svcTxt?'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+svcCol+';">'+svcTxt+'</span>':'')
+        +(tyreTxt?'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+tyreCol+';">'+tyreTxt+'</span>':'')
+        +'</div>';
+    })()+
     '</div>'+
     '<div class="stg-bar s8">'+bar+'</div>'+
     '<div id="cos">'+body+'</div>'+
@@ -1413,7 +1436,6 @@ function coStep0(){
     <div><div style="font-size:15px;font-weight:900;color:var(--al);">${APP_USER&&APP_USER.name?APP_USER.name:'Unknown'}</div>
     <div style="font-size:13px;color:var(--g5);">🔒 Preparing this vehicle</div></div>
   </div>
-  ${licDiscBanner(co.v,'out')}
   <div class="fuel-row" style="flex-wrap:wrap;gap:10px;">
     <div style="flex:1;min-width:160px;">
       <div class="fuel-lbl">🛣 Odometer OUT (km)</div>
@@ -3228,6 +3250,23 @@ function drawCI(){
         </div>
         <span style="font-size:14px;font-weight:700;padding:3px 10px;border-radius:8px;background:rgba(240,80,80,.15);color:var(--rl);border:1px solid var(--re)">◀ ARRIVAL</span>
       </div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;padding:6px 14px 8px;border-top:1px solid rgba(255,255,255,.1);">
+      ${(function(){
+        var licExp=(v.lic&&v.lic.expiry)||'';
+        var licDiff=licExp?Math.round((new Date(licExp+'T00:00:00')-new Date())/86400000):99;
+        var licCol=licDiff<30?'var(--rl)':licDiff<60?'var(--al)':'rgba(255,255,255,.5)';
+        var licTxt=licExp?(licDiff<0?'⚠ Disc EXPIRED':'Disc: '+new Date(licExp+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'})):'No disc date';
+        var fuelTxt='Fuel out: '+(v.fuelOut||'Full');
+        var odoTxt='ODO out: '+(r.odometerOut||v.odo||'—')+' km';
+        var svcKm=(v.svc&&v.svc.lastKm&&v.svc.intKm)?(v.svc.lastKm+v.svc.intKm-v.odo):null;
+        var svcTxt=svcKm!==null?(svcKm<=0?'⚠ Service DUE':'Svc in '+svcKm+' km'):'';
+        var svcCol=svcKm!==null&&svcKm<=0?'var(--rl)':svcKm!==null&&svcKm<1000?'var(--al)':'rgba(255,255,255,.5)';
+        var pills='<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+licCol+';">'+licTxt+'</span>'
+          +'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);">'+fuelTxt+'</span>'
+          +'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);">'+odoTxt+'</span>'
+          +(svcTxt?'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+svcCol+';">'+svcTxt+'</span>':'');
+        return pills;
+      })()}
     </div>
     <div class="stg-bar s5">${bar}</div>
     <div id="ci-step-body">${bodyHTML}</div>
@@ -3265,8 +3304,6 @@ function ciStep0_CI(){
     <div class="who-lbl">👤 Who is receiving this vehicle?</div>
     ${selStaff('ci-rcv',STAFF_HO,r.receivedBy)}
   </div>
-  ${licDiscBanner(v,'in')}
-
   <!-- ODO + FUEL ROW -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
     <div>
