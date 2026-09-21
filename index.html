@@ -819,7 +819,7 @@ function renderCOPicker(){
     var badge=isToday?'<span style="background:#4a6fa5;color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">TODAY</span>':'<span style="background:var(--g2);color:var(--g5);font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">UPCOMING</span>';
     var dt=new Date(v.pu+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
     var col=isToday?'#4a6fa5':'var(--g3)';
-    rows+='<div data-fn="'+v.fn+'" class="picker-row" style="background:var(--g1);border:2px solid '+col+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;touch-action:manipulation;">'
+    rows+='<div data-fn="'+v.fn+'" class="picker-row" ontouchend="event.preventDefault();startCO(this.dataset.fn);" style="background:var(--g1);border:2px solid '+col+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;">'
       +'<div><div style="font-size:16px;font-weight:900;color:var(--se);">'+v.fn+'</div>'
       +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+v.cl+'</div>'
@@ -848,7 +848,7 @@ function renderCIPicker(){
     var badge=isToday?'<span style="background:#2a9d5c;color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">TODAY</span>':'<span style="background:var(--g2);color:var(--g5);font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">UPCOMING</span>';
     var dt=new Date(v.rt+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
     var col=isToday?'#2a9d5c':'var(--g3)';
-    rows+='<div data-fn="'+v.fn+'" class="picker-row-ci" style="background:var(--g1);border:2px solid '+col+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;touch-action:manipulation;">'
+    rows+='<div data-fn="'+v.fn+'" class="picker-row-ci" ontouchend="event.preventDefault();startCI(this.dataset.fn);" style="background:var(--g1);border:2px solid '+col+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;">'
       +'<div><div style="font-size:16px;font-weight:900;color:var(--se);">'+v.fn+'</div>'
       +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+v.cl+'</div>'
@@ -2911,7 +2911,11 @@ function sendHandoverWA(){
 //  Damage → Equipment → Customer sign → Management → DONE
 // ═══════════════════════════════════════════════════════════════
 function startCI(fn){
-  const v=FLEET.find(x=>x.fn===fn);if(!v||v.st!=='rented'){toast('Not on rent','err');return;}
+  const v=FLEET.find(x=>x.fn===fn);if(!v){toast('Vehicle not found','err');return;}
+  // Accept if vehicle is rented OR has a return date in the past/today (may not have been updated)
+  const today=new Date().toISOString().split('T')[0];
+  const daysToReturn=v.rt?Math.round((new Date(v.rt+'T00:00:00')-new Date(today+'T00:00:00'))/86400000):99;
+  if(v.st!=='rented'&&daysToReturn>1){toast('Vehicle not due for return yet','err');return;}
   // Mark as in-progress (preserve existing staff if already set)
   try{
     const existing=localStorage.getItem('inprogress_'+fn);
