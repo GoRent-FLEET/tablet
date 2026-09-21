@@ -4493,10 +4493,19 @@ function lsPin(d) {
       var nbrp = document.getElementById('nb-rp');
       if (nbrp) nbrp.style.display = (typeof REPORTS_ALLOWED !== 'undefined' && REPORTS_ALLOWED.includes(match.name)) ? '' : 'none';
       LS_PIN = ''; LS_WHO = '';
-      // Switch screen immediately then load data
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'flex';
-      try { loadFleetFromDB().then(function(){ loadClients().then(function(){ renderOV(); }); }); } catch(e){ try{ renderOV(); }catch(e2){} }
+      // Switch screen immediately - hard and simple
+      var ls = document.getElementById('login-screen');
+      var ap = document.getElementById('app');
+      ls.style.cssText = 'display:none!important';
+      ap.style.cssText = 'display:flex!important;height:100%;flex-direction:column;';
+      // Load data independently - errors won't block the UI
+      setTimeout(function(){
+        try{ loadFleetFromDB().catch(function(){}).then(function(){
+          try{ loadClients().catch(function(){}).then(function(){
+            try{ renderOV(); }catch(e){}
+          }); }catch(e){ try{renderOV();}catch(e2){} }
+        }); }catch(e){ try{renderOV();}catch(e2){} }
+      }, 100);
     } else {
       var msg = document.getElementById('ls-msg');
       msg.style.color = '#f05050';
