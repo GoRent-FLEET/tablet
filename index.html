@@ -871,7 +871,7 @@ function startCO(fn){
     prepBy:'',prepSig:null,prepAt:'',prepItems:{},prepPhotos:[],fuelOut:'Full',
     prepLog:[],prepCheckedBy:{},
     equipSig:null,equipAt:'',equipLog:[],
-    clientName:v.cl||'',clientEmail:'',clientPassport:null,clientID:null,
+    clientName:v.cl||'',clientEmail:'',clientPhone:'',clientPassport:null,clientID:null,
     licFront:null,licBack:null,
     contract:null,contractSigned:false,
     dmgDone:false,
@@ -1272,8 +1272,15 @@ function coStep1(){
           <input value="${d.licExpiry||''}" placeholder="MM/YYYY" oninput="co.drivers[${i}].licExpiry=this.value">
         </div>
       </div>
-      ${isPrimary?`<div class="fi"><label>Email (contract copy sent here)</label>
-        <input type="email" value="${co.clientEmail||''}" placeholder="client@email.com" oninput="co.clientEmail=this.value">
+      ${isPrimary?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="fi"><label>📧 Email address</label>
+          <input type="email" value="${co.clientEmail||''}" placeholder="client@email.com" oninput="co.clientEmail=this.value"
+            style="border-color:${co.clientEmail?'var(--gb)':'var(--g3)'}">
+        </div>
+        <div class="fi"><label>💬 WhatsApp number</label>
+          <input type="tel" value="${co.clientPhone||''}" placeholder="+264 81 ..." oninput="co.clientPhone=this.value"
+            style="border-color:${co.clientPhone?'var(--gb)':'var(--g3)'}">
+        </div>
       </div>`:''}
 
       <!-- Document photos -->
