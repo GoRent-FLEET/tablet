@@ -750,6 +750,31 @@ function backToNames(){
 let currentUser=null, currentProfile=null;
 let co={}, ci={}, coStep=0, ciStep=0, clientList=[];
 function ipKey(fn){ return 'ip_'+(APP_USER?APP_USER.name:'x')+'_'+fn; }
+
+function getActiveStaff(){
+  // Returns [{fn, type, staffName, step, prepBy, bonnetBy, mechBy}]
+  var active = [];
+  try {
+    for(var i=0; i<localStorage.length; i++){
+      var key = localStorage.key(i);
+      if(!key || !key.startsWith('ip_')) continue;
+      var parts = key.split('_'); // ['ip', name, fn]
+      if(parts.length < 3) continue;
+      var staffName = parts[1];
+      var fn = parts.slice(2).join('_');
+      var rec = JSON.parse(localStorage.getItem(key));
+      if(rec && rec.fn) active.push({
+        key: key,
+        fn: fn,
+        staffName: staffName,
+        type: rec.type || 'checkout',
+        prepBy: rec.staff || staffName,
+        started: rec.started || ''
+      });
+    }
+  } catch(e) {}
+  return active;
+}
 const sigs={};
 let imarks={}, itool='sc', isize='M', iundo=null, retSt={};
 const VIEWS=['lhs','rhs','fl','rear','fr'];
@@ -763,6 +788,8 @@ initIM();
 // ── NAV ──────────────────────────────────────────────────────────
 const REPORTS_ALLOWED=['Manager','Simon','Peter','Nelson','Joe','Vince','Robbie'];
 function canViewReports(){ return APP_USER && REPORTS_ALLOWED.includes(APP_USER.name); }
+const MANAGEMENT=['Manager','Robbie','Peter','Simon','Joe','Christina'];
+function isManagement(){ return !!(APP_USER && MANAGEMENT.includes(APP_USER.name)); }
 
 function goPage(p){
   if(!APP_USER){showLogin();return;}
@@ -998,6 +1025,22 @@ function renderOV(){
     var inprog=null; try{var r=localStorage.getItem(ipKey(v.fn));if(r)inprog=JSON.parse(r);}catch(e){}
     var isIP=inprog&&((isOut&&inprog.type==='checkout')||(!isOut&&inprog.type==='checkin'));
     if(isIP){bg='#fff5f5';border='#e53e3e';}
+    // For management: find ALL staff working on this vehicle
+    var allStaffOnVeh=[];
+    if(isManagement()){
+      try{
+        for(var _si=0;_si<localStorage.length;_si++){
+          var _sk=localStorage.key(_si);
+          if(_sk&&_sk.startsWith('ip_')&&_sk.endsWith('_'+v.fn)){
+            var _sr=JSON.parse(localStorage.getItem(_sk));
+            if(_sr&&_sr.fn===v.fn){
+              var _sn=_sk.split('_')[1];
+              if(_sn&&!allStaffOnVeh.includes(_sn)) allStaffOnVeh.push(_sn);
+            }
+          }
+        }
+      }catch(e){}
+    }
     return '<div onclick="ovExpandTo(\''+(isOut?'out':'in')+'\',\''+v.fn+'\')" '
       +'ontouchend="event.preventDefault();ovExpandTo(\''+(isOut?'out':'in')+'\',\''+v.fn+'\')" '
       +'style="background:'+bg+';border:1px solid '+border+';border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;touch-action:manipulation;display:flex;align-items:flex-start;gap:10px;">'
@@ -1012,6 +1055,12 @@ function renderOV(){
       +'<div style="font-size:12px;font-weight:800;color:'+campCol+';">'+camp+'</div>'
       +'</div>'
       +(isRemote?'<span style="font-size:16px;flex-shrink:0;">⚠️</span>':'')
+      +(allStaffOnVeh.length?'<div style="margin-top:5px;padding-top:5px;border-top:1px dashed #e0e0e0;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">'
+        +'<span style="font-size:10px;color:#888;font-weight:700;">👥</span>'
+        +allStaffOnVeh.map(function(n){
+          return '<span style="font-size:10px;font-weight:800;color:#4a6fa5;background:#eef2f8;padding:1px 7px;border-radius:10px;">'+n+'</span>';
+        }).join('')
+        +'</div>':'')
       +'</div>';
   }
 
