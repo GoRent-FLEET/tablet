@@ -2665,14 +2665,7 @@ function coStep4_dmg(){
         +buildGroup('○ Not yet checked', unchecked, 'var(--g5)')
         +'</div>'
     )
-    +'<!-- Damage Inspector -->'
-    +'<div style="background:var(--g1);border:2px solid var(--g2);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;">'
-    +'<div style="font-size:15px;font-weight:800;margin-bottom:8px;">🔍 Damage Inspection</div>'
-    +'<div class="al info" style="margin-bottom:10px;font-size:13px;">Blue = Scratch · Red = Dent · Yellow = Pre-existing</div>'
-    +insHTML()
-    +photoHTML('co.dmgPhotos','📷 Damage Photos','Photograph all damage — these protect the company.',8)
-    +'</div>'
-    +'<div class="al ok" style="margin-top:8px;text-align:center;">✅ Tap <strong>Next →</strong> to proceed to client handover</div>';
+    +'<div class="al ok" style="margin-top:8px;text-align:center;">✅ Tap <strong>Next →</strong> to proceed to client handover for damage inspection</div>';
 }
 function tapMech(i){
   const nm=(function(){var _e=document.getElementById('co-h-nm');return _e?_e.value:undefined;})();if(nm)co.mechBy=nm;
@@ -2715,6 +2708,15 @@ function coStep5_client(){
 
   if(!co.handoverChecks) co.handoverChecks={};
   const hc=co.handoverChecks;
+
+  // Build damage section HTML
+  const dmgSectionHTML=`
+  <div style="background:var(--g1);border:2px solid var(--g2);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;">
+    <div style="font-size:15px;font-weight:800;margin-bottom:8px;">🔍 Damage Inspection</div>
+    <div class="al info" style="margin-bottom:10px;font-size:13px;">Blue = Scratch · Red = Dent · Yellow = Pre-existing</div>
+    ${insHTML()}
+    ${photoHTML('co.dmgPhotos','📷 Damage Photos','Photograph all damage — these protect the company.',8)}
+  </div>`;
 
   // Handover checklist sections
   const HO_SECTIONS=[
@@ -2776,8 +2778,9 @@ function coStep5_client(){
   const pct=Math.round(doneItems/totalItems*100);
 
   return `
+  ${dmgSectionHTML}
   <div class="step-intro">
-    <div class="step-ico">✍️</div>
+    <div class="step-ico">🤝</div>
     <div>
       <div class="step-title">Step 6 — Client Handover</div>
       <div class="step-sub">${v.cl} · ${co.fn} · ${v.reg} — go through each section with the client</div>
