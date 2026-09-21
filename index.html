@@ -472,7 +472,6 @@ const L_PREP=[
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"5\" y=\"11\" width=\"14\" height=\"10\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M8 11V7a4 4 0 018 0v4\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"12\" cy=\"16\" r=\"1.5\" fill=\"#60a5fa\"/></svg>','Mounting brackets & load bars','All mounting brackets and load bars present, tight and secure'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"5\" y=\"11\" width=\"14\" height=\"10\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M8 11V7a4 4 0 018 0v4\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"12\" cy=\"16\" r=\"1.5\" fill=\"#60a5fa\"/></svg>','Canopy locks','All canopy locks working and secured'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><circle cx=\"12\" cy=\"12\" r=\"9\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M8 12l3 3 5-5\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Tailgate & lock','Opens, closes and locks correctly'],  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M11 5L6 9H2v6h4l5 4V5z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><path d=\"M15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Hooter','Horn working'],
-  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><circle cx=\"7\" cy=\"11\" r=\"2\" fill=\"#22c55e\"/><circle cx=\"12\" cy=\"11\" r=\"2\" fill=\"#22c55e\"/><circle cx=\"17\" cy=\"11\" r=\"2\" fill=\"#22c55e\"/></svg>','No warnings','Dashboard — zero active warning lights'],  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"2\" y=\"9\" width=\"20\" height=\"8\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><circle cx=\"7\" cy=\"17\" r=\"3\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><circle cx=\"17\" cy=\"17\" r=\"3\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/></svg>','4WD tested','Hi and Lo range engage correctly'],  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><circle cx=\"12\" cy=\"12\" r=\"9\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M12 3a15 15 0 010 18M3 12h18\" stroke=\"#60a5fa\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Cross-border docs','Letter present if booked for cross-border'],
   ['__CAMPING__','Bedding for tent','Sleeping bags, pillows, sheets — packed and complete (camping vehicles only)'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M14.7 6.3a1 1 0 010 1.4L7.4 15l-3 1 1-3 7.3-7.3a1 1 0 011.4 0z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M3 21h18\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Canopy bolts fastened','All canopy mounting bolts checked and tightened'],
   ['__SECTION__','🏕 Camping Equipment','Check all equipment is present, clean and packed'],
@@ -536,27 +535,34 @@ const L_PREP=[
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M12 2l9 5v10l-9 5-9-5V7l9-5z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','All packed & locked','All equipment loaded and canopy locked']
 ];
 const L_MECH=[
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M7 3h10l2 6H5L7 3z" stroke="#a78bfa" stroke-width="1.8" stroke-linejoin="round"/><path d="M5 9v13h14V9" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round"/></svg>','Engine oil','Between MIN and MAX marks'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="12" cy="12" r="8" stroke="#a78bfa" stroke-width="1.8"/><circle cx="12" cy="12" r="2.5" fill="#a78bfa"/></svg>','Coolant','Reservoir full, no leaks, hoses ok'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="12" cy="12" r="9" stroke="#a78bfa" stroke-width="1.8"/><circle cx="12" cy="12" r="4" stroke="#a78bfa" stroke-width="1.8"/></svg>','Brake fluid','Level ok, colour good'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M12 3l8 14H4L12 3z" stroke="#a78bfa" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 10v3M12 15v.5" stroke="#a78bfa" stroke-width="2.2" stroke-linecap="round"/></svg>','No oil leaks','Check under vehicle — must be dry'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M3 6h18l-2 5H5L3 6z" stroke="#a78bfa" stroke-width="1.8" stroke-linejoin="round"/><path d="M5 11h14l-2 6H7l-2-6z" stroke="#a78bfa" stroke-width="1.8" stroke-linejoin="round"/></svg>','Air filter','Clean and correctly seated'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="2" y="7" width="18" height="11" rx="2" stroke="#a78bfa" stroke-width="1.8"/><path d="M20 11h2v3h-2" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round"/><path d="M7 12h10M12 9v6" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/></svg>','Main battery','Load tested, terminals clean'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="2" y="7" width="18" height="11" rx="2" stroke="#a78bfa" stroke-width="1.8"/><path d="M20 11h2v3h-2" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round"/><path d="M7 12h10" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/></svg>','Fridge battery','Load tested, solenoid working'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="12" cy="12" r="4" stroke="#a78bfa" stroke-width="1.8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round"/></svg>','All lights','Headlights hi/lo, indicators, brake, reverse, interior'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="2" y="5" width="20" height="14" rx="2" stroke="#a78bfa" stroke-width="1.8"/><circle cx="7" cy="11" r="2" fill="#22c55e"/><circle cx="12" cy="11" r="2" fill="#22c55e"/><circle cx="17" cy="11" r="2" fill="#22c55e"/></svg>','No warnings','Dashboard — zero active warning lights'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M13 2L4 13h7l-1 9 9-11h-7l1-9z" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>','12V & USB','All charging ports working'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="12" cy="12" r="9" stroke="#a78bfa" stroke-width="1.8"/><circle cx="12" cy="12" r="4" stroke="#a78bfa" stroke-width="1.5"/><path d="M12 8v4l2.5 2.5" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>','Tyre pressure','All 4 + spare checked, compressor present'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M12 2l10 6v8l-10 6L2 16V8l10-6z" stroke="#a78bfa" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="#a78bfa" stroke-width="1.8"/></svg>','Wheel nuts','All tightened and torqued'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="12" cy="12" r="9" stroke="#a78bfa" stroke-width="1.8"/><circle cx="12" cy="12" r="5" stroke="#a78bfa" stroke-width="1.5"/><circle cx="12" cy="12" r="2" fill="#a78bfa"/></svg>','Spare wheels x2','Both checked and inflated to correct pressure'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="12" cy="12" r="9" stroke="#a78bfa" stroke-width="1.8"/><circle cx="12" cy="12" r="2.5" fill="#a78bfa"/><path d="M12 9.5V4M8.5 13.5L4 16M15.5 13.5L20 16" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round"/></svg>','Steering & brakes','No play, pulls straight, brakes firm'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="2" y="9" width="20" height="8" rx="2" stroke="#a78bfa" stroke-width="1.8"/><circle cx="7" cy="17" r="3" stroke="#a78bfa" stroke-width="1.8"/><circle cx="17" cy="17" r="3" stroke="#a78bfa" stroke-width="1.8"/></svg>','4WD tested','Hi and Lo range engage correctly'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="3" y="5" width="18" height="12" rx="2" stroke="#a78bfa" stroke-width="1.8"/><path d="M3 10h18" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/></svg>','Windscreen','No chips or cracks'],  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="9" y="6" width="8" height="16" rx="2" stroke="#a78bfa" stroke-width="1.8"/><path d="M11 6V3h4v3" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round"/></svg>','Fire extinguisher','Gauge green, pin intact, mounted securely'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#a78bfa" stroke-width="1.8"/><path d="M12 8v8M8 12h8" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/></svg>','First aid kit','Complete, all items present, in-date'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M4 12h16M4 12l5-5M4 12l5 5" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>','Recovery kit','Tow strap, shovel, axe, jack, spanner, jump leads, triangles, tyre kit'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="#a78bfa" stroke-width="1.8" stroke-linejoin="round"/></svg>','Vehicle docs','Licence disc valid, insurance present'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="12" cy="12" r="9" stroke="#a78bfa" stroke-width="1.8"/><path d="M12 3a15 15 0 010 18M3 12h18" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/></svg>','Cross-border docs','Letter present if booked for cross-border'],
-  ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="8" cy="10" r="4" stroke="#a78bfa" stroke-width="1.8"/><path d="M11.4 12.6L20 21" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/></svg>','Keys & remote','All keys and remote present and working']
+  ['__SECTION__','🛢 Fluids & leaks'],
+  ['•','Engine oil level','Between MIN and MAX, no milky residue'],
+  ['•','Coolant level','Reservoir between min/max, hoses ok'],
+  ['•','Brake fluid','Level ok, colour good, no leaks'],
+  ['•','Power steering fluid','At correct level'],
+  ['•','Windscreen washer fluid','Topped up'],
+  ['•','No oil leaks','Check under vehicle — must be dry'],
+  ['__SECTION__','🔧 Engine bay'],
+  ['•','Fan belts','No cracks or fraying'],
+  ['•','Air filter','Clean and correctly seated'],
+  ['__SECTION__','🔋 Lights & batteries'],
+  ['•','Main battery','Load tested'],
+  ['•','Battery terminals','Clean and tight'],
+  ['•','Fridge battery','Load tested, solenoid working'],
+  ['•','All lights','Headlights hi/lo, indicators, brake, reverse, interior'],
+  ['•','12V & USB','All charging ports working'],
+  ['__SECTION__','🛞 Wheels & tyres'],
+  ['•','Tyre pressure','All 4 + spares checked, compressor present'],
+  ['•','Wheel nuts','All tightened and torqued'],
+  ['•','Spare wheels x2','Both checked and inflated to correct pressure'],
+  ['__SECTION__','🚙 Driving checks'],
+  ['•','Steering & brakes','No play, pulls straight, brakes firm'],
+  ['•','4WD tested','Hi and Lo range engage correctly'],
+  ['•','No warnings','Dashboard — zero active warning lights'],
+  ['•','Windscreen','No chips or cracks'],
+  ['__SECTION__','🔑 Keys'],
+  ['•','Keys & remote','All vehicle keys and remote present and working'],
+  ['•','Canopy keys','Canopy keys present and working'],
 ];
 const RET_GROUPS=[{"g": "Tent & sleeping", "items": ["Tent + ladder + pins", "Tent mattress & bedding", "Sleeping bags"]}, {"g": "Kitchen", "items": ["Gas stove & burner", "Pots, pans & utensils (complete)", "Cutlery, plates & cups (complete)", "Braai grid"]}, {"g": "Camp furniture", "items": ["Table", "Chairs (correct qty)", "Camping lights", "Binoculars"]}, {"g": "Fridge & fuel", "items": ["Fridge", "Jerrycans (correct qty)"]}, {"g": "Safety & recovery", "items": ["Fire extinguisher", "First aid kit", "Jack & wheel spanner", "Tool kit", "Tow strap", "Shovel & axe", "Jump leads", "Warning triangles x2", "Tyre repair kit"]}, {"g": "Docs & keys", "items": ["Vehicle licence & insurance", "All keys & remote"]}];
 const FLEET_DEMO=[
@@ -1504,7 +1510,7 @@ function drawCO(){
   }
   if(typeof coStep==='undefined') coStep=0;
   // Step progress bar
-  const bar=CO_STEPS.map(s=>{
+  const bar=CO_STEPS.filter(function(s){return s.n!==1;}).map(s=>{
     const done=(s.n===0&&!!co.prepSig)||(s.n===1&&!!co.bonnetDone)||
                (s.n===2&&!!co.mechDone)||(s.n===3&&!!co.equipSig)||
                (s.n===4&&co.contractSigned)||(s.n===5&&!!co.dmgDone)||
@@ -1611,7 +1617,7 @@ function drawCO(){
         })();
     })()+
     '</div>'+
-    '<div class="stg-bar s8">'+bar+'</div>'+
+    '<div class="stg-bar s7">'+bar+'</div>'+
     '<div id="cos">'+body+'</div>'+
     '<div class="btn-row">'+_backBtn+_nextBtn+'</div>';
   setTimeout(()=>['co-p-sig','co-equip-sig','co-c-sig','co-m-sig'].forEach(initSig),80);
@@ -1624,6 +1630,7 @@ function coGoStep(t){
     toast('🔒 Access restricted — contact management','err');
     return;
   }
+  if(t===1) t=(coStep>1)?0:2; // Engine checks now live in Mechanical
   coStep=Math.max(0,Math.min(7,t));drawCO();
 }
 
@@ -2778,12 +2785,14 @@ function coStep4_dmg(){
     else if(val==='prob') issues.push({step:'Prep',label:lbl,status:'problem'});
   });
 
-  // Bonnet items unchecked
-  var BONNET_ITEMS=['Engine oil level','Coolant level','Brake fluid','Power steering fluid','Battery terminals','Fan belts','Windscreen washer fluid'];
-  BONNET_ITEMS.forEach(function(lbl,i){
-    var key='bon'+i; var val=(co.bonnetItems&&co.bonnetItems[key])||'';
-    if(!val) issues.push({step:'Engine',label:lbl,status:'unchecked'});
-    else if(val==='issue') issues.push({step:'Engine',label:lbl,status:'problem'});
+  // Documents (checked on this step)
+  if(!co.docItems) co.docItems={};
+  var DOCS=[['veh','Vehicle docs','Licence disc valid, insurance papers present']];
+  if(co.v.xb) DOCS.push(['xb','Cross-border docs','Letter & papers for '+co.v.xb]);
+  DOCS.forEach(function(d){
+    var val=co.docItems[d[0]]||'';
+    if(!val) issues.push({step:'Docs',label:d[1],status:'unchecked'});
+    else if(val==='issue') issues.push({step:'Docs',label:d[1],status:'problem'});
   });
 
   // Mech items unchecked
@@ -2805,7 +2814,7 @@ function coStep4_dmg(){
       +items.map(function(i){
         return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--g0);border-radius:8px;margin-bottom:4px;border-left:3px solid '+color+';">'
           +'<span style="font-size:11px;font-weight:800;color:var(--g5);min-width:70px;">'+i.step+'</span>'
-          +'<span style="font-size:13px;font-weight:700;color:var(--tx);">'+i.label+'</span>'
+          +'<span style="font-size:13px;font-weight:700;color:var(--tx);">'+String(i.label).replace('__QTY__','')+'</span>'
           +'</div>';
       }).join('')
       +'</div>';
@@ -2817,6 +2826,18 @@ function coStep4_dmg(){
     +'<div class="step-ico">🔍</div>'
     +'<div><div class="step-title">Vehicle Inspection</div>'
     +'<div class="step-sub">Management review — unchecked and problem items</div></div>'
+    +'</div>'
+    +'<div style="background:var(--g1);border:2px solid var(--g2);border-radius:var(--rs);padding:10px 14px;margin-bottom:14px;">'
+    +'<div style="font-size:13px;font-weight:800;color:var(--tx);margin-bottom:4px;">📄 Documents</div>'
+    +DOCS.map(function(d){
+      var val=co.docItems[d[0]]||'';
+      var ok='padding:7px 10px;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer;touch-action:manipulation;border:2px solid '+(val==='ok'?'var(--gb)':'var(--g3)')+';background:'+(val==='ok'?'var(--sg)':'var(--g1)')+';color:'+(val==='ok'?'var(--se)':'var(--g5)')+';';
+      var bad='padding:7px 10px;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer;touch-action:manipulation;border:2px solid '+(val==='issue'?'var(--re)':'var(--g3)')+';background:'+(val==='issue'?'var(--rg)':'var(--g1)')+';color:'+(val==='issue'?'var(--rl)':'var(--g5)')+';';
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--g2);">'
+        +'<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;color:var(--tx);">'+d[1]+'</div><div style="font-size:11px;color:var(--g5);">'+d[2]+'</div></div>'
+        +'<button style="'+ok+'" onclick="setDocItem(\''+d[0]+'\',\'ok\')">✅</button>'
+        +'<button style="'+bad+'" onclick="setDocItem(\''+d[0]+'\',\'issue\')">⚠</button></div>';
+    }).join('')
     +'</div>'
     +(allClear
       ? '<div style="background:var(--sg);border:2px solid var(--gb);border-radius:var(--rs);padding:16px;text-align:center;margin-bottom:14px;">'
@@ -2831,6 +2852,19 @@ function coStep4_dmg(){
         +'</div>'
     )
     +'<div class="al ok" style="margin-top:8px;text-align:center;">✅ Tap <strong>Next →</strong> to proceed to client handover for damage inspection</div>';
+}
+// Keeps ticked items if the page reloads mid check-out (was missing, which broke the tick buttons)
+function saveCOProgress(){
+  try{
+    if(!co||!co.fn)return;
+    var raw=localStorage.getItem(ipKey(co.fn));var rec=raw?JSON.parse(raw):{};
+    rec.mechItems=co.mechItems||{};rec.docItems=co.docItems||{};rec.updated=Date.now();
+    localStorage.setItem(ipKey(co.fn),JSON.stringify(rec));
+  }catch(e){}
+}
+function setDocItem(k,v){
+  if(!co.docItems)co.docItems={};
+  co.docItems[k]=v; saveCOProgress(); drawCO();
 }
 function tapMech(i){
   const nm=(function(){var _e=document.getElementById('co-h-nm');return _e?_e.value:undefined;})();if(nm)co.mechBy=nm;
