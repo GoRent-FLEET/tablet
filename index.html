@@ -1267,6 +1267,125 @@ function renderOV(){
     +'</div>'
 
     +'</div>';
+
+  // Show vehicle detail overlay if a vehicle is expanded
+  if(window._ovExpanded){
+    var fn=window._ovExpanded;
+    var v=FLEET.find(function(x){return x.fn===fn;});
+    if(v){
+      var isOut=(window._ovMode==='out');
+      var clientVisible=canSeeClientInfo();
+      var overlay=document.createElement('div');
+      overlay.style.cssText='position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;';
+      overlay.onclick=function(ev){if(ev.target===overlay){window._ovExpanded=null;renderOV();}};
+
+      var licExp=(v.lic&&v.lic.expiry)||'';
+      var licDiff=licExp?Math.round((new Date(licExp+'T00:00:00')-new Date())/86400000):99;
+      var licBadge=licExp?('<span style="font-size:11px;font-weight:800;padding:2px 9px;border-radius:8px;background:'+(licDiff<30?'#fde8e8':licDiff<60?'#fff3cd':'#e8f5ee')+';color:'+(licDiff<30?'#c53030':licDiff<60?'#b7791f':'#276749')+';">'+(licDiff<0?'⚠ EXPIRED':'Disc: '+new Date(licExp+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}))+'</span>'):'';
+      var campBadge=v.camping?('<span style="background:#e6f4ea;color:#276749;font-size:12px;font-weight:800;padding:3px 10px;border-radius:8px;">🏕 '+v.pax+' Pax Camping</span>'):('<span style="background:#f5f5f5;color:#888;font-size:12px;font-weight:800;padding:3px 10px;border-radius:8px;">🚫 No Camping</span>');
+      var xbBadge=v.xb?('<span style="background:#fff3cd;color:#b7791f;font-size:12px;font-weight:800;padding:3px 10px;border-radius:8px;">🌍 '+v.xb+'</span>'):'';
+      var specBadges=(v.special&&v.special.length?v.special.map(function(sp){return '<span style="background:#fde8e8;color:#c53030;font-size:11px;font-weight:800;padding:2px 9px;border-radius:8px;">⚠ '+sp+'</span>';}).join(''):'');
+
+      // Collection & dropoff
+      var puDate=v.pu?new Date(v.pu+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):'—';
+      var rtDate=v.rt?new Date(v.rt+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):'—';
+
+      var html='<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">'
+        // Handle bar
+        +'<div style="text-align:center;padding:10px 0 0;"><div style="width:40px;height:4px;background:#e0e0e0;border-radius:2px;display:inline-block;"></div></div>'
+        // Header
+        +'<div style="background:#1a3a2a;padding:14px 18px 12px;">'
+        +'<div style="display:flex;align-items:flex-start;justify-content:space-between;">'
+        +'<div>'
+        +'<div style="font-size:22px;font-weight:900;color:#fff;">'+v.fn+' <span style="font-size:14px;font-weight:700;color:rgba(255,255,255,.6);">'+v.reg+'</span></div>'
+        +'<div style="font-size:15px;font-weight:700;color:rgba(255,255,255,.85);margin-top:2px;">'+v.cl+'</div>'
+        +'<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px;">📅 '+v.pu+' → '+v.rt+'</div>'
+        +'</div>'
+        +'<button onclick="window._ovExpanded=null;renderOV();" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:32px;height:32px;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;touch-action:manipulation;">✕</button>'
+        +'</div>'
+        // Status pills
+        +'<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;">'+licBadge+campBadge+xbBadge+specBadges+'</div>'
+        +'<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;">'
+        +'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);">ODO: '+v.odo+' km</span>'
+        +(v.svc?'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);">Svc in '+(v.svc.lastKm+v.svc.intKm-v.odo)+' km</span>':'')
+        +'</div>'
+        +'</div>'
+        // Body
+        +'<div style="padding:14px 16px;">'
+
+        // Collection & Drop-off
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'
+        +'<div style="background:#f0fff4;border:1px solid #9ae6b4;border-radius:10px;padding:10px 12px;">'
+        +'<div style="font-size:10px;font-weight:800;color:#276749;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">▶ Collection</div>'
+        +'<div style="font-size:13px;font-weight:800;color:#1a1a1a;">'+(v.puLocation||'Go Rent Office')+'</div>'
+        +'<div style="font-size:11px;color:#666;margin-top:2px;">'+puDate+'</div>'
+        +'</div>'
+        +'<div style="background:#eff6ff;border:1px solid #90cdf4;border-radius:10px;padding:10px 12px;">'
+        +'<div style="font-size:10px;font-weight:800;color:#2b6cb0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">◀ Drop-off</div>'
+        +'<div style="font-size:13px;font-weight:800;color:#1a1a1a;">'+(v.doLocation||'Go Rent Office')+'</div>'
+        +'<div style="font-size:11px;color:#666;margin-top:2px;">'+rtDate+'</div>'
+        +'</div>'
+        +'</div>';
+
+      // Flight & transfer (client info)
+      if(clientVisible&&(v.flightIn||v.flightOut)){
+        html+='<div style="background:#f5f0ff;border:1px solid #d6bcfa;border-radius:10px;padding:12px 14px;margin-bottom:12px;">'
+          +'<div style="font-size:11px;font-weight:800;color:#553c9a;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">✈️ Flight Details</div>'
+          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+        if(v.flightIn){
+          var arrParts=v.flightIn.split('·');
+          html+='<div style="background:#fff;border-radius:8px;padding:8px 10px;border-top:3px solid #2a9d5c;">'
+            +'<div style="font-size:10px;font-weight:800;color:#276749;text-transform:uppercase;margin-bottom:3px;">▶ ARRIVAL</div>'
+            +'<div style="font-size:14px;font-weight:900;color:#1a1a1a;">'+arrParts[0].trim()+'</div>'
+            +(arrParts[1]?'<div style="font-size:11px;color:#666;">'+arrParts[1].trim()+'</div>':'')
+            +'</div>';
+        }
+        if(v.flightOut){
+          var depParts=v.flightOut.split('·');
+          html+='<div style="background:#fff;border-radius:8px;padding:8px 10px;border-top:3px solid #4a6fa5;">'
+            +'<div style="font-size:10px;font-weight:800;color:#2b6cb0;text-transform:uppercase;margin-bottom:3px;">◀ DEPARTURE</div>'
+            +'<div style="font-size:14px;font-weight:900;color:#1a1a1a;">'+depParts[0].trim()+'</div>'
+            +(depParts[1]?'<div style="font-size:11px;color:#666;">'+depParts[1].trim()+'</div>':'')
+            +'</div>';
+        }
+        html+='</div>';
+        if(v.transfer){
+          var tColor=v.transferPays==='included'?'#276749':'#b7791f';
+          var tBg=v.transferPays==='included'?'#e6f4ea':'#fff3cd';
+          html+='<div style="margin-top:8px;background:#fff;border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:8px;">'
+            +'<span style="font-size:16px;">🚐</span>'
+            +'<div><div style="font-size:13px;font-weight:800;color:#1a1a1a;">'+v.transfer+'</div>'
+            +(v.location?'<div style="font-size:11px;color:#666;">📍 '+v.location+'</div>':'')
+            +(v.transferPays?'<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:'+tBg+';color:'+tColor+';">'+(v.transferPays==='included'?'✅ Included':'💳 Client pays')+'</span>':'')
+            +'</div></div>';
+        }
+        html+='</div>';
+      }
+
+      // Client contact (if allowed)
+      if(clientVisible&&(v.email||v.phone||v.quote)){
+        html+='<div style="background:#f7fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:12px;">'
+          +'<div style="font-size:11px;font-weight:800;color:#4a5568;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">👤 Client Contact</div>'
+          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
+        if(v.quote) html+='<div><div style="font-size:10px;color:#888;">Quote</div><div style="font-size:13px;font-weight:800;">'+v.quote+'</div></div>';
+        if(v.email) html+='<div><div style="font-size:10px;color:#888;">Email</div><a href="mailto:'+v.email+'" style="font-size:12px;font-weight:700;color:#4a6fa5;text-decoration:none;">'+v.email+'</a></div>';
+        if(v.phone) html+='<div><div style="font-size:10px;color:#888;">WhatsApp</div><a href="https://wa.me/'+v.phone.replace(/[\s+]/g,'')+'" style="font-size:12px;font-weight:700;color:#2a9d5c;text-decoration:none;">'+v.phone+'</a></div>';
+        html+='</div></div>';
+      }
+
+      var actionFn=isOut?'startCO':'startCI';
+      var btnBg=isOut?'#4a6fa5':'#2a9d5c';
+      var btnLbl=isOut?'▶ Start Check-Out':'◄ Start Check-In';
+      html+='<button data-fn="'+fn+'" data-action="'+(isOut?'co':'ci')+'" '
+        +'ontouchend="event.preventDefault();'+(isOut?'startCO':'startCI')+'(this.dataset.fn);" '
+        +'onclick="'+(isOut?'startCO':'startCI')+'(this.dataset.fn);" '
+        +'style="width:100%;padding:16px;background:'+btnBg+';border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:900;cursor:pointer;touch-action:manipulation;margin-top:4px;">'
+        +btnLbl+'</button>';
+
+      overlay.innerHTML=html;
+      body.appendChild(overlay);
+    }
+  }
 }
 
 
