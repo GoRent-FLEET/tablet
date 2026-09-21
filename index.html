@@ -340,7 +340,7 @@ input[type=file]{display:none;}
   <div class="toast" id="toast"></div>
   <div id="upload-banner"></div>
   <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
-    <div class="page" id="page-login" style="display:none;align-items:center;justify-content:center;flex-direction:column;background:#0d1117;">
+    <div class="page" id="page-login" style="align-items:center;justify-content:center;flex-direction:column;background:#0d1117;">
 
   <!-- LOGO -->
   <div style="text-align:center;margin-bottom:24px;">
@@ -390,7 +390,7 @@ input[type=file]{display:none;}
 
 </div>
 </div>
-<div class="page on" id="page-ov"><div class="scroll" id="ov-body"></div></div>
+<div class="page" id="page-ov"><div class="scroll" id="ov-body"></div></div>
     <div class="page" id="page-co"><div class="scroll" id="co-body"><div style="padding:40px;text-align:center;color:var(--g5)">Select a vehicle from Overview</div></div></div>
     <div class="page" id="page-ci"><div class="scroll" id="ci-body"><div style="padding:40px;text-align:center;color:var(--g5)">Select a returning vehicle from Overview</div></div></div>
     <div class="page" id="page-rp"><div class="scroll" id="rp-body"></div></div>
@@ -626,10 +626,9 @@ function showLogin(){
   try{ localStorage.removeItem('gorent_user'); }catch(e){}
   document.querySelectorAll('.page').forEach(function(e){ e.classList.remove('on'); });
   var pl = document.getElementById('page-login');
-  if(pl){ pl.classList.add('on'); pl.style.display='flex'; }
+  if(pl) pl.classList.add('on');
   var nl = document.getElementById('nav-logout');
   if(nl) nl.style.display='none';
-  // Reset to name list
   var s1=document.getElementById('s1'); if(s1) s1.style.display='';
   var s2=document.getElementById('s2'); if(s2) s2.style.display='none';
 }
@@ -691,26 +690,25 @@ function pinTap(d) {
     if (matched) {
       APP_USER = matched;
       try { localStorage.setItem('gorent_user', JSON.stringify(matched)); } catch(e) {}
-      document.getElementById('s2msg').style.color = '#3ddc84';
-      document.getElementById('s2msg').textContent = '✅ Logged in as ' + _who + ' — Successful!';
       // Update nav
       var nu = document.getElementById('nav-user-name');
-      if (nu) nu.textContent = '👤 ' + _who;
+      if (nu) nu.textContent = '👤 ' + matched.name;
       var nl = document.getElementById('nav-logout');
       if (nl) nl.style.display = '';
-      // Switch to dashboard
-      _pin = '';
-      _who = '';
-      document.querySelectorAll('.page').forEach(function(e){ e.classList.remove('on'); });
-      document.querySelectorAll('.nb').forEach(function(e){ e.classList.remove('on'); });
-      var pov = document.getElementById('page-ov');
-      if (pov) { pov.classList.add('on'); pov.style.display = 'flex'; }
-      var nb = document.getElementById('nb-ov');
-      if (nb) nb.classList.add('on');
       // Show/hide Reports tab based on role
       var nbrp = document.getElementById('nb-rp');
       if(nbrp) nbrp.style.display = REPORTS_ALLOWED.includes(matched.name) ? '' : 'none';
-      renderOV();
+      // Switch page immediately
+      document.querySelectorAll('.page').forEach(function(e){ e.classList.remove('on'); });
+      document.querySelectorAll('.nb').forEach(function(e){ e.classList.remove('on'); });
+      var pov = document.getElementById('page-ov');
+      if (pov) { pov.classList.add('on'); }
+      var nbov = document.getElementById('nb-ov');
+      if (nbov) nbov.classList.add('on');
+      _pin = '';
+      _who = '';
+      // Render dashboard with protection
+      try { renderOV(); } catch(err) { console.error('renderOV error:', err); }
     } else {
       document.getElementById('s2msg').style.color = '#f05050';
       document.getElementById('s2msg').textContent = '❌ Wrong PIN — try again';
