@@ -1634,11 +1634,7 @@ function coStep0(){
     <div class="step-ico">🚗</div>
     <div><div class="step-title">Step 1 — Vehicle Checks</div>
     <div class="step-sub">Tap each item: once = ✅ OK · twice = ⚠ Problem · Grey = NOT CHECKED = your liability</div></div>
-  </div>
-  <div class="who-box" style="display:flex;align-items:center;gap:12px;">
-    <div style="width:38px;height:38px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#000;">${APP_USER&&APP_USER.name?APP_USER.name.slice(0,2).toUpperCase():'??'}</div>
-    <div><div style="font-size:15px;font-weight:900;color:var(--al);">${APP_USER&&APP_USER.name?APP_USER.name:'Unknown'}</div>
-    <div style="font-size:13px;color:var(--g5);">🔒 Preparing this vehicle</div></div>
+    <div style="margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:6px;background:var(--g0);border:1px solid var(--am);border-radius:20px;padding:3px 10px 3px 3px;"><div style="width:22px;height:22px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000;">${APP_USER&&APP_USER.name?APP_USER.name.slice(0,2).toUpperCase():'??'}</div><span style="font-size:12px;font-weight:800;color:var(--al);white-space:nowrap;">🔒 ${APP_USER&&APP_USER.name?APP_USER.name:'Unknown'}</span></div>
   </div>
   <div class="fuel-row" style="flex-wrap:wrap;gap:10px;">
     <div style="flex:1;min-width:160px;">
