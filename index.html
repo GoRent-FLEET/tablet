@@ -1024,6 +1024,12 @@ async function loadBookings(){
     var vmap={};(vres.data||[]).forEach(function(v){vmap[v.fleet_no]=v;});
     FLEET.length=0;
     (r.data||[]).forEach(function(b){if(b.fleet_no)FLEET.push(bkToVeh(b,vmap[b.fleet_no],today));});
+    // Start km = last km recorded when the vehicle was returned (tablet check-ins)
+    try{
+      var cr=await SB.from('checkins').select('fleet_no,odo_in,created_at').order('created_at',{ascending:false}).limit(1000);
+      var seen={};(cr.data||[]).forEach(function(c){if(c.fleet_no&&c.odo_in&&!seen[c.fleet_no])seen[c.fleet_no]=c;});
+      FLEET.forEach(function(v){var c=seen[v.fn];if(c){v.odo=c.odo_in;v.lastRet={km:c.odo_in,at:c.created_at};}});
+    }catch(e){}
     BOOKINGS_LOADED=true;
     return true;
   }catch(e){console.warn('loadBookings',e);return false;}
@@ -1641,8 +1647,9 @@ function coStep0(){
     <div style="flex:1;min-width:160px;">
       <div class="fuel-lbl">🛣 Odometer OUT (km)</div>
       <input type="number" inputmode="numeric" pattern="[0-9]*" id="co-odo-out" value="${co.odometerOut||co.v.odo||''}"
-        placeholder="e.g. 42350" oninput="co.odometerOut=+this.value"
+        placeholder="Enter km" onfocus="this.select()" oninput="co.odometerOut=+this.value"
         style="padding:10px 14px;font-size:15px;font-weight:700;background:var(--g0);border:2px solid var(--gb);border-radius:var(--rs);color:var(--tx);width:100%;margin-top:6px;">
+      <div style="font-size:12px;color:var(--g5);margin-top:6px;">${co.v.lastRet?'↩ Last returned: <b style="color:var(--tx);">'+Number(co.v.lastRet.km).toLocaleString()+' km</b> on '+new Date(co.v.lastRet.at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' — change it if the dashboard shows a different reading':(co.v.odo?'From Fleet Manager: '+Number(co.v.odo).toLocaleString()+' km — change it if the dashboard shows a different reading':'No previous reading for this vehicle — enter the km from the dashboard')}</div>
     </div>
   </div>
   <div class="fuel-row">
