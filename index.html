@@ -324,6 +324,7 @@ input[type=file]{display:none;}
     <div style="font-size:28px;font-weight:900;color:#fff;">Go&nbsp;Rent <span style="color:#3ddc84;">4×4</span></div>
     <div style="font-size:11px;color:#666;margin-top:3px;text-transform:uppercase;letter-spacing:1px;">Check App</div>
   </div>
+  <button ontouchstart="event.preventDefault();debugGo();" onclick="debugGo();" style="background:#f5a623;color:#000;font-size:20px;font-weight:900;padding:20px 40px;border:none;border-radius:16px;cursor:pointer;touch-action:manipulation;margin-bottom:20px;width:100%;max-width:340px;">🔧 TAP HERE TO ENTER APP</button>
   <div id="ls-names" style="width:100%;max-width:340px;">
     <div style="font-size:12px;font-weight:700;color:#666;text-align:center;margin-bottom:14px;text-transform:uppercase;letter-spacing:1px;">Who are you?</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
@@ -4513,6 +4514,16 @@ function lsDel() {
   lsDots();
 }
 
+function debugGo() {
+  var ls = document.getElementById('login-screen');
+  var ap = document.getElementById('app');
+  if (!ls) { alert('ERROR: login-screen not found'); return; }
+  if (!ap) { alert('ERROR: app not found'); return; }
+  ls.setAttribute('style','display:none!important');
+  ap.setAttribute('style','display:flex!important;height:100%;flex-direction:column;');
+  APP_USER = {name:'Peter', code:'7777', role:'prep'};
+  try { renderOV(); } catch(e) { alert('renderOV error: ' + e.message); }
+}
 function showLoginScreen() {
   APP_USER = null;
   LS_PIN = ''; LS_WHO = '';
