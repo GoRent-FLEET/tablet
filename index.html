@@ -1188,7 +1188,7 @@ function gatherContract(){
   co.contract.fuel_out=co.fuelOut;
   co.contract.pickup_location=document.getElementById('ct-ploc')?.value||'Go Rent 4×4 Workshop, Windhoek';
   co.contract.return_location=document.getElementById('ct-rloc')?.value||'Go Rent 4×4 Workshop, Windhoek';
-  co.contract.daily_rate=+document.getElementById('ct-rate')?.value||co.contract.daily_rate;
+  co.contract.deposit_method=document.getElementById("ct-dmethod")?.value||co.contract.deposit_method;
   co.contract.deposit_amount=+document.getElementById('ct-dep')?.value||co.contract.deposit_amount;
   co.contract.fuel_deposit=+document.getElementById('ct-fdep')?.value||co.contract.fuel_deposit||7500;
   co.contract.insurance_option=document.getElementById('ct-ins')?.value||co.contract.insurance_option;
@@ -1198,7 +1198,6 @@ function gatherContract(){
   co.contract.additional_drivers=document.getElementById('ct-add')?.value||co.contract.additional_drivers;
   const days=co.v.pu&&co.v.rt?Math.max(1,Math.round((new Date(co.v.rt)-new Date(co.v.pu))/86400000)):0;
   co.contract.total_days=days;
-  co.contract.total_rental=days*co.contract.daily_rate;
 
 }
 
@@ -2349,268 +2348,320 @@ window.addEventListener('load',async()=>{
 
 
 function buildContractHTML(c,sigUrl){
-  const fD=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):'———';
-  const fDT=d=>d?new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}):'———';
-  const f=(lbl,val)=>`<div style="display:grid;grid-template-columns:150px 1fr;gap:4px;padding:4px 0;border-bottom:1px solid #eee;font-size:11px"><span style="color:#555;font-weight:700">${lbl}:</span><span style="color:${val?'#111':'#bbb'}">${val||'———'}</span></div>`;
+  const fD=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):'';
+  const fDT=d=>d?new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
   const days=c.total_days||0;
-  const iBox=(n,lbl,rate,dep,note)=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 8px;margin-bottom:4px;border:1px solid #ccc;border-radius:4px;${c.insurance_option===n?'background:#f0f9f4;border-color:#1e8449':'background:#fafafa'}">
-    <div style="width:15px;height:15px;border:2px solid ${c.insurance_option===n?'#1e8449':'#999'};border-radius:3px;margin-top:1px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff">
-      ${c.insurance_option===n?'<span style="color:#1e8449;font-size:11px;font-weight:900;line-height:1">✓</span>':''}
-    </div>
-    <div style="font-size:11px;line-height:1.55"><strong>${lbl}</strong> | N$${rate}/day | Deposit N$${dep}<br><span style="color:#555">${note}</span></div>
-  </div>`;
-  const addBox=(checked,lbl)=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;margin-bottom:4px;border:1px solid #ccc;border-radius:4px;${checked?'background:#f0f9f4;border-color:#1e8449':'background:#fafafa'}">
-    <div style="width:15px;height:15px;border:2px solid ${checked?'#1e8449':'#999'};border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff">
-      ${checked?'<span style="color:#1e8449;font-size:11px;font-weight:900;line-height:1">✓</span>':''}
-    </div>
-    <div style="font-size:11px;line-height:1.5">${lbl}</div>
-  </div>`;
-  const total=(c.total_rental||0)+(c.deposit_amount||0)+(c.fuel_deposit||0)+(c.cross_border_fee||0)
-    +(c.addon_windscreen?184*days:0)+(c.addon_equipment?103.50*days:0);
 
-  // Additional drivers from co.drivers array
-  const driversHTML=(()=>{
-    const drivers=(typeof co!=='undefined'&&co.drivers)||[];
-    const addl=drivers.slice(1);
-    if(!addl.length&&!c.additional_drivers)return[1,2,3,4].map(n=>`
-      <div style="border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:5px;font-size:11px;display:grid;grid-template-columns:1fr 1fr;gap:8px;color:#bbb">
-        <div>Additional Driver ${n} — Full Name: ___________________________</div>
-        <div>DOB / Nationality: ___________________________</div>
-        <div>Licence #: ___________________________</div>
-        <div>Licence Expiry: ___________________________</div>
-      </div>`).join('');
-    const rows=addl.length?addl.map((d,i)=>`
-      <div style="border:1px solid #1e8449;border-radius:4px;padding:8px 10px;margin-bottom:5px;font-size:11px;background:#f0f9f4">
-        <strong>Additional Driver ${i+1}:</strong> ${d.name||'—'}
-      </div>`).join(''):'';
-    // Also render text-based additional drivers if entered
-    const textDrvs=c.additional_drivers?c.additional_drivers.split('\n').filter(Boolean).map((d,i)=>`
-      <div style="border:1px solid #1e8449;border-radius:4px;padding:8px 10px;margin-bottom:5px;font-size:11px;background:#f0f9f4">
-        <strong>Additional Driver ${addl.length+i+1}:</strong> ${d}
-      </div>`).join(''):'';
-    // Fill remaining blank slots
-    const filled=addl.length+(c.additional_drivers?c.additional_drivers.split('\n').filter(Boolean).length:0);
-    const blanks=Math.max(0,4-filled);
-    const blankRows=Array.from({length:blanks},(_,i)=>`
-      <div style="border:1px solid #ddd;border-radius:4px;padding:8px 10px;margin-bottom:5px;font-size:11px;display:grid;grid-template-columns:1fr 1fr;gap:8px;color:#bbb">
-        <div>Additional Driver ${filled+i+1} — Full Name: ___________________________</div>
-        <div>DOB / Nationality: ___________________________</div>
-        <div>Licence #: ___________________________</div><div>Licence Expiry: ___________________________</div>
-      </div>`).join('');
-    return rows+textDrvs+blankRows;
+  // Tyre cover: 1 tyre ≤14 days, 2 tyres >14 days
+  const tyreCover = days>14 ? '2 tyres per rental' : '1 tyre per rental';
+
+  // Blank field box
+  const box=(label,val,w='100%',h='32px')=>`
+    <div style="display:inline-block;width:${w};vertical-align:top;padding:0 4px 6px 0;">
+      <div style="font-size:9px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px;">${label}</div>
+      <div style="min-height:${h};border:1px solid #bbb;border-radius:3px;padding:5px 8px;font-size:12px;color:#111;background:#fff;font-weight:${val?'600':'400'};color:${val?'#111':'#999'};">${val||''}</div>
+    </div>`;
+
+  const chkBox=(checked)=>`<span style="display:inline-block;width:13px;height:13px;border:1.5px solid #555;border-radius:2px;margin-right:6px;vertical-align:middle;background:${checked?'#111':'#fff'};position:relative;">${checked?'<span style="position:absolute;top:-2px;left:1px;color:#fff;font-size:11px;font-weight:900;">✓</span>':''}</span>`;
+
+  // Additional drivers — from co.drivers array (skip index 0 = primary) + manual entries
+  const addlDrivers = (()=>{
+    const drivers = (typeof co!=='undefined'&&co.drivers)||[];
+    const addl = drivers.slice(1); // skip primary
+    const rows = [];
+    // Up to 4 additional drivers
+    for(let i=0;i<4;i++){
+      const d = addl[i]||null;
+      rows.push(`
+        <div style="display:grid;grid-template-columns:2fr 1.5fr 1.5fr;gap:0;margin-bottom:4px;border:1px solid #ccc;border-radius:3px;overflow:hidden;">
+          <div style="padding:6px 8px;border-right:1px solid #ccc;font-size:11px;">
+            <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Additional Driver ${i+1} — Full Name</div>
+            <div style="color:${d?.name?'#111':'#ccc'};font-weight:${d?.name?'600':'400'}">${d?.name||''}</div>
+          </div>
+          <div style="padding:6px 8px;border-right:1px solid #ccc;font-size:11px;">
+            <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Date of Birth / Nationality</div>
+            <div style="color:${(d?.dob||d?.nationality)?'#111':'#ccc'}">${[d?.dob,d?.nationality].filter(Boolean).join(' / ')||''}</div>
+          </div>
+          <div style="padding:6px 8px;font-size:11px;">
+            <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Licence # / Expiry</div>
+            <div style="color:${(d?.licNo||d?.licExpiry)?'#111':'#ccc'}">${[d?.licNo,d?.licExpiry].filter(Boolean).join(' / ')||''}</div>
+          </div>
+        </div>`);
+    }
+    return rows.join('');
   })();
 
-  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:11.5px;color:#111;line-height:1.65;max-width:780px;margin:0 auto;">
+  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:11.5px;color:#111;line-height:1.55;max-width:780px;margin:0 auto;background:#fff;">
 
   <!-- LETTERHEAD -->
-  <div style="text-align:center;border-bottom:3px solid #000;padding-bottom:14px;margin-bottom:16px;">
-    <div style="font-size:21px;font-weight:900;letter-spacing:-.5px;">GO RENT 4×4 RENTALS AND TOURS CC</div>
-    <div style="font-size:11px;color:#555;margin-top:3px;">Reg. No: CC/2021/04371 | Windhoek, Namibia | WhatsApp: +264 81 858 1750 | gorent4x4.com</div>
-    <div style="font-size:16px;font-weight:700;margin-top:10px;text-transform:uppercase;letter-spacing:.8px;">Vehicle Rental Agreement &amp; Terms and Conditions</div>
-    <div style="font-size:10px;color:#555;margin-top:3px;">Registration No: CC/2021/04371 | Page 1 of 6</div>
+  <div style="display:flex;align-items:flex-start;gap:14px;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:14px;">
+    <div style="width:60px;height:60px;flex-shrink:0;background:#e8f5ee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:24px;">🚙</div>
+    <div style="flex:1;">
+      <div style="font-size:18px;font-weight:900;letter-spacing:-.3px;line-height:1;">GO RENT 4X4 RENTALS AND TOURS CC</div>
+      <div style="font-size:10px;color:#555;margin-top:3px;">Reg. No: CC/2021/04371 | Windhoek, Namibia | WhatsApp: +264 81 861 8085 | gorent4x4.com</div>
+      <div style="font-size:13px;font-weight:700;margin-top:6px;text-transform:uppercase;letter-spacing:.5px;">Vehicle Rental Agreement &amp; Terms and Conditions</div>
+    </div>
   </div>
 
   <!-- 1. PARTIES -->
-  <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #000;padding-bottom:3px;margin-bottom:10px;">1. Parties &amp; Vehicle Details</div>
+  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin-bottom:10px;">1. PARTIES &amp; VEHICLE DETAILS</div>
 
-  <div style="margin-bottom:10px;padding:8px 12px;background:#f9f9f9;border:1px solid #ddd;border-radius:4px;font-size:10.5px;line-height:1.65;">
-    <strong>1.1 RENTAL COMPANY:</strong> GO RENT 4×4 RENTALS AND TOURS CC ("Go Rent" / "GR") — registered Namibian closed corporation (CC/2021/04371).<br><br>
-    <strong>1.2 CLIENT</strong> — The individual who signs this Agreement ("you" / "the Renter") is solely responsible for:
-    paying all rental fees, insurance waiver fees, penalties, and fines; additional charges apply for drivers under 25 or over 65;
-    ensuring full compliance including speed limits and restricted-area rules; minimum driver age 23, licence held min. 1 year;
-    supervising all additional drivers — their actions are your liability; foreign renters: valid IDP required — no copies accepted.
+  <div style="font-size:11px;font-weight:700;margin-bottom:4px;">1.1 RENTAL COMPANY</div>
+  <div style="font-size:10.5px;color:#333;margin-bottom:10px;">GO RENT 4X4 RENTALS AND TOURS CC ("Go Rent" / "GR") — registered Namibian closed corporation (CC/2021/04371).</div>
+
+  <div style="font-size:11px;font-weight:700;margin-bottom:4px;">1.2 CLIENT</div>
+  <div style="font-size:10.5px;color:#333;margin-bottom:10px;line-height:1.6;">
+    The individual who signs this Agreement ("you" / "the Renter") is solely responsible for:
+    paying all rental fees, insurance waiver fees, penalties, and fines; ensuring full compliance with this Agreement including speed limits and restricted-area rules;
+    supervising all additional drivers and passengers — their actions are your liability; additional charges apply for drivers under 25 or over 65;
+    minimum driver age 23, licence held minimum 1 year; foreign renters: valid IDP required — no copies accepted.
   </div>
 
-  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;">1.3 Client Information</div>
-  ${f('Full name',c.client_name)}
-  ${f('Date of birth',c.client_dob||'')}
-  ${f('Nationality',c.client_nationality||'')}
-  ${f('Passport number',c.client_passport||'')}
-  ${f("Driver's licence #",c.client_licence||'')}
-  ${f('Licence expiry',c.client_licence_expiry||'')}
+  <div style="font-size:11px;font-weight:700;margin-bottom:6px;">1.3 CLIENT INFORMATION</div>
+  <div style="border:1px solid #ccc;border-radius:4px;overflow:hidden;margin-bottom:10px;">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1.2fr 1.2fr;border-bottom:1px solid #ccc;">
+      ${['Full Name','Date of Birth','Nationality','Passport Number'].map((l,i)=>{
+        const vals=[c.client_name,c.client_dob,c.client_nationality,c.client_passport];
+        return `<div style="padding:7px 8px;${i<3?'border-right:1px solid #ccc;':''}">
+          <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div>
+          <div style="font-size:12px;font-weight:600;color:#111;min-height:18px;">${vals[i]||''}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 2fr;">
+      <div style="padding:7px 8px;border-right:1px solid #ccc;">
+        <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Driver's Licence #</div>
+        <div style="font-size:12px;font-weight:600;color:#111;min-height:18px;">${c.client_licence||''}</div>
+      </div>
+      <div style="padding:7px 8px;">
+        <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Licence Expiry Date</div>
+        <div style="font-size:12px;font-weight:600;color:#111;min-height:18px;">${c.client_licence_expiry||''}</div>
+      </div>
+    </div>
+  </div>
 
-  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin:12px 0 6px;">1.4 Vehicle Information</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;">
-    ${f('Fleet number',c.fleet_no)}${f('Registration',c.vehicle_reg)}${f('Total rental days',days?days+' days':'')}
-    ${f('Rental FROM',fD(c.pickup_date))}${f('Time',c.pickup_time||'08:00')}${f('Location',c.pickup_location||'')}
-    ${f('Rental TO',fD(c.return_date))}${f('Time',c.return_time||'08:00')}${f('Location',c.return_location||'')}
+  <div style="font-size:11px;font-weight:700;margin-bottom:6px;">1.4 VEHICLE INFORMATION</div>
+  <div style="border:1px solid #ccc;border-radius:4px;overflow:hidden;margin-bottom:8px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #ccc;">
+      ${[['Go Rent Fleet Number',c.fleet_no],['Vehicle Registration',c.vehicle_reg],['Total Rental Days',days?(days+' days'):'']].map(([l,v],i)=>
+        `<div style="padding:7px 8px;${i<2?'border-right:1px solid #ccc;':''}"><div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div><div style="font-size:12px;font-weight:600;min-height:18px;">${v||''}</div></div>`
+      ).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #ccc;">
+      ${[['Rental FROM Date',fD(c.pickup_date)],['Time',c.pickup_time||'08:00'],['Location',c.pickup_location||'Windhoek, 6 Diehl Str']].map(([l,v],i)=>
+        `<div style="padding:7px 8px;${i<2?'border-right:1px solid #ccc;':''}"><div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div><div style="font-size:12px;font-weight:600;min-height:18px;">${v||''}</div></div>`
+      ).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;">
+      ${[['Rental TO Date',fD(c.return_date)],['Time',c.return_time||'08:00'],['Location',c.return_location||'Windhoek, 6 Diehl Str']].map(([l,v],i)=>
+        `<div style="padding:7px 8px;${i<2?'border-right:1px solid #ccc;':''}"><div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div><div style="font-size:12px;font-weight:600;min-height:18px;">${v||''}</div></div>`
+      ).join('')}
+    </div>
   </div>
-  <div style="font-size:10px;color:#555;margin-top:5px;padding:5px 8px;background:#f9f9f9;border:1px solid #ddd;border-radius:3px;">
-    The vehicle remains sole property of Go Rent at all times. GR may recover it immediately on material breach.
+  <div style="font-size:10px;color:#555;margin-bottom:12px;">The vehicle remains sole property of Go Rent at all times. GR may recover it immediately on material breach.</div>
+
+  <div style="font-size:11px;font-weight:700;margin-bottom:4px;">1.5 ADDITIONAL DRIVERS</div>
+  <div style="font-size:10px;color:#333;margin-bottom:6px;line-height:1.5;">
+    Only persons listed below — plus the Renter — may drive the vehicle. Each must present a valid licence at pick-up. The Renter remains fully liable for any breach by an additional driver.<br>
+    Go Rent charges <strong>N$280.00 per additional driver</strong> (once-off fee per rental period), payable at vehicle collection.
   </div>
+  ${addlDrivers}
 
   <!-- 2. INSURANCE -->
-  <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #000;padding-bottom:3px;margin:16px 0 10px;">2. Insurance Options &amp; Security Deposits</div>
-  <div style="font-size:10px;color:#555;margin-bottom:8px;">Select ONE option. Tick the applicable box at sign-off.</div>
-  ${iBox('1','Option 1 – Basic Cover','230','45,000','Refunded 7 days after return if no damage.')}
-  ${addBox(c.addon_windscreen,'Add-On – Windscreen &amp; Tyre Cover | N$184/day | Up to 1 tyre + 1 windscreen per rental. Rims always excluded.')}
-  ${iBox('2','Option 2 – Extended Cover','362','30,000','Refunded 7 days after return if no damage.')}
-  ${addBox(c.addon_equipment,'Add-On – Camping Equipment Damage/Loss Cover | N$103.50/day | Covers provided camping gear against accidental damage or loss.')}
-  ${iBox('3','Option 3 – Premium Cover (Zero Excess on Covered Claims)','546','0','No excess payable on covered claims. Sections 3 &amp; 5 exclusions still apply.')}
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:8px 0;">
-    ${f('Fuel &amp; Admin Deposit','N$7,500.00 received')}
-    ${f('Remote Collection / Cross-Border Deposit',c.cross_border?'N$15,000.00 received':'N/A (if applicable)')}
-  </div>
-  <div style="background:#fff8e6;border:1px solid #f5a623;border-radius:4px;padding:7px 10px;font-size:10.5px;margin-bottom:10px;">
-    <strong>IMPORTANT:</strong> Regardless of which insurance option is selected, certain damage events are NEVER covered. See Sections 3 and 5. Signing confirms you have read and understood.
-  </div>
-
-  <!-- 1.5 ADDITIONAL DRIVERS -->
-  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px;">1.5 Additional Drivers</div>
-  <div style="font-size:10px;color:#555;margin-bottom:7px;">Only persons listed below — plus the Renter — may drive the vehicle. Each must present a valid licence at pick-up. The Renter remains fully liable for any breach by an additional driver. Go Rent charges N$280.00 per additional driver (once-off fee per rental period), payable at vehicle collection.</div>
-  ${driversHTML}
-
-  <!-- 3. EXCLUSIONS -->
-  <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #000;padding-bottom:3px;margin:16px 0 10px;">3. Vehicle Insurance Exclusions — Always the Renter's Cost</div>
-  <div style="background:#fdf0f0;border:1px solid #e74c3c;border-radius:4px;padding:9px 12px;margin-bottom:10px;font-size:10.5px;line-height:1.7;">
-    <strong style="color:#c0392b;display:block;margin-bottom:4px;">The following damage is NEVER covered under any insurance option:</strong>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;">
-      <div>• Windscreen (without add-on)</div><div>• Sandblast / sandstorm damage to paint or glass</div>
-      <div>• Side windows, rear windows, canopy windows — never covered</div><div>• Single-vehicle accidents (rollovers, collisions with animals or objects)</div>
-      <div>• Mirrors (side mirrors) — never covered</div><div>• Stationary objects — walls, poles, gates, trees, rocks</div>
-      <div>• Excessive scratches from trees, branches, bush or vegetation</div><div>• Lost or damaged camping gear (without add-on)</div>
-      <div>• Rims — excluded from ALL cover. Full OEM replacement value.</div><div>• Steering damage from potholes, rocks, kerbs, or off-road</div>
-      <div>• Missing rims or tyres — full OEM replacement value</div><div>• Tyre blowout vehicle damage</div>
-      <div>• Tyres beyond the 1-tyre add-on limit</div><div>• Negligence or vehicle misuse (see Section 5)</div>
-    </div>
-    <div style="margin-top:6px;font-size:10px;color:#888;">See Section 5 for the comprehensive exclusion and void-insurance conditions.</div>
-  </div>
-
-  <!-- 4. SPEED LIMITS -->
-  <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #000;padding-bottom:3px;margin:16px 0 10px;">4. Speed Limits, Traffic Laws &amp; GPS Tracker</div>
-  <div style="font-size:11px;font-weight:700;margin-bottom:6px;">4.1 GR Contract Speed Limits</div>
-  <div style="font-size:10.5px;color:#555;margin-bottom:7px;">Go Rent contractual speed limits take precedence over posted road signs. Exceeding them immediately voids all insurance and triggers a N$1,500 penalty per GPS-detected incident.</div>
-  <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px;">
-    <tr style="background:#000;color:#fff;"><th style="padding:5px 10px;text-align:left;">Road Type</th><th style="padding:5px 10px;text-align:center;">GR Contract Limit</th></tr>
-    ${[['Town / Built-up area','60 km/h'],['Gravel road','80 km/h'],['National tarred highway','110 km/h'],['Safari / 8-seater','100 km/h'],['4x4 High Range (off-road)','60 km/h'],['4x4 Low Range (off-road)','10 km/h'],['National Parks','40 km/h']].map((r,i)=>`<tr style="background:${i%2?'#f9f9f9':'#fff'}"><td style="padding:4px 10px;border-bottom:1px solid #eee;">${r[0]}</td><td style="padding:4px 10px;border-bottom:1px solid #eee;text-align:center;font-weight:700;">${r[1]}</td></tr>`).join('')}
-  </table>
-  <div style="background:#fdf0f0;border:1px solid #e74c3c;border-radius:4px;padding:7px 12px;margin-bottom:8px;font-size:10.5px;">
-    <strong style="color:#c0392b;">ZERO TOLERANCE — SPEEDING VOIDS ALL INSURANCE:</strong> There are no warnings. A single recorded speeding violation voids your entire insurance for the remainder of the rental. You become personally liable for ALL damage. GR treats GPS data as primary evidence. Our insurer has direct live GPS access — if speeding is detected, cover is refused immediately without prior notice.
-  </div>
-  <div style="font-size:11px;font-weight:700;margin:8px 0 5px;">4.2 GPS Tracking &amp; Evidence</div>
-  <div style="font-size:10.5px;color:#333;margin-bottom:8px;line-height:1.6;">Vehicle fitted with GPS recording speed, location, and route data at all times. By signing, you consent to this monitoring. GR treats GPS data as primary evidence for any speeding fine, no-go area entry, or insurance void, subject to the Renter's right to dispute its accuracy. GR reserves the right to share GPS data with insurers, law enforcement, and courts.</div>
-  <div style="font-size:11px;font-weight:700;margin-bottom:5px;">4.3 Namibian Traffic Laws — Mandatory Compliance</div>
-  <div style="font-size:10.5px;line-height:1.7;margin-bottom:8px;">
-    Failure to comply with any Namibian traffic law voids insurance and may result in additional penalties:<br>
-    • Drive on the LEFT at all times &nbsp;• Seatbelts mandatory for all occupants &nbsp;• No mobile phone use while driving (hands-free excepted)<br>
-    • Zero blood-alcohol tolerance under GR policy &nbsp;• Stop signs and red lights must be obeyed — ignoring them voids insurance<br>
-    • Overtaking prohibited on blind rises or restricted visibility &nbsp;• <strong>Headlights ALWAYS on when driving, regardless of time of day or visibility.</strong>
-  </div>
-  <div style="font-size:10.5px;margin-bottom:8px;padding:6px 10px;background:#f9f9f9;border:1px solid #ddd;border-radius:4px;">
-    <strong>4.4 Traffic Fines:</strong> Any official traffic fine is the Renter's sole responsibility. An additional N$450 administration fee per fine is charged by GR for processing.<br>
-    <strong>4.5 Southern Africa Insurance Note:</strong> Namibian insurance covers TWO-VEHICLE COLLISIONS ONLY — both vehicles identifiable. It does NOT cover single-vehicle incidents, negligence, rollovers, hitting animals or objects, getting stuck, incorrect drive mode selection, or any event in Sections 3 and 5.1 — regardless of insurance option.
-  </div>
-
-  <!-- 5. DETAILED EXCLUSIONS -->
-  <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #000;padding-bottom:3px;margin:16px 0 10px;">5. Detailed Exclusions &amp; Renter Responsibilities</div>
-  <div style="font-size:10.5px;color:#555;margin-bottom:7px;">Insurance does NOT cover the following. The Renter pays the full cost plus a 20% administration fee.</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;font-size:10.5px;line-height:1.7;margin-bottom:10px;">
-    <div>• Vehicle overturned or written off — 20% of Replacement Value</div><div>• Tyre damage beyond add-on limits</div>
-    <div>• Unauthorised areas — outside Namibia without written GR approval</div><div>• Water crossing above axle depth</div>
-    <div>• No driving after sunset (except within towns)</div><div>• Sandstorm / sandblast damage</div>
-    <div>• Expired rental period</div><div>• Personal belongings — theft or loss</div>
-    <div>• Burn damage — cigarettes, open flame, or heat source</div><div>• Interior damage beyond normal wear</div>
-    <div>• Roof, bonnet, or door misuse</div><div>• Rooftop tent misuse — driving with tent open</div>
-    <div>• Rollovers under any circumstances</div><div>• Camping equipment (without add-on)</div>
-    <div>• Side windows, rear windows, canopy windows, side mirrors</div><div>• Mechanical misuse — gearbox or engine from incorrect operation</div>
-    <div>• Rim damage — full OEM replacement value</div><div>• Undercarriage &amp; body damage from off-road</div>
-    <div>• Missing rims or tyres — full OEM replacement value</div><div>• Scratches &amp; paint damage from vegetation</div>
-    <div>• Lost keys — N$6,500 plus travel / courier costs</div><div>• Wrong fuel type — voids all cover</div>
-    <div>• <strong>Accidents within rest camps, campsites, lodge or hotel premises</strong></div><div>• <strong>Accidents without a police report — always the Renter's responsibility</strong></div>
+  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:16px 0 10px;">2. INSURANCE OPTIONS &amp; SECURITY DEPOSITS
+    <span style="float:right;font-size:9px;font-weight:700;background:#111;color:#fff;padding:3px 10px;border-radius:3px;letter-spacing:.5px;">FOR OFFICE USE ONLY</span>
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-    <div style="background:#fdf0f0;border:1px solid #e74c3c;border-radius:4px;padding:8px 12px;font-size:10px;line-height:1.65;">
-      <strong style="color:#c0392b;display:block;margin-bottom:4px;">5.2 Void Insurance — Cancelled Immediately</strong>
-      Speeding · Alcohol or drugs · Invalid licence · Unmarked/prohibited roads · Water crossing · Ignoring traffic signals · Towing any vehicle/trailer · No driving after sunset outside towns · 4x4 misuse on tar · Unauthorised driver · No-Go area entry · Commercial use · Civil unrest areas · Customs violations
+    <div>
+      <!-- Option 1 -->
+      <div style="display:flex;align-items:flex-start;gap:6px;padding:7px 8px;margin-bottom:5px;border:1px solid #ccc;border-radius:4px;background:${c.insurance_option==='1'?'#f0f9f4;border-color:#1e8449':'#fff'};">
+        ${chkBox(c.insurance_option==='1')}
+        <div style="font-size:10.5px;line-height:1.5;"><strong>Option 1 – Basic Cover</strong> | N$230/day | Security deposit N$45,000 — refunded 7 days after return if no damage.</div>
+      </div>
+      <!-- Option 2 -->
+      <div style="display:flex;align-items:flex-start;gap:6px;padding:7px 8px;margin-bottom:5px;border:1px solid #ccc;border-radius:4px;background:${c.insurance_option==='2'?'#f0f9f4;border-color:#1e8449':'#fff'};">
+        ${chkBox(c.insurance_option==='2')}
+        <div style="font-size:10.5px;line-height:1.5;"><strong>Option 2 – Extended Cover</strong> | N$362/day | Security deposit N$30,000 — refunded 7 days after return if no damage.</div>
+      </div>
+      <!-- Option 3 -->
+      <div style="display:flex;align-items:flex-start;gap:6px;padding:7px 8px;margin-bottom:5px;border:1px solid #ccc;border-radius:4px;background:${c.insurance_option==='3'?'#f0f9f4;border-color:#1e8449':'#fff'};">
+        ${chkBox(c.insurance_option==='3')}
+        <div style="font-size:10.5px;line-height:1.5;"><strong>Option 3 – Premium Cover (Zero Excess on Covered Claims)</strong> | N$546/day | No excess payable on claims that fall within cover. Sections 3 and 5 exclusions still apply regardless of option chosen.</div>
+      </div>
+      <!-- Fuel deposit -->
+      <div style="display:flex;align-items:flex-start;gap:6px;padding:7px 8px;border:1px solid #ccc;border-radius:4px;background:#fff;margin-bottom:5px;">
+        ${chkBox(true)}
+        <div style="font-size:10.5px;line-height:1.5;"><strong>Fuel &amp; Admin Deposit (N$7,500.00) received</strong><br>
+        <span style="font-size:9.5px;color:#555;">Refunded within 7 days of the vehicle's return. Any fuel shortage (fill-up cost) and admin costs will be deducted from this deposit before the balance is refunded.</span></div>
+      </div>
     </div>
-    <div style="background:#fdf0f0;border:1px solid #e74c3c;border-radius:4px;padding:8px 12px;font-size:10px;line-height:1.65;">
-      <strong style="color:#c0392b;display:block;margin-bottom:4px;">5.3 Negligence &amp; Vehicle Abuse</strong>
-      Rooftop tent open while driving · Standing on vehicle · Overloading · Commercial use · Reversing into objects · Vegetation contact · Ignoring handover advice · Failing to check tyre pressures
+    <div>
+      <!-- Windscreen add-on -->
+      <div style="display:flex;align-items:flex-start;gap:6px;padding:7px 8px;margin-bottom:5px;border:1px solid #ccc;border-radius:4px;background:${c.addon_windscreen?'#f0f9f4;border-color:#1e8449':'#fff'};">
+        ${chkBox(!!c.addon_windscreen)}
+        <div style="font-size:10.5px;line-height:1.5;"><strong>Add-On – Windscreen &amp; Tyre Cover</strong> | N$184/day | Optional. 1 windscreen per rental. Tyre cover: <strong>${tyreCover}</strong>. <span style="color:#c0392b;font-weight:700;">Rims always excluded.</span></div>
+      </div>
+      <!-- Camping add-on -->
+      <div style="display:flex;align-items:flex-start;gap:6px;padding:7px 8px;margin-bottom:5px;border:1px solid #ccc;border-radius:4px;background:${c.addon_equipment?'#f0f9f4;border-color:#1e8449':'#fff'};">
+        ${chkBox(!!c.addon_equipment)}
+        <div style="font-size:10.5px;line-height:1.5;"><strong>Add-On – Camping Equipment Damage/Loss Cover</strong> | N$103.50/day | Optional. Covers provided camping gear against accidental damage or loss.</div>
+      </div>
+      <!-- Cross-border -->
+      <div style="display:flex;align-items:flex-start;gap:6px;padding:7px 8px;border:1px solid #ccc;border-radius:4px;background:${c.cross_border?'#f0f9f4;border-color:#1e8449':'#fff'};">
+        ${chkBox(!!c.cross_border)}
+        <div style="font-size:10.5px;line-height:1.5;"><strong>Remote Collection &amp; Cross-Border Damage Deposit (N$30,000.00) received</strong>
+        ${c.cross_border?`<br><span style="color:#1e8449;font-weight:700;">✓ Authorised: ${c.cross_border}</span>`:''}
+        <br><span style="font-size:9.5px;color:#555;">(if applicable — see Section 6.2.2 for travel into Botswana or other neighbouring countries)</span></div>
+      </div>
     </div>
   </div>
 
-  <div style="font-size:10.5px;padding:7px 10px;background:#f9f9f9;border:1px solid #ddd;border-radius:4px;margin-bottom:10px;line-height:1.6;">
-    <strong>5.4 Tyre &amp; Rim:</strong> Rims excluded from ALL cover including Tyre &amp; Windscreen add-on. Full OEM replacement value per item. Notify GR immediately if spare used.<br>
-    <strong>5.6 Theft:</strong> Covered ONLY if: (1) parked securely, (2) all locked, (3) original GR keys retained, (4) police report within 24 hours.<br>
-    <strong>5.7 Police Reports — Mandatory:</strong> Report required within 24 hours of any accident, theft, or incident. Without it, no insurance claim can be processed — Renter bears all costs.
+  <div style="background:#fff8e6;border:1px solid #e8a000;border-radius:4px;padding:9px 12px;margin-bottom:14px;font-size:10.5px;line-height:1.6;">
+    <strong>IMPORTANT:</strong> Regardless of which insurance option is selected, certain damage events are NEVER covered. See Sections 3 and 5 for the full exclusion list.
+    Signing confirms you have read and understood. Botswana and other countries outside Namibia carry their own additional deposit and rules — see Section 6.2.
+  </div>
+
+  <!-- 3. EXCLUSIONS SUMMARY -->
+  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">3. VEHICLE INSURANCE EXCLUSIONS — ALWAYS THE RENTER'S COST</div>
+  <div style="border:1px solid #e74c3c;border-radius:4px;padding:9px 12px;margin-bottom:12px;font-size:10px;line-height:1.7;background:#fdf5f5;">
+    <div style="font-weight:700;margin-bottom:5px;">The following damage is NEVER covered under any insurance option. The Renter pays all repair, replacement, and recovery costs in full:</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
+      <div>• Windscreen — only covered with optional Tyre &amp; Windscreen add-on<br>
+      • Side windows, rear windows, canopy windows — never covered<br>
+      • Mirrors (side mirrors) — never covered<br>
+      • Excessive scratches — trees, branches, bush, or vegetation<br>
+      • <strong style="color:#c0392b;">Rims — excluded from all cover.</strong> Renter pays full replacement value at OEM product cost for any rim damage<br>
+      • Steering damage — potholes, rocks, kerbs, or off-road driving<br>
+      • <strong style="color:#c0392b;">Missing rims</strong> or missing tyres — full OEM replacement value<br>
+      • Tyres — beyond the add-on limit (${tyreCover})</div>
+      <div>• Sandblast / sandstorm damage to paint or glass<br>
+      • Single-vehicle accidents (rollovers, collisions with animals or objects)<br>
+      • Stationary objects — walls, poles, gates, trees, rocks<br>
+      • Lost or damaged camping gear — unless Camping Equipment Damage/Loss Cover is chosen<br>
+      • Tyre blowout vehicle damage — blowouts, loose lug nuts, broken wheel studs, or jack misuse<br>
+      • Negligence or vehicle misuse (see Section 5)</div>
+    </div>
+    <div style="font-size:9px;color:#888;margin-top:4px;">See Section 5 for the comprehensive exclusion and void-insurance conditions.</div>
+  </div>
+
+  <!-- 4. SPEED LIMITS -->
+  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">4. SPEED LIMITS, TRAFFIC LAWS &amp; GPS TRACKER</div>
+  <div style="font-size:10.5px;margin-bottom:6px;"><strong>4.1 GR CONTRACT SPEED LIMITS</strong> — Go Rent contractual speed limits take precedence over posted road signs. Exceeding them immediately voids all insurance and triggers a N$1,500 penalty per GPS-detected incident.</div>
+  <table style="width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:8px;">
+    <tr style="background:#111;color:#fff;"><th style="padding:5px 10px;text-align:left;font-weight:700;">Road Type</th><th style="padding:5px 10px;text-align:right;font-weight:700;">GR Contract Limit</th></tr>
+    ${[['Town / Built-up area','60 km/h'],['Gravel road (good condition)','80 km/h'],['Gravel road (corrugated / poor condition)','60 km/h'],['National tarred highway','110 km/h'],['Safari / 8-seater','100 km/h'],['4x4 High Range (off-road)','60 km/h'],['4x4 Low Range (off-road)','10 km/h'],['National Parks','40 km/h']].map((r,i)=>
+      `<tr style="background:${i%2?'#f9f9f9':'#fff'}"><td style="padding:4px 10px;border-bottom:1px solid #eee;">${r[0]}</td><td style="padding:4px 10px;border-bottom:1px solid #eee;text-align:right;font-weight:700;">${r[1]}</td></tr>`
+    ).join('')}
+  </table>
+  <div style="background:#fdf5f5;border:1px solid #e74c3c;border-radius:4px;padding:8px 12px;margin-bottom:8px;font-size:10px;line-height:1.5;">
+    <strong>ZERO TOLERANCE — SPEEDING VOIDS ALL INSURANCE:</strong> There are no warnings. A single recorded speeding violation voids your entire insurance for the remainder of the rental. You become personally liable for ALL damage — including damage unrelated to the speeding. GR treats GPS data as primary evidence of any such violation.
+  </div>
+  <div style="font-size:10px;color:#333;margin-bottom:12px;line-height:1.6;">
+    <strong>4.3 Namibian Traffic Laws:</strong> Drive LEFT at all times · Seatbelts mandatory · Zero blood-alcohol tolerance · Stop signs and red lights must be obeyed ·
+    Overtaking prohibited on blind rises · No mobile phone while driving · <strong>Headlights ALWAYS on when driving, regardless of time of day or visibility.</strong><br>
+    <strong>4.4 Traffic Fines:</strong> Renter's sole responsibility. Additional N$450 administration fee per fine charged by GR.<br>
+    <strong>4.5 Southern Africa Insurance Note:</strong> Namibian insurance covers TWO-VEHICLE COLLISIONS ONLY — both vehicles identifiable. It does NOT cover single-vehicle incidents, negligence, rollovers, hitting animals or objects, getting stuck, incorrect drive mode selection, or any event in Sections 3 and 5.1.
+  </div>
+
+  <!-- 5. EXCLUSIONS DETAIL -->
+  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">5. DETAILED EXCLUSIONS &amp; RENTER RESPONSIBILITIES</div>
+  <div style="font-size:10px;line-height:1.7;margin-bottom:10px;">
+    <strong>5.1 Not covered:</strong> Vehicle overturned (20% replacement value) · Unauthorised areas · No driving after sunset (except towns) · Expired rental · Burn damage · Roof/bonnet/door misuse · Rollovers · Side/rear/canopy windows/mirrors · Rim damage (OEM cost) · Missing rims/tyres · Tyre damage beyond add-on · Water crossing &gt;700mm · Sandblast · Personal belongings · Interior damage · Rooftop tent misuse · Camping equipment (without add-on) · Mechanical misuse · Undercarriage damage · Vegetation scratches · Lost keys N$6,500 · Wrong fuel · Accidents in rest camps/campsites/lodges · Accidents without police report.
+  </div>
+  <div style="background:#fdf5f5;border:1px solid #e74c3c;border-radius:4px;padding:8px 12px;margin-bottom:8px;font-size:10px;line-height:1.5;">
+    <strong>5.2 VOID INSURANCE — CANCELLED IMMEDIATELY:</strong> Speeding · Alcohol or drugs · Invalid licence · Unmarked/prohibited roads · Water crossing · Ignoring traffic signals · Civil unrest · Towing · Customs violations · Driving after sunset outside towns · 4x4 misuse on tar · Unauthorised driver · No-Go area · Commercial use.
+  </div>
+  <div style="font-size:10px;line-height:1.6;margin-bottom:10px;">
+    <strong>5.4 RIMS &amp; MISSING ITEMS — ALWAYS THE CLIENT'S COST:</strong> Rims are excluded from all cover. Rim damage, missing rims, and missing tyres are NEVER covered by any insurance option, including the Tyre &amp; Windscreen add-on. The Renter pays the full replacement value at OEM product cost per item, plus fitting and balancing costs.<br>
+    <strong>5.7 Police Reports — Mandatory:</strong> Report required within 24 hours of any accident, theft, or incident. Without it, no insurance claim can be processed.
   </div>
 
   <!-- 6. NO-GO AREAS -->
-  <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #000;padding-bottom:3px;margin:16px 0 10px;">6. No-Go Areas — Strictly Prohibited</div>
-  <div style="background:#fdf0f0;border:2px solid #e74c3c;border-radius:4px;padding:9px 12px;margin-bottom:8px;font-size:10.5px;line-height:1.7;">
-    <strong style="color:#c0392b;">Entry — whether accidental or intentional — results in: N$30,000 fine + immediate permanent cancellation of ALL insurance + personal liability for all damage. No exceptions.</strong><br><br>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;">
-      <div><strong>NAMIBIA:</strong> Van Zyl's Pass · Khaudum NP · Sandwich Harbour · Sperrgebiet (Diamond Area 1 &amp; 2) · Skeleton Coast north of Möwe Bay · Remote Damaraland backcountry (unmarked) · Diamond Coast / Bogenfels · Off-piste dunes Walvis Bay / Swakopmund · Any unmarked NRA road</div>
-      <div><strong>BOTSWANA &amp; OTHER:</strong> CKGR · Moremi/Okavango Delta (extra deposit) · Savuti · Makgadikgadi · Nxai Pans · Cut lines and hunting areas<br><strong>South Africa:</strong> written itinerary required &nbsp;<strong>Zimbabwe:</strong> Victoria Falls only, written approval &nbsp;<strong>Angola, Zambia or any other country not explicitly authorised:</strong> PROHIBITED</div>
-    </div>
-    <div style="margin-top:6px;font-size:10px;color:#888;">A damage deposit is required when visiting Botswana/other countries. Vehicle recovery outside Namibia is entirely the Renter's cost — all towing, transport, customs duties and third-party charges.</div>
+  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">6. NO-GO AREAS — STRICTLY PROHIBITED</div>
+  <div style="background:#fdf5f5;border:2px solid #e74c3c;border-radius:4px;padding:9px 12px;margin-bottom:8px;font-size:10px;line-height:1.7;">
+    <strong>THESE AREAS ARE ABSOLUTELY PROHIBITED.</strong> Entry — whether accidental or intentional — results in: a fine of <strong>N$30,000</strong>; immediate and permanent cancellation of ALL insurance cover; the Renter becomes personally liable for all damage, in addition to the fine.<br>
+    <strong>Namibia:</strong> Van Zyl's Pass · Khaudum NP · Sandwich Harbour · Sperrgebiet (Diamond Area 1 &amp; 2) · Skeleton Coast north of Möwe Bay · Remote Damaraland (unmarked) · Diamond Coast/Bogenfels · Off-piste dunes Walvis Bay/Swakopmund · Any unmarked NRA road.<br>
+    <strong>6.2 Botswana &amp; Other Countries (separate rules, own deposit N$30,000):</strong> CKGR · Moremi/Okavango Delta · Savuti · Makgadikgadi · Nxai Pans · Cut lines and hunting areas.<br>
+    South Africa — written itinerary required. Zimbabwe — Victoria Falls only, written approval. Angola, Zambia or any other country — PROHIBITED.
   </div>
-  ${c.cross_border?`<div style="padding:7px 12px;background:#f0f9f4;border:1px solid #1e8449;border-radius:4px;margin-bottom:10px;font-size:10.5px;"><strong>✓ Authorised cross-border travel for this rental:</strong> ${c.cross_border}. Additional damage deposit of N$15,000 applies.</div>`:''}
+  ${c.cross_border?`<div style="background:#f0f9f4;border:1px solid #1e8449;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:10.5px;"><strong>✓ Authorised cross-border travel for this rental:</strong> ${c.cross_border}. Additional cross-border damage deposit of N$30,000 applies and has been received.</div>`:''}
 
-  <!-- 7–9 KEY TERMS -->
-  <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #000;padding-bottom:3px;margin:16px 0 10px;">7–9. Rental Period, Fees &amp; Liability</div>
-  <div style="font-size:10.5px;line-height:1.7;padding:8px 12px;background:#f9f9f9;border:1px solid #ddd;border-radius:4px;margin-bottom:10px;">
-    <strong>Fuel:</strong> Return full tank. N$250 fee + shortfall if not full. Wrong fuel = full repair cost.<br>
-    <strong>Late return:</strong> Daily rate + N$3,500/day or part thereof. Extensions must be requested 2 days before agreed return date. No refund for early return.<br>
-    <strong>Cleanliness:</strong> Excessively dirty: N$1,750. Heavy scratches: N$3,500. No smoking. Burn damage: full interior repair. Stickers: N$400/item.<br>
-    <strong>Claims handling fee:</strong> N$5,000 per insurance claim submitted, regardless of fault.<br>
-    <strong>Breakdowns:</strong> GR not liable for loss, inconvenience, or missed connections. Use GR-approved recovery only. Unapproved towing invalidates all cover.<br>
-    <strong>Liability:</strong> You fully indemnify GR from all claims arising from your use of the vehicle or breach of this Agreement including death, injury, or property damage.<br>
-    <strong>Loss of use:</strong> If Renter declines insurance and vehicle is out for repairs, Renter pays GR lost rental income at daily rate for up to 60 days.<br>
-    <strong>Governing law:</strong> Laws of the Republic of Namibia. Disputes heard in Magistrate's or High Court, Windhoek.<br>
-    <strong>Data (POPIA):</strong> Personal information processed for rental administration, GPS monitoring, and insurer communication only. Not sold or disclosed except as required by law.
+  <!-- 7. FEES -->
+  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">7. RENTAL PERIOD, RETURN &amp; ADDITIONAL FEES</div>
+  <div style="font-size:10px;line-height:1.7;margin-bottom:12px;">
+    <strong>7.1 Office Hours &amp; Return Times:</strong> GR office hours 07:30–16:00, Mon–Fri. Weekend/holiday returns must be arranged in advance.<br>
+    <strong>7.2 Late Return:</strong> Daily rate PLUS N$3,500 per extra day or part thereof. Extensions must be requested at least 2 days before agreed return date.<br>
+    <strong>7.3 Early Return:</strong> No refund or credit under any circumstances.<br>
+    <strong>7.4 Fuel:</strong> Return full tank. N$250 fee + shortfall cost if not full. Wrong fuel = negligence — Renter bears all repair costs.<br>
+    <strong>7.5 Cleanliness:</strong> Excessively dirty: N$1,750. Heavy scratches/paint correction: N$3,500. No smoking. Burn damage: full interior repair. Stickers: N$400/item.<br>
+    <strong>7.6 Claims Handling Fee:</strong> N$5,000 per insurance claim submitted, regardless of fault.<br>
+    <strong>7.7 Cancellation:</strong> &gt;30 days before pickup: 50% deposit refunded. &lt;30 days: no refund.
+  </div>
+
+  <!-- 9. LIABILITY -->
+  <div style="font-size:10px;line-height:1.6;margin-bottom:14px;padding:8px 12px;background:#f9f9f9;border:1px solid #ddd;border-radius:4px;">
+    <strong>9. LIABILITY, INDEMNITY &amp; GOVERNING LAW:</strong> You agree to fully indemnify and hold harmless GO RENT 4X4 RENTALS AND TOURS CC from all claims, losses, damages, and legal actions arising from your use of the vehicle or breach of this Agreement. GR is not liable for indirect or consequential losses including missed flights or accommodation costs. This Agreement is governed by the laws of the Republic of Namibia. Disputes heard in Magistrate's or High Court, Windhoek. Personal information processed per POPIA-equivalent Namibian data-protection legislation for rental administration, GPS monitoring, and insurer communication only.
   </div>
 
   <!-- FINANCIAL SUMMARY -->
-  <div style="border:2px solid #000;border-radius:4px;padding:13px;margin-bottom:16px;">
-    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:10px;">Financial Summary</div>
-    ${f('Daily rate',`N$ ${(c.daily_rate||0).toLocaleString('en-ZA',{minimumFractionDigits:2})}`)}
-    ${f(`Rental (${days} days)`,`N$ ${(c.total_rental||0).toLocaleString('en-ZA',{minimumFractionDigits:2})}`)}
-    ${f('Damage deposit',`N$ ${(c.deposit_amount||0).toLocaleString('en-ZA',{minimumFractionDigits:2})}`)}
-    ${f('Fuel &amp; admin deposit',`N$ ${(c.fuel_deposit||7500).toLocaleString('en-ZA',{minimumFractionDigits:2})}`)}
-    ${c.cross_border?f('Cross-border damage deposit',`N$ ${(c.cross_border_fee||15000).toLocaleString('en-ZA',{minimumFractionDigits:2})}`):''}
-    ${c.addon_windscreen?f('Windscreen &amp; Tyre add-on',`N$ ${(184*days).toLocaleString('en-ZA',{minimumFractionDigits:2})}`):''}
-    ${c.addon_equipment?f('Camping Equipment cover',`N$ ${(103.50*days).toLocaleString('en-ZA',{minimumFractionDigits:2})}`):''}
-    ${f('Deposit method',c.deposit_method||'—')}
-    <div style="border-top:2px solid #000;margin-top:8px;padding-top:8px;display:grid;grid-template-columns:150px 1fr;font-size:15px;font-weight:900;">
-      <span>TOTAL DUE:</span><span>N$ ${total.toLocaleString('en-ZA',{minimumFractionDigits:2})}</span>
+  <div style="border:2px solid #111;border-radius:4px;padding:12px;margin-bottom:16px;">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #111;padding-bottom:6px;margin-bottom:10px;">Financial Summary</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+      ${[
+        ['Rental period', days?days+' days':'—'],
+        ['Damage deposit', c.deposit_amount?'N$ '+Number(c.deposit_amount).toLocaleString('en-ZA',{minimumFractionDigits:2}):'—'],
+        ['Fuel & admin deposit', 'N$ 7,500.00'],
+        ['Cross-border deposit', c.cross_border?'N$ 30,000.00':'N/A'],
+        ['Windscreen & Tyre add-on', c.addon_windscreen?'N$ '+(184*days).toLocaleString('en-ZA',{minimumFractionDigits:2}):'Not selected'],
+        ['Camping Equipment cover', c.addon_equipment?'N$ '+(103.50*days).toLocaleString('en-ZA',{minimumFractionDigits:2}):'Not selected'],
+        ['Deposit method', c.deposit_method||'—'],
+      ].map(([l,v])=>`<div style="padding:5px 8px;border-bottom:1px solid #eee;font-size:11px;"><span style="color:#555;font-weight:600;">${l}:</span> <span style="color:#111;font-weight:700;">${v}</span></div>`).join('')}
     </div>
   </div>
 
   <!-- 10. SIGNATURES -->
-  <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #000;padding-bottom:3px;margin-bottom:12px;">10. Declaration &amp; Signatures</div>
-  <div style="font-size:11px;margin-bottom:16px;line-height:1.7;">
-    By signing below, the Renter confirms that they have <strong>read, understood, and agree to all terms and conditions</strong> set out in this Agreement, including all insurance exclusions, speed limits, no-go area restrictions, and negligence provisions.
+  <div style="font-size:13px;font-weight:800;border-bottom:2px solid #000;padding-bottom:3px;margin:0 0 10px;">10. DECLARATION &amp; SIGNATURES</div>
+  <div style="font-size:10.5px;margin-bottom:14px;line-height:1.6;">
+    By signing below, the Renter confirms that they have read, understood, and agree to all terms and conditions set out in this Agreement, including all insurance exclusions, speed limits, no-go area restrictions, and negligence provisions.
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;padding-top:16px;border-top:2px solid #000;">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
+    <div style="padding:8px 10px;border-right:1px solid #ccc;">
+      <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Renter Full Name</div>
+      <div style="font-size:12px;font-weight:700;min-height:20px;">${c.client_name||''}</div>
+    </div>
+    <div style="padding:8px 10px;border-right:1px solid #ccc;">
+      <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Date</div>
+      <div style="font-size:12px;font-weight:700;min-height:20px;">${fD(c.pickup_date)}</div>
+    </div>
+    <div style="padding:8px 10px;">
+      <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Place Signed</div>
+      <div style="font-size:12px;font-weight:700;min-height:20px;">Windhoek, 6 Diehl Str</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;padding-top:14px;border-top:2px solid #000;">
     <div>
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:4px;">Renter</div>
-      <div style="font-size:12px;font-weight:700;margin-bottom:3px;">${c.client_name||'___________________________'}</div>
-      <div style="font-size:10px;color:#555;margin-bottom:8px;">
-        Date: ${fD(c.pickup_date)}<br>
-        Place signed: ${c.pickup_location||'Windhoek, Namibia'}
-      </div>
-      <div style="border:1px solid #ccc;border-radius:4px;min-height:60px;display:flex;align-items:center;justify-content:center;background:#fafafa;">
-        ${sigUrl?`<img src="${sigUrl}" style="max-height:54px;max-width:100%;display:block;" alt="Client signature">`:'<span style="color:#bbb;font-size:10px;font-style:italic;">Sign here</span>'}
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:6px;">Renter Signature</div>
+      <div style="border:1px solid #ccc;border-radius:4px;min-height:64px;display:flex;align-items:center;justify-content:center;background:#fafafa;">
+        ${sigUrl?`<img src="${sigUrl}" style="max-height:58px;max-width:100%;display:block;" alt="Renter signature">`:'<span style="color:#ccc;font-size:10px;font-style:italic;">Sign here</span>'}
       </div>
       ${sigUrl?`<div style="font-size:9px;color:#1e8449;margin-top:4px;">✓ Digitally signed — ${fDT(c.client_signed_at)}</div>`:''}
     </div>
     <div>
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:4px;">For and on behalf of GO RENT 4×4 RENTALS AND TOURS CC</div>
-      <div style="font-size:12px;font-weight:700;margin-bottom:3px;">${c.staff_signed_by||'___________________________'}</div>
-      <div style="font-size:10px;color:#555;margin-bottom:8px;">Date: ${fDT(c.staff_signed_at)||'_______________'}</div>
-      <div style="border-bottom:1px solid #000;min-height:60px;margin-bottom:4px;"></div>
-      <div style="font-size:9px;color:#555;">Authorised Representative Signature</div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:6px;">For and on behalf of GO RENT 4X4 RENTALS AND TOURS CC</div>
+      <div style="border-bottom:1px solid #000;min-height:64px;margin-bottom:4px;"></div>
+      <div style="font-size:9px;color:#555;">Authorised Representative Name: ${c.staff_signed_by||'___________________________'}</div>
     </div>
   </div>
 
-  <div style="text-align:center;margin-top:18px;padding-top:12px;border-top:1px solid #ccc;font-size:10px;color:#777;line-height:1.6;">
-    GO RENT 4×4 RENTALS AND TOURS CC · CC/2021/04371 · Windhoek, Namibia · gorent4x4.com · WhatsApp: +264 81 858 1750
+  <div style="text-align:center;margin-top:16px;padding-top:10px;border-top:1px solid #ccc;font-size:10px;color:#777;">
+    GO RENT 4X4 RENTALS AND TOURS CC · CC/2021/04371 · Windhoek, Namibia · gorent4x4.com · WhatsApp: +264 81 861 8085
   </div>
 </div>`;
 }
+
 
 
 </script>
