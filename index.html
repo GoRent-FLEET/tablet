@@ -496,7 +496,7 @@ const STAFF_HO  =['Simon','Joe','Nelson','Robert','Peter'];
 
 // ── APP STATE ────────────────────────────────────────────────────
 let currentUser=null, currentProfile=null;
-let co={}, ci={}, coStep=0, clientList=[];
+let co={}, ci={}, coStep=0, ciStep=0, clientList=[];
 const sigs={};
 let imarks={}, itool='sc', isize='M', iundo=null, retSt={};
 const VIEWS=['lhs','rhs','fl','rear','fr'];
@@ -1901,9 +1901,11 @@ function startCI(fn){
     if(prev.staff){ci.receivedBy=prev.staff;}
   }catch(e){}
   RET_GROUPS.forEach(g=>g.items.forEach(i=>{retSt[i]='ok';}));
-  ci={v,fn,receivedBy:'',odoIn:v.odo+1200,fuelIn:'Full',notes:'',
+  ci={v,fn,receivedBy:'',odoIn:v.odo+1200,odometerOut:co?.odometerOut||v.odo,fuelIn:'Full',notes:'',
       dmgd:[],dmgPhotos:[],custSig:null,custAt:'',
-      mgmtName:'',mgmtSig:null,mgmtAt:'',deposit:'Full deposit returned',mgmtNotes:''};
+      mgmtName:'',mgmtSig:null,mgmtAt:'',deposit:'Full deposit returned',mgmtNotes:'',
+      retItems:{},retSig:null,retAt:''};
+  ciStep=0;
   initIM();
   (v.dmgd||[]).forEach(d=>{(d.cells||[]).forEach(c=>{imarks[d.view]?.['M']&&(imarks[d.view]['M'][c.r+','+c.c]='pr');});});
   goPage('ci');drawCI();
@@ -1911,7 +1913,7 @@ function startCI(fn){
 
 function drawCI(){
   const r=ci,v=r.v;
-  const km=r.odoIn-v.odo;
+  // Compute issues for step progress
   const allItems=RET_GROUPS.flatMap(g=>g.items);
   const missing=allItems.filter(i=>retSt[i]==='missing');
   const damaged=allItems.filter(i=>retSt[i]==='dmg');
@@ -1919,115 +1921,339 @@ function drawCI(){
   const newDmg=ci.dmgd.filter(d=>d.types?.some(t=>t!=='pr'));
   const fuelShort=r.fuelIn!==v.fuelOut;
   const hasIssues=newDmg.length||fuelShort||missing.length||damaged.length;
+  const km=r.odoIn-(ci.odometerOut||v.odo);
+
+  const CI_STEPS=[
+    {n:0,ico:'🧹',lbl:'Vehicle Check',sub:'Checklist & fuel'},
+    {n:1,ico:'🔍',lbl:'Damage',sub:'Inspect body'},
+    {n:2,ico:'🏕',lbl:'Equipment',sub:'All items back'},
+    {n:3,ico:'✍️',lbl:'Customer',sub:'Client signs'},
+    {n:4,ico:'👔',lbl:'Management',sub:'Close rental'},
+  ];
+
+  const bar=CI_STEPS.map(s=>{
+    const done=(s.n===0&&!!r.retSig)||(s.n===1&&!!r.dmgPhotos?.length)||(s.n===2&&allItems.every(i=>retSt[i]&&retSt[i]!==''))||(s.n===3&&!!r.custSig)||(s.n===4&&!!r.mgmtSig);
+    const active=s.n===ciStep;
+    return `<div class="stg ${active?'active':done?'done':''}" onclick="ciStep=${s.n};drawCI()">
+      <div style="font-size:16px">${done&&!active?'✅':s.ico}</div>
+      <div style="font-size:9px;margin-top:2px">${s.lbl}</div>
+    </div>`;
+  }).join('');
+
+  const bodyHTML=ciStep===0?ciStep0_CI():ciStep===1?ciStep1_CI():ciStep===2?ciStep2_CI():ciStep===3?ciStep3_CI():ciStep4_CI();
 
   document.getElementById('ci-body').innerHTML=`
     <div class="fhdr">
-      <div class="fhdr-fn">${r.fn}<span>${v.reg}</span></div>
-      <div class="fhdr-cl">${v.cl} · Return: ${v.rt}</div>
-    </div>
-
-    <!-- 1. WHO -->
-    <div class="who-box" style="margin-bottom:12px">
-      <div class="who-lbl">👤 Who is receiving this vehicle?</div>
-      ${selStaff('ci-rcv',STAFF_HO,r.receivedBy)}
-    </div>
-
-    <!-- 2. ODO + FUEL -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:12px">
-      <div class="info-item"><div class="info-lbl">Odo OUT</div><div class="info-val">${v.odo.toLocaleString()} km</div></div>
-      <div class="info-item"><div class="info-lbl">Fuel OUT</div><div class="info-val">${v.fuelOut||'Full'}</div></div>
-      <div class="fi" style="margin:0"><label style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase">Odo IN * (km)</label>
-        <input type="number" id="ci-odo" value="${r.odoIn}" oninput="ci.odoIn=+this.value;document.getElementById('ci-km').textContent=(+this.value-v.odo).toLocaleString()+' km driven'" style="padding:10px">
-      </div>
-      <div class="fi" style="margin:0"><label style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase">Fuel IN *</label>
-        <select id="ci-fuel" onchange="ci.fuelIn=this.value;drawCI()" style="color-scheme:dark;padding:10px">
-          ${['Full','3/4','1/2','1/4','Empty'].map(f=>`<option${r.fuelIn===f?' selected':''}>${f}</option>`).join('')}
-        </select>
-      </div>
-    </div>
-    <div class="al blue" style="margin-bottom:8px">🛣 <span id="ci-km">${km>0?km.toLocaleString()+' km driven':''}</span>&nbsp;&nbsp;
-      <span style="font-size:10px;color:var(--g5);">ODO out: ${v.odo.toLocaleString()} km</span>
-    </div>
-    \${licDiscBanner(v,'in')}
-
-    <!-- 3. DAMAGE INSPECTOR -->
-    <div style="background:var(--g1);border:2px solid var(--g2);border-radius:var(--r);padding:12px 14px;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px">🔍 Vehicle Inspection on Return</div>
-      ${v.dmgd?.length?
-        `<div class="al info" style="margin-bottom:8px;font-size:11px">⭐ Yellow = pre-existing from departure. Blue/Red = NEW damage = client pays.</div>`:
-        `<div class="al ok" style="margin-bottom:8px;font-size:11px">✓ No damage at check-out. Mark any new damage found.</div>`}
-      ${insHTML()}
-      <div style="margin-top:10px">
-        ${photoHTML('ci.dmgPhotos','📷 Return Damage Photos','Photograph ALL damage — new and pre-existing. These are your evidence for deposit deductions and insurance claims.',8)}
-      </div>
-    </div>
-
-    <!-- 4. EQUIPMENT -->
-    <div style="background:var(--g1);border:2px solid var(--g2);border-radius:var(--r);padding:12px 14px;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px">🏕 Equipment Return Check</div>
-      <div id="ret-grps">${renderRetGroups()}</div>
-    </div>
-
-    <!-- 5. NOTES -->
-    <div class="fi" style="margin-bottom:14px">
-      <label>Notes / client comments</label>
-      <textarea id="ci-notes" placeholder="Client reported issues, damage they mentioned, comments..." oninput="ci.notes=this.value">${r.notes}</textarea>
-    </div>
-
-    <!-- 6. ISSUES ALERT -->
-    ${hasIssues?`<div style="background:#1a0300;border:2px solid var(--re);border-radius:var(--r);padding:14px;margin-bottom:14px;animation:pulse 1.5s infinite">
-      <div style="font-size:14px;font-weight:800;color:var(--rl);margin-bottom:8px">🚨 Issues Found — Management Notified on Signature</div>
-      ${newDmg.length?`<div style="font-size:12px;color:var(--rl);padding:5px 0;border-bottom:1px solid rgba(240,80,80,.2)">🔴 NEW DAMAGE: ${newDmg.map(d=>d.view_name).join(', ')}</div>`:''}
-      ${fuelShort?`<div style="font-size:12px;color:var(--rl);padding:5px 0;border-bottom:1px solid rgba(240,80,80,.2)">⛽ FUEL SHORT: Out ${v.fuelOut||'Full'} → In ${r.fuelIn}</div>`:''}
-      ${missing.length?`<div style="font-size:12px;color:var(--rl);padding:5px 0;border-bottom:1px solid rgba(240,80,80,.2)">❌ MISSING: ${missing.join(', ')}</div>`:''}
-      ${damaged.length?`<div style="font-size:12px;color:var(--al);padding:5px 0">⚠ DAMAGED: ${damaged.join(', ')}</div>`:''}
-    </div>`:`<div class="al ok" style="margin-bottom:14px">✅ No issues — clean return</div>`}
-
-    <!-- 7. CUSTOMER SIGNATURE -->
-    ${r.custSig?
-      `<div class="signed" style="margin-bottom:14px">✅<div class="signed-name">${v.cl} — return confirmed</div><div class="signed-time">${r.custAt}</div></div>`:
-      ciReturnView(v,r,newDmg,fuelShort,missing,damaged)}
-
-    <!-- 8. MANAGEMENT SIGN-OFF -->
-    <div style="background:var(--g1);border:2px solid ${r.custSig?'var(--g3)':'var(--g2)'};border-radius:var(--r);padding:13px;${r.custSig?'':'opacity:.3;pointer-events:none'}">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px">👔 Management Sign-Off</div>
-      <div class="sum-box" style="margin-bottom:10px">
-        <div class="sum-title">${r.fn} · ${v.cl} · Return Summary</div>
-        <div class="sum-row"><span class="sum-lbl">KM driven</span><span class="sum-val ok">${km.toLocaleString()} km</span></div>
-        <div class="sum-row"><span class="sum-lbl">Fuel</span><span class="sum-val ${fuelShort?'warn':'ok'}">${v.fuelOut||'Full'} → ${r.fuelIn} ${fuelShort?'⚠ SHORT':'✓'}</span></div>
-        <div class="sum-row"><span class="sum-lbl">New damage</span><span class="sum-val ${newDmg.length?'warn':'ok'}">${newDmg.length?`⚠ ${newDmg.map(d=>d.view_name).join(', ')}`:'✓ None'}</span></div>
-        <div class="sum-row"><span class="sum-lbl">Missing items</span><span class="sum-val ${missing.length?'warn':'ok'}">${missing.length?`⚠ ${missing.slice(0,3).join(', ')}...`:'✓ All returned'}</span></div>
-        <div class="sum-row"><span class="sum-lbl">Damage photos</span><span class="sum-val ${r.dmgPhotos?.length?'ok':'warn'}">${r.dmgPhotos?.length?`✓ ${r.dmgPhotos.length} photos on file`:'⚠ No photos'}</span></div>
-        <div class="sum-row"><span class="sum-lbl">Received by</span><span class="sum-val ok">${r.receivedBy||'—'}</span></div>
-      </div>
-      ${hasIssues?`<div style="background:var(--rg);border:2px solid var(--re);border-radius:var(--r);padding:12px;margin-bottom:10px">
-        <div style="font-size:13px;font-weight:800;color:var(--rl);margin-bottom:6px">💰 Action Required</div>
-        ${newDmg.length?`<div style="font-size:12px;color:var(--rl);margin-bottom:4px">🔴 Get repair quote for ${newDmg.map(d=>d.view_name).join(', ')} — charge to ${v.cl}</div>`:''}
-        ${fuelShort?`<div style="font-size:12px;color:var(--rl);margin-bottom:4px">⛽ Charge refill cost — ${v.fuelOut||'Full'} to ${r.fuelIn}</div>`:''}
-        ${missing.length?`<div style="font-size:12px;color:var(--rl)">❌ Charge replacement: ${missing.join(', ')}</div>`:''}
-        <div style="font-size:10px;color:var(--am);margin-top:8px">📷 ${r.dmgPhotos?.length||0} photos filed under ${r.fn}/${v.cl} as evidence</div>
-      </div>`:''}
-      ${r.mgmtSig?
-        `<div class="signed">✅<div class="signed-name">${r.mgmtName} — Rental closed · ${r.deposit}</div><div class="signed-time">${r.mgmtAt}</div></div>
-        <button class="btn g" style="margin-top:8px" onclick="completeCI()">✅ Complete Return</button>`:
-        `<div class="fg">
-          <div class="fi"><label>Deposit decision</label>
-            <select id="ci-dep" onchange="ci.deposit=this.value" style="color-scheme:dark">
-              <option>Full deposit returned</option>
-              <option>Partial deduction — new damage</option>
-              <option>Full deduction — major damage</option>
-              <option>Partial deduction — missing equipment</option>
-              <option>Withhold pending investigation</option>
-            </select>
-          </div>
-          <div class="fi"><label>Manager name *</label><input id="ci-mgmt" value="${r.mgmtName}" oninput="ci.mgmtName=this.value" placeholder="Manager"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="fhdr-fn">${r.fn} <span>${v.reg}</span></div>
+          <div class="fhdr-cl">${v.cl} · Return: ${v.rt}</div>
         </div>
-        <div class="fi"><label>Notes</label><textarea id="ci-mnotes" oninput="ci.mgmtNotes=this.value" placeholder="Deposit decision notes..." style="min-height:50px">${r.mgmtNotes}</textarea></div>
-        <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">Manager — sign to close rental</span><span class="sig-clr" onclick="clrSig('ci-m-sig')">Clear</span></div><canvas class="sig-cv" id="ci-m-sig"></canvas></div>
-        <button class="btn ${hasIssues?'r':'g'}" style="${hasIssues?'background:#c0392b;color:#fff':''}" onclick="signMgmtCI()">✅ Close Rental &amp; Sign Off</button>`}
+        <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;background:rgba(240,80,80,.15);color:var(--rl);border:1px solid var(--re)">◀ ARRIVAL</span>
+      </div>
+    </div>
+    <div class="stg-bar s5">${bar}</div>
+    <div id="ci-step-body">${bodyHTML}</div>
+    <div class="btn-row">
+      ${ciStep>0?`<button class="btn s" style="flex:1" onclick="ciStep=Math.max(0,ciStep-1);drawCI()">← Back</button>`:''}
+      ${ciStep<4?`<button class="btn g" style="flex:2" onclick="ciStep=Math.min(4,ciStep+1);drawCI()">Next →</button>`:''}
     </div>`;
 
-  setTimeout(()=>{VIEWS.forEach(v=>buildIG(v));renderIS();['ci-c-sig','ci-m-sig'].forEach(initSig);},100);
+  setTimeout(()=>{
+    VIEWS.forEach(v=>buildIG(v));renderIS();
+    ['ci-ret-sig','ci-c-sig','ci-m-sig'].forEach(initSig);
+  },100);
+}
+
+function ciStep0_CI(){
+  const r=ci,v=r.v;
+  // Use L_PREP as the return checklist — same items as check-out
+  const done=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&(l.startsWith('__QTY__')?ci.retItems[l.replace('__QTY__','')]:ci.retItems[l])&&(ci.retItems[l]!=='na')).length;
+  const checkable=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__').length;
+  const pct=Math.round(done/checkable*100);
+  const probs=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&ci.retItems[l]==='prob').map(([i,l])=>l);
+  const km=r.odoIn-(ci.odometerOut||v.odo);
+
+  return `
+  <div class="step-intro">
+    <div class="step-ico">🧹</div>
+    <div><div class="step-title">Step 1 — Vehicle Return Check</div>
+    <div class="step-sub">Tick each item: once = ✅ OK · twice = ⚠ Problem · grey = NOT CHECKED = your liability</div></div>
+  </div>
+  <div class="who-box">
+    <div class="who-lbl">👤 Who is receiving this vehicle?</div>
+    ${selStaff('ci-rcv',STAFF_HO,r.receivedBy)}
+  </div>
+  ${licDiscBanner(v,'in')}
+
+  <!-- ODO + FUEL ROW -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+    <div>
+      <div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">🛣 Odometer IN (km) *</div>
+      <input type="number" id="ci-odo" value="${r.odoIn}"
+        oninput="ci.odoIn=+this.value;document.getElementById('ci-km-disp').textContent=(+this.value-(ci.odometerOut||v.odo)).toLocaleString()+' km driven';drawCI()"
+        style="padding:12px 14px;font-size:16px;font-weight:700;background:var(--g0);border:2px solid var(--gb);border-radius:var(--rs);color:var(--tx);width:100%;">
+      <div id="ci-km-disp" style="font-size:11px;color:var(--se);margin-top:4px;font-weight:700;">${km>0?km.toLocaleString()+' km driven':''}</div>
+      <div style="font-size:10px;color:var(--g5);margin-top:2px;">ODO out: ${(ci.odometerOut||v.odo).toLocaleString()} km</div>
+    </div>
+    <div>
+      <div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">⛽ Fuel IN *</div>
+      <select id="ci-fuel" onchange="ci.fuelIn=this.value;drawCI()"
+        style="color-scheme:dark;padding:12px 14px;font-size:15px;font-weight:700;width:100%;background:var(--g0);border:2px solid ${r.fuelIn===v.fuelOut?'var(--gb)':'var(--re)'};border-radius:var(--rs);color:${r.fuelIn===v.fuelOut?'var(--se)':'var(--rl)'};">
+        ${['Full','3/4','1/2','1/4','Empty'].map(f=>`<option${r.fuelIn===f?' selected':''}>${f}</option>`).join('')}
+      </select>
+      <div style="font-size:11px;margin-top:4px;font-weight:700;color:${r.fuelIn===v.fuelOut?'var(--se)':'var(--rl)'};">
+        ${r.fuelIn===v.fuelOut?'✅ Matches departure':'⚠ Out: '+(v.fuelOut||'Full')+' → In: '+r.fuelIn+' — fuel charge applies'}
+      </div>
+    </div>
+  </div>
+
+  <div class="prog-wrap">
+    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:var(--se)"></div></div>
+    <div class="prog-lbl"><span class="prog-n">${done}/${checkable}</span> items checked
+    ${pct===100?'<span style="color:var(--se);font-weight:700;margin-left:8px">✅ All done!</span>':''}</div>
+  </div>
+
+  <div class="chk-list">${L_PREP.map(([ico,lbl,det],i)=>{
+    if(ico==='__SECTION__'||ico==='__OPTIONAL__'){
+      const isOpt=ico==='__OPTIONAL__';
+      const isMain=!isOpt&&(lbl.startsWith('🚗 Vehicle')||lbl.startsWith('🏕')||lbl.startsWith('📦')||lbl.startsWith('📦 Loose'));
+      return `<div style="background:${isOpt?'var(--ag)':isMain?'var(--g2)':'var(--g1)'};border-radius:var(--rs);padding:${isMain?'9px 14px':'7px 14px 7px 20px'};margin:${isMain?'10px 0 6px':'4px 0 3px'};border-left:${isOpt?'3px solid var(--am)':isMain?'none':'3px solid var(--se)'};display:flex;align-items:center;gap:10px;">
+        <span style="font-size:${isMain?'18':'15'}px;">${lbl.split(' ')[0]}</span>
+        <div>
+          <div style="font-size:${isMain?'12':'11'}px;font-weight:800;color:${isOpt?'var(--al)':isMain?'var(--tx)':'var(--se)'};">${lbl.replace(lbl.split(' ')[0]+' ','')}</div>
+          <div style="font-size:10px;color:var(--g5);">${det}</div>
+        </div>
+      </div>`;
+    }
+    const st=ci.retItems[lbl]||'';
+    const isOptItem=ico==='__OPT_ITEM__';
+    const isQtyItem=lbl.startsWith('__QTY__');
+    const realLbl=isQtyItem?lbl.replace('__QTY__',''):lbl;
+    const maxQty=isQtyItem?parseInt(det)||5:0;
+    const naSVG=()=>`<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(90,112,144,.15)" stroke="#5a7090" stroke-width="2"/><path d="M8 12h8" stroke="#5a7090" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+    if(isQtyItem){
+      const qtyVal=ci.retItems[realLbl]||'';
+      const qtyNum=parseInt(qtyVal)||0;
+      return `<div class="ci ${qtyNum>0?'ok':''}" style="cursor:default;">
+        <div class="ci-icon">${ico}</div>
+        <div class="ci-text"><div class="ci-lbl">${realLbl}</div><div class="ci-det">${det}</div></div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <select onchange="ci.retItems['${realLbl}']=this.value;if(!r.receivedBy){toast('Select your name first','err');this.value='';return;}const s=document.getElementById('ci-step-body');if(s){s.innerHTML=ciStep0_CI();setTimeout(()=>initSig('ci-ret-sig'),60);}"
+            style="color-scheme:dark;padding:8px 10px;border-radius:var(--rs);border:2px solid ${qtyNum>0?'var(--gb)':'var(--g3)'};background:${qtyNum>0?'var(--sg)':'var(--g1)'};color:${qtyNum>0?'var(--se)':'var(--g5)'};font-size:14px;font-weight:700;min-width:70px;">
+            <option value="">Qty</option>
+            ${Array.from({length:maxQty},(_,k)=>`<option value="${k+1}" ${qtyVal==k+1?'selected':''}>${k+1}</option>`).join('')}
+          </select>
+          <div class="ci-st">${qtyNum>0?okSVG():uncSVG()}</div>
+        </div>
+      </div>`;
+    }
+    return `<div class="ci ${st==='ok'?'ok':st==='prob'?'prob':''}" onclick="tapRetItem(${i})">
+      <div class="ci-icon">${ico==='__OPT_ITEM__'?`<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>`:ico}</div>
+      <div class="ci-text">
+        <div class="ci-lbl">${realLbl}${isOptItem?'<span style="font-size:9px;color:var(--g5);margin-left:6px;background:var(--g2);padding:1px 6px;border-radius:8px;">optional</span>':''}</div>
+        <div class="ci-det">${det}</div>
+      </div>
+      <div class="ci-st">${st==='ok'?okSVG():st==='prob'?probSVG():st==='na'?naSVG():uncSVG()}</div>
+    </div>`;
+  }).join('')}</div>
+
+  ${probs.length?`<div class="al warn">⚠ Problems noted: ${probs.join(' · ')}</div>`:''}
+  ${photoHTML('ci.dmgPhotos','📷 Vehicle Return Photos','Photo the exterior before unloading. Shows client condition matches what they signed.',6)}
+
+  ${r.retSig?
+    `<div class="signed">✅<div class="signed-name">${r.receivedBy} — Vehicle check signed</div><div class="signed-time">${r.retAt}</div></div>`:
+    `<div class="liab">⚠️ By signing, <strong>${r.receivedBy||'[select name above]'}</strong> confirms the checklist above reflects the vehicle as returned.<br>
+    Every ⬜ grey item = <strong>NOT CHECKED = personal liability.</strong></div>
+    <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">Your signature</span><span class="sig-clr" onclick="clrSig('ci-ret-sig')">Clear</span></div><canvas class="sig-cv" id="ci-ret-sig"></canvas></div>
+    <button class="btn g" onclick="signRetCheck()">✓ Sign & Confirm — Vehicle Return Check</button>`}`;
+}
+
+function tapRetItem(i){
+  const nm=document.getElementById('ci-rcv')?.value;if(nm)ci.receivedBy=nm;
+  if(!ci.receivedBy){toast('Select your name first','err');return;}
+  if(L_PREP[i][0]==='__SECTION__'||L_PREP[i][0]==='__OPTIONAL__')return;
+  if(L_PREP[i][1]?.startsWith('__QTY__'))return;
+  const lbl=L_PREP[i][1];
+  const isOpt=L_PREP[i][0]==='__OPT_ITEM__';
+  const cur=ci.retItems[lbl]||'';
+  if(isOpt) ci.retItems[lbl]=cur===''?'ok':cur==='ok'?'prob':cur==='prob'?'na':'';
+  else ci.retItems[lbl]=cur===''?'ok':cur==='ok'?'prob':'';
+  const s=document.getElementById('ci-step-body');
+  if(s){
+    const existingSig=hasSig('ci-ret-sig')?getSig('ci-ret-sig'):null;
+    s.innerHTML=ciStep0_CI();
+    setTimeout(()=>{
+      initSig('ci-ret-sig');
+      if(existingSig&&sigs['ci-ret-sig']){
+        const cv=document.getElementById('ci-ret-sig');
+        if(cv){const img=new Image();img.onload=()=>{sigs['ci-ret-sig'].ctx.drawImage(img,0,0,cv.offsetWidth,cv.offsetHeight);sigs['ci-ret-sig'].hasData=true;};img.src=existingSig;}
+      }
+    },60);
+  }
+}
+
+function signRetCheck(){
+  const domVal=document.getElementById('ci-rcv')?.value;if(domVal)ci.receivedBy=domVal;
+  if(!ci.receivedBy){toast('Select your name first','err');return;}
+  if(!hasSig('ci-ret-sig')){toast('Sign below to confirm','err');return;}
+  ci.odoIn=+document.getElementById('ci-odo')?.value||ci.odoIn;
+  ci.fuelIn=document.getElementById('ci-fuel')?.value||ci.fuelIn;
+  ci.retSig=getSig('ci-ret-sig');ci.retAt=now();
+  try{
+    const raw=localStorage.getItem('inprogress_'+ci.fn);
+    if(raw){const rec=JSON.parse(raw);rec.staff=ci.receivedBy;rec.staffLocked=true;localStorage.setItem('inprogress_'+ci.fn,JSON.stringify(rec));}
+  }catch(e){}
+  toast('Step 1 signed ✅','ok');ciStep=1;drawCI();
+}
+
+function ciStep1_CI(){
+  const v=ci.v;
+  return `
+  <div class="step-intro">
+    <div class="step-ico">🔍</div>
+    <div><div class="step-title">Step 2 — Damage Inspection</div>
+    <div class="step-sub">Mark any new damage — blue=scratch · red=dent · yellow=pre-existing from departure</div></div>
+  </div>
+  ${v.dmgd?.length?
+    `<div class="al info" style="margin-bottom:8px;font-size:11px">⭐ Yellow markings = pre-existing from departure. Blue/Red = NEW damage = client liability.</div>`:
+    `<div class="al ok" style="margin-bottom:8px;font-size:11px">✓ No damage recorded at check-out. Mark any new damage found now.</div>`}
+  ${insHTML()}
+  ${photoHTML('ci.dmgPhotos','📷 Damage Photos','Photograph ALL damage found — new and pre-existing. Essential evidence for insurance and deposit deductions.',8)}`;
+}
+
+function ciStep2_CI(){
+  return `
+  <div class="step-intro">
+    <div class="step-ico">🏕</div>
+    <div><div class="step-title">Step 3 — Equipment Return</div>
+    <div class="step-sub">Verify all items returned in acceptable condition</div></div>
+  </div>
+  <div id="ret-grps">${renderRetGroups()}</div>
+  <div class="fi" style="margin-top:10px">
+    <label>Notes / client comments</label>
+    <textarea id="ci-notes" placeholder="Client reported issues, damage comments, missing items explanation..." oninput="ci.notes=this.value" style="min-height:60px">${ci.notes||''}</textarea>
+  </div>`;
+}
+
+function ciStep3_CI(){
+  const r=ci,v=r.v;
+  const allItems=RET_GROUPS.flatMap(g=>g.items);
+  const missing=allItems.filter(i=>retSt[i]==='missing');
+  const damaged=allItems.filter(i=>retSt[i]==='dmg');
+  const newDmg=r.dmgd.filter(d=>d.types?.some(t=>t!=='pr'));
+  const fuelShort=r.fuelIn!==v.fuelOut;
+  const hasIssues=newDmg.length||fuelShort||missing.length||damaged.length;
+  const km=r.odoIn-(ci.odometerOut||v.odo);
+
+  return `
+  <div class="step-intro">
+    <div class="step-ico">✍️</div>
+    <div><div class="step-title">Step 4 — Client Sign-Off</div>
+    <div class="step-sub">Client reviews return summary and signs</div></div>
+  </div>
+
+  <div style="background:#0a1520;border:3px solid ${hasIssues?'var(--re)':'var(--gb)'};border-radius:var(--r);overflow:hidden;margin-bottom:14px">
+    <div style="background:${hasIssues?'linear-gradient(135deg,#200505,#3a0808)':'linear-gradient(135deg,#0f3d26,#145c30)'};padding:13px 16px;border-bottom:2px solid ${hasIssues?'var(--re)':'var(--gb)'}">
+      <div style="font-size:16px;font-weight:800;color:#fff">${hasIssues?'⚠️':'✅'} ${v.cl} — Return Summary</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.6)">Received by ${r.receivedBy||'—'} · ${new Date().toLocaleDateString('en-GB')}</div>
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid var(--g2);display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      ${[['🛣','KM driven',km.toLocaleString()+' km','ok'],
+         ['⛽','Fuel',`${v.fuelOut||'Full'} → ${r.fuelIn}`,fuelShort?'warn':'ok'],
+         ['📅','Days',(Math.round((new Date(v.rt)-new Date(v.pu))/86400000)||'?')+' days','ok'],
+      ].map(([ico,lbl,val,st])=>`<div style="text-align:center;background:var(--g1);border-radius:8px;padding:10px 4px">
+        <div style="font-size:16px">${ico}</div>
+        <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin:3px 0">${lbl}</div>
+        <div style="font-size:12px;font-weight:700;color:${st==='warn'?'var(--rl)':'var(--se)'}">${val}</div>
+      </div>`).join('')}
+    </div>
+    ${hasIssues?`<div style="padding:12px 16px;border-bottom:1px solid var(--g2)">
+      ${newDmg.map(d=>`<div style="font-size:12px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">🔴 NEW DAMAGE — ${d.view_name}: ${d.types.filter(t=>t!=='pr').map(t=>t==='sc'?'Scratch':'Dent').join(', ')}</div>`).join('')}
+      ${fuelShort?`<div style="font-size:12px;color:var(--al);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">⛽ Fuel short — ${v.fuelOut||'Full'} out → ${r.fuelIn} returned — refill cost charged</div>`:''}
+      ${missing.map(i=>`<div style="font-size:12px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">❌ MISSING: ${i}</div>`).join('')}
+    </div>`:''}
+    <div style="padding:12px 16px;border-bottom:1px solid var(--g2);background:rgba(0,0,0,.2)">
+      <div style="font-size:12px;font-weight:700;color:var(--tx);margin-bottom:8px">By signing you confirm:</div>
+      ${['You have reviewed this return summary and agree it is accurate',
+         hasIssues?'You accept responsibility for the items listed above':'Vehicle returned in good order — no new damage or missing items',
+         'The rental period has ended and all obligations are fulfilled',
+      ].map(t=>`<div style="display:flex;gap:8px;padding:4px 0;font-size:11px;color:var(--g6)"><span style="color:var(--se)">✓</span>${t}</div>`).join('')}
+    </div>
+    <div style="padding:14px 16px">
+      ${r.custSig?
+        `<div class="signed">✅<div class="signed-name">${v.cl} — return confirmed</div><div class="signed-time">${r.custAt}</div></div>`:
+        `<div class="sig-area" style="border-color:${hasIssues?'var(--re)':'var(--gb)'}">
+          <div class="sig-hdr" style="background:${hasIssues?'#200505':'#071a0f'};border-bottom-color:${hasIssues?'var(--re)':'var(--gb)'}">
+            <span class="sig-lbl" style="color:${hasIssues?'var(--rl)':'var(--se)'}">${v.cl} — sign to confirm return</span>
+            <span class="sig-clr" onclick="clrSig('ci-c-sig')">Clear</span>
+          </div>
+          <canvas class="sig-cv" id="ci-c-sig" style="height:110px"></canvas>
+        </div>
+        <button class="btn ${hasIssues?'r':'g'}" style="margin-top:10px;font-size:15px;padding:18px;${hasIssues?'background:#c0392b;color:#fff':''}" onclick="signCustCI()">
+          ✍️ ${hasIssues?'I acknowledge the issues —':''} Sign & Confirm Return
+        </button>`}
+    </div>
+  </div>`;
+}
+
+function ciStep4_CI(){
+  const r=ci,v=r.v;
+  const allItems=RET_GROUPS.flatMap(g=>g.items);
+  const missing=allItems.filter(i=>retSt[i]==='missing');
+  const damaged=allItems.filter(i=>retSt[i]==='dmg');
+  const newDmg=r.dmgd.filter(d=>d.types?.some(t=>t!=='pr'));
+  const fuelShort=r.fuelIn!==v.fuelOut;
+  const hasIssues=newDmg.length||fuelShort||missing.length||damaged.length;
+  const km=r.odoIn-(ci.odometerOut||v.odo);
+
+  return `
+  <div class="step-intro">
+    <div class="step-ico">👔</div>
+    <div><div class="step-title">Step 5 — Management Sign-Off</div>
+    <div class="step-sub">Review return, decide on deposit, close rental</div></div>
+  </div>
+
+  <div class="sum-box" style="margin-bottom:10px">
+    <div class="sum-title">${r.fn} · ${v.cl} · Return Summary</div>
+    <div class="sum-row"><span class="sum-lbl">KM driven</span><span class="sum-val ok">${km.toLocaleString()} km</span></div>
+    <div class="sum-row"><span class="sum-lbl">ODO out / in</span><span class="sum-val ok">${(ci.odometerOut||v.odo).toLocaleString()} → ${r.odoIn.toLocaleString()} km</span></div>
+    <div class="sum-row"><span class="sum-lbl">Fuel</span><span class="sum-val ${fuelShort?'warn':'ok'}">${v.fuelOut||'Full'} → ${r.fuelIn} ${fuelShort?'⚠ SHORT':'✓'}</span></div>
+    <div class="sum-row"><span class="sum-lbl">New damage</span><span class="sum-val ${newDmg.length?'warn':'ok'}">${newDmg.length?`⚠ ${newDmg.map(d=>d.view_name).join(', ')}`:'✓ None'}</span></div>
+    <div class="sum-row"><span class="sum-lbl">Missing items</span><span class="sum-val ${missing.length?'warn':'ok'}">${missing.length?`⚠ ${missing.slice(0,3).join(', ')}`:'✓ All returned'}</span></div>
+    <div class="sum-row"><span class="sum-lbl">Vehicle check</span><span class="sum-val ${r.retSig?'ok':'warn'}">${r.retSig?'✅ Signed by '+r.receivedBy:'⚠ Not signed'}</span></div>
+    <div class="sum-row"><span class="sum-lbl">Client signed</span><span class="sum-val ${r.custSig?'ok':'warn'}">${r.custSig?'✅ '+r.custAt:'⚠ Not yet'}</span></div>
+    <div class="sum-row"><span class="sum-lbl">Received by</span><span class="sum-val ok">${r.receivedBy||'—'}</span></div>
+  </div>
+
+  ${hasIssues?`<div style="background:var(--rg);border:2px solid var(--re);border-radius:var(--r);padding:12px;margin-bottom:10px">
+    <div style="font-size:13px;font-weight:800;color:var(--rl);margin-bottom:6px">💰 Action Required</div>
+    ${newDmg.length?`<div style="font-size:12px;color:var(--rl);margin-bottom:4px">🔴 Get repair quote for ${newDmg.map(d=>d.view_name).join(', ')} — charge to ${v.cl}</div>`:''}
+    ${fuelShort?`<div style="font-size:12px;color:var(--al);margin-bottom:4px">⛽ Charge refill: ${v.fuelOut||'Full'} → ${r.fuelIn}</div>`:''}
+    ${missing.length?`<div style="font-size:12px;color:var(--rl)">❌ Charge replacement: ${missing.join(', ')}</div>`:''}
+    <div style="font-size:10px;color:var(--am);margin-top:8px">📷 ${r.dmgPhotos?.length||0} photos on file as evidence</div>
+  </div>`:''}
+
+  ${r.mgmtSig?
+    `<div class="signed">✅<div class="signed-name">${r.mgmtName} — Rental closed · ${r.deposit}</div><div class="signed-time">${r.mgmtAt}</div></div>
+    <button class="btn g" style="margin-top:8px" onclick="completeCI()">✅ Complete Return</button>`:
+    `<div style="background:var(--g1);border:2px solid var(--g2);border-radius:var(--r);padding:13px;">
+      <div class="fg">
+        <div class="fi"><label>Deposit decision</label>
+          <select id="ci-dep" onchange="ci.deposit=this.value" style="color-scheme:dark">
+            <option>Full deposit returned</option>
+            <option>Partial deduction — new damage</option>
+            <option>Full deduction — major damage</option>
+            <option>Partial deduction — missing equipment</option>
+            <option>Withhold pending investigation</option>
+          </select>
+        </div>
+        <div class="fi"><label>Manager name *</label><input id="ci-mgmt" value="${r.mgmtName}" oninput="ci.mgmtName=this.value" placeholder="Manager"></div>
+      </div>
+      <div class="fi"><label>Notes</label><textarea id="ci-mnotes" oninput="ci.mgmtNotes=this.value" placeholder="Deposit decision notes..." style="min-height:50px">${r.mgmtNotes||''}</textarea></div>
+      <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">Manager — sign to close rental</span><span class="sig-clr" onclick="clrSig('ci-m-sig')">Clear</span></div><canvas class="sig-cv" id="ci-m-sig"></canvas></div>
+      <button class="btn ${hasIssues?'r':'g'}" style="${hasIssues?'background:#c0392b;color:#fff':''}" onclick="signMgmtCI()">✅ Close Rental &amp; Sign Off</button>
+    </div>`}`;
 }
 
 function ciReturnView(v,r,newDmg,fuelShort,missing,damaged){
@@ -2076,11 +2302,8 @@ function ciReturnView(v,r,newDmg,fuelShort,missing,damaged){
 }
 
 async function signCustCI(){
-  ci.receivedBy=document.getElementById('ci-rcv')?.value||ci.receivedBy;
-  if(!ci.receivedBy){toast('Select who received the vehicle','err');return;}
+  if(!ci.receivedBy){toast('Select who received the vehicle first','err');ciStep=0;drawCI();return;}
   if(!hasSig('ci-c-sig')){toast('Customer must sign','err');return;}
-  ci.odoIn=+document.getElementById('ci-odo')?.value||ci.odoIn;
-  ci.fuelIn=document.getElementById('ci-fuel')?.value||ci.fuelIn;
   ci.notes=document.getElementById('ci-notes')?.value||ci.notes;
   ci.custSig=getSig('ci-c-sig');ci.custAt=now();
   uploadPhotos(ci.dmgPhotos,ci.fn,ci.v.cl,'damage-in');
