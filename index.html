@@ -369,11 +369,17 @@ const L_PREP=[
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M4 7h16v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Bedding','Sleeping bags and fitted sheet — clean and packed'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M3 10h18M7 10v8M17 10v8\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Towels','Correct quantity, clean and dry'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"5\" y=\"2\" width=\"14\" height=\"20\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M5 9h14\" stroke=\"#60a5fa\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Fridge','Powers on, correct temp, clean inside'],
-  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"7\" y=\"5\" width=\"10\" height=\"16\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M10 5V3h4v2\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Jerrycans','Correct quantity, clean and sealed'],
+  
   
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><circle cx=\"12\" cy=\"12\" r=\"9\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><circle cx=\"12\" cy=\"12\" r=\"4\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M12 8v4l2.5 2.5\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Compressor','Present, working and correct fitting — test before departure'],
   
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M9 3h6l1 7H8L9 3z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M8 10h8l-2 11H10L8 10z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Lights & binoculars','Camping lights charged, binoculars present'],
+  ['__OPTIONAL__','📦 Optional Extras','Only check if included in this booking — tap N/A if not applicable'],
+  ['__OPT_ITEM__','Jerrycans (if booked)','Correct quantity, clean and sealed — N/A if not included'],
+  ['__OPT_ITEM__','Water can (if booked)','Present, clean and sealed — N/A if not included'],
+  ['__OPT_ITEM__','Picnic bag (if booked)','Present and complete — N/A if not included'],
+  ['__OPT_ITEM__','Sleeping bags (qty)','Correct quantity packed — N/A if not included'],
+
   ['__SECTION__','📦 Box 1 — Dinner Set','Glasses, cutlery, cups, plates, bowls, salt & pepper'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"3\" y=\"6\" width=\"18\" height=\"15\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M3 10h18\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/><path d=\"M9 6V4h6v2\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Glasses','All glasses present and unbroken'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"3\" y=\"6\" width=\"18\" height=\"15\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M3 10h18\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/><path d=\"M9 6V4h6v2\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Plates & bowls','Full set present, clean and undamaged'],
@@ -856,9 +862,9 @@ function coGoStep(t){
 
 // ── STEP 0: Prep & Pack ──────────────────────────────────────────
 function coStep0(){
-  const done=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&co.prepItems[l]).length;
-  const checkable=L_PREP.filter(([i])=>i!=='__SECTION__').length;const pct=Math.round(done/checkable*100);
-  const probs=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&co.prepItems[l]==='prob').map(([i,l])=>l);
+  const done=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&co.prepItems[l]&&co.prepItems[l]!=='na').length;
+  const checkable=L_PREP.filter(([i])=>i!=='__SECTION__'&&i!=='__OPTIONAL__').length;const pct=Math.round(done/checkable*100);
+  const probs=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&co.prepItems[l]==='prob').map(([i,l])=>l);
   return `
   <div class="step-intro">
     <div class="step-ico">🧹</div>
@@ -880,22 +886,27 @@ function coStep0(){
     ${pct===100?'<span style="color:var(--se);font-weight:700;margin-left:8px">✅ All done!</span>':''}</div>
   </div>
   <div class="chk-list">${L_PREP.map(([ico,lbl,det],i)=>{
-    if(ico==='__SECTION__'){
-      // Main sections (🚗 🏕 📦) vs sub-sections (🧹 🔧)
-      const isMain = lbl.startsWith('🚗 Vehicle') || lbl.startsWith('🏕') || lbl.startsWith('📦') || lbl.startsWith('📦 Loose');
-      return `<div style="background:${isMain?'var(--g2)':'var(--g1)'};border-radius:var(--rs);padding:${isMain?'9px 14px':'7px 14px 7px 20px'};margin:${isMain?'10px 0 6px':'4px 0 3px'};border-left:${isMain?'none':'3px solid var(--se)'};display:flex;align-items:center;gap:10px;">
+    if(ico==='__SECTION__'||ico==='__OPTIONAL__'){
+      const isOpt = ico==='__OPTIONAL__';
+      const isMain = !isOpt && (lbl.startsWith('🚗 Vehicle') || lbl.startsWith('🏕') || lbl.startsWith('📦') || lbl.startsWith('📦 Loose'));
+      return `<div style="background:${isOpt?'var(--ag)':isMain?'var(--g2)':'var(--g1)'};border-radius:var(--rs);padding:${isMain?'9px 14px':'7px 14px 7px 20px'};margin:${isMain?'10px 0 6px':'4px 0 3px'};border-left:${isOpt?'3px solid var(--am)':isMain?'none':'3px solid var(--se)'};display:flex;align-items:center;gap:10px;">
         <span style="font-size:${isMain?'18':'15'}px;">${lbl.split(' ')[0]}</span>
         <div>
-          <div style="font-size:${isMain?'12':'11'}px;font-weight:800;color:${isMain?'var(--tx)':'var(--se)'};">${lbl.replace(/^[^\s]+\s/,'')}</div>
+          <div style="font-size:${isMain?'12':'11'}px;font-weight:800;color:${isOpt?'var(--al)':isMain?'var(--tx)':'var(--se)'};">${lbl.replace(lbl.split(' ')[0]+' ','')}</div>
           <div style="font-size:10px;color:var(--g5);">${det}</div>
         </div>
       </div>`;
     }
     const st=co.prepItems[lbl]||'';
-    return `<div class="ci ${st==='ok'?'ok':st==='prob'?'prob':''}" onclick="tapPrep(${i})">
-      <div class="ci-icon">${ico}</div>
-      <div class="ci-text"><div class="ci-lbl">${lbl}</div><div class="ci-det">${det}</div></div>
-      <div class="ci-st">${st==='ok'?okSVG():st==='prob'?probSVG():uncSVG()}</div>
+    const isOptItem=ico==='__OPT_ITEM__';
+    const naSVG=()=>`<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(90,112,144,.15)" stroke="#5a7090" stroke-width="2"/><path d="M8 12h8" stroke="#5a7090" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+    return `<div class="ci ${st==='ok'?'ok':st==='prob'?'prob':''}" onclick="tapPrep(${i})" style="${isOptItem&&!st?'opacity:.7;':''}">
+      <div class="ci-icon">${ico==='__OPT_ITEM__'?`<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>`:ico}</div>
+      <div class="ci-text">
+        <div class="ci-lbl">${lbl}${isOptItem?'<span style="font-size:9px;color:var(--g5);margin-left:6px;background:var(--g2);padding:1px 6px;border-radius:8px;">optional</span>':''}</div>
+        <div class="ci-det">${det}</div>
+      </div>
+      <div class="ci-st">${st==='ok'?okSVG():st==='prob'?probSVG():st==='na'?naSVG():uncSVG()}</div>
     </div>`;
   }).join('')}</div>
   ${probs.length?`<div class="al warn">⚠ Problems noted: ${probs.join(' · ')}</div>`:''}
@@ -911,9 +922,17 @@ function coStep0(){
 function tapPrep(i){
   const nm=document.getElementById('co-p-nm')?.value;if(nm)co.prepBy=nm;
   if(!co.prepBy){toast('Select your name first','err');return;}
-  if(L_PREP[i][0]==='__SECTION__')return;
+  if(L_PREP[i][0]==='__SECTION__'||L_PREP[i][0]==='__OPTIONAL__')return;
   const lbl=L_PREP[i][1];
-  co.prepItems[lbl]=co.prepItems[lbl]===''||!co.prepItems[lbl]?'ok':co.prepItems[lbl]==='ok'?'prob':'';
+  const isOpt=L_PREP[i][0]==='__OPT_ITEM__';
+  const cur=co.prepItems[lbl]||'';
+  // Optional items: grey → ok → prob → na → grey
+  // Regular items:  grey → ok → prob → grey
+  if(isOpt){
+    co.prepItems[lbl]=cur===''?'ok':cur==='ok'?'prob':cur==='prob'?'na':'';
+  } else {
+    co.prepItems[lbl]=cur===''?'ok':cur==='ok'?'prob':'';
+  }
   const s=document.getElementById('cos');if(s){s.innerHTML=coStep0();setTimeout(()=>initSig('co-p-sig'),60);}
 }
 
@@ -1802,7 +1821,7 @@ function signHandover(){
 
 // ── STEP 4: Management clearance ─────────────────────────────────
 function coStep4(){
-  const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&!co.prepItems[l]).map(([i,l])=>l);
+  const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&i!=='__OPT_ITEM__'&&!co.prepItems[l]).map(([i,l])=>l);
   const uncMech=L_MECH.filter(([i,l])=>!co.mechItems[l]).map(([i,l])=>l);
   const probPrep=L_PREP.filter(([i,l])=>co.prepItems[l]==='prob').map(([i,l])=>l);
   const probMech=L_MECH.filter(([i,l])=>co.mechItems[l]==='prob').map(([i,l])=>l);
@@ -1852,7 +1871,7 @@ async function completeCO(){
   try{localStorage.removeItem('inprogress_'+co.fn);}catch(e){}
   co.v.st='rented';co.v.dmgd=co.dmgd||[];
   // Save checkout record
-  const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&!co.prepItems[l]).map(([i,l])=>l);
+  const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&i!=='__OPT_ITEM__'&&!co.prepItems[l]).map(([i,l])=>l);
   const uncMech=L_MECH.filter(([i,l])=>!co.mechItems[l]).map(([i,l])=>l);
   await SB.from('checkouts').insert({
     booking_id:co.fn+'_'+co.v.pu, fleet_no:co.fn, client:co.clientName,
