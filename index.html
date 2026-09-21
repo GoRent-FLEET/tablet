@@ -411,7 +411,7 @@ const L_PREP=[
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"9\" y=\"6\" width=\"8\" height=\"16\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M11 6V3h4v3\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Fire extinguisher','Gauge green, pin intact, mounted securely'],
   ['__SECTION__','📦 Loose Items','Table, chairs, gas stove, cooler box, braai grid'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M2 7h20v3H2V7z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M5 10v10M19 10v10\" stroke=\"#60a5fa\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Table','Present, clean and in good condition'],
-  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M6 4h12v8H6V4z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><path d=\"M6 12v6M18 12v6M4 18h16\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Chairs (correct qty)','All chairs present and in good condition'],
+  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M6 4h12v8H6V4z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><path d=\"M6 12v6M18 12v6M4 18h16\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','__QTY__Chairs','5','Present and in good condition'],
   ['','Gas stove','Present, burner working, gas connected'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"3\" y=\"7\" width=\"18\" height=\"13\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M3 11h18\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/><path d=\"M9 7V5h6v2\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Cooler box','Present, clean and lid sealing correctly'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M2 8h20M5 8l2 10h10l2-10\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Braai grid','Present and clean'],
@@ -862,8 +862,8 @@ function coGoStep(t){
 
 // ── STEP 0: Prep & Pack ──────────────────────────────────────────
 function coStep0(){
-  const done=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&co.prepItems[l]&&co.prepItems[l]!=='na').length;
-  const checkable=L_PREP.filter(([i])=>i!=='__SECTION__'&&i!=='__OPTIONAL__').length;const pct=Math.round(done/checkable*100);
+  const done=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&(l.startsWith('__QTY__')?co.prepItems[l.replace('__QTY__','')]:co.prepItems[l])&&(co.prepItems[l]!=='na')).length;
+  const checkable=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__').length;const pct=Math.round(done/checkable*100);
   const probs=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&co.prepItems[l]==='prob').map(([i,l])=>l);
   return `
   <div class="step-intro">
@@ -899,11 +899,35 @@ function coStep0(){
     }
     const st=co.prepItems[lbl]||'';
     const isOptItem=ico==='__OPT_ITEM__';
+    const isQtyItem=lbl.startsWith('__QTY__');
+    const realLbl=isQtyItem?lbl.replace('__QTY__',''):lbl;
+    const maxQty=isQtyItem?parseInt(det)||5:0;
     const naSVG=()=>`<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(90,112,144,.15)" stroke="#5a7090" stroke-width="2"/><path d="M8 12h8" stroke="#5a7090" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+
+    if(isQtyItem){
+      const qtyVal=co.prepItems[realLbl]||'';
+      const qtyNum=parseInt(qtyVal)||0;
+      return `<div class="ci ${qtyNum>0?'ok':''}" style="cursor:default;">
+        <div class="ci-icon">${ico}</div>
+        <div class="ci-text">
+          <div class="ci-lbl">${realLbl}</div>
+          <div class="ci-det">${ico2} In good condition</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <select onchange="co.prepItems['${realLbl}']=this.value;if(!co.prepBy){toast('Select your name first','err');this.value='';return;}const s=document.getElementById('cos');if(s){s.innerHTML=coStep0();setTimeout(()=>initSig('co-p-sig'),60);}"
+            style="color-scheme:dark;padding:8px 10px;border-radius:var(--rs);border:2px solid ${qtyNum>0?'var(--gb)':'var(--g3)'};background:${qtyNum>0?'var(--sg)':'var(--g1)'};color:${qtyNum>0?'var(--se)':'var(--g5)'};font-size:14px;font-weight:700;min-width:70px;">
+            <option value="">Qty</option>
+            ${Array.from({length:maxQty},(_,k)=>`<option value="${k+1}" ${qtyVal==k+1?'selected':''}>${k+1}</option>`).join('')}
+          </select>
+          <div class="ci-st">${qtyNum>0?okSVG():uncSVG()}</div>
+        </div>
+      </div>`;
+    }
+
     return `<div class="ci ${st==='ok'?'ok':st==='prob'?'prob':''}" onclick="tapPrep(${i})" style="${isOptItem&&!st?'opacity:.7;':''}">
       <div class="ci-icon">${ico==='__OPT_ITEM__'?`<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>`:ico}</div>
       <div class="ci-text">
-        <div class="ci-lbl">${lbl}${isOptItem?'<span style="font-size:9px;color:var(--g5);margin-left:6px;background:var(--g2);padding:1px 6px;border-radius:8px;">optional</span>':''}</div>
+        <div class="ci-lbl">${realLbl}${isOptItem?'<span style="font-size:9px;color:var(--g5);margin-left:6px;background:var(--g2);padding:1px 6px;border-radius:8px;">optional</span>':''}</div>
         <div class="ci-det">${det}</div>
       </div>
       <div class="ci-st">${st==='ok'?okSVG():st==='prob'?probSVG():st==='na'?naSVG():uncSVG()}</div>
@@ -923,6 +947,7 @@ function tapPrep(i){
   const nm=document.getElementById('co-p-nm')?.value;if(nm)co.prepBy=nm;
   if(!co.prepBy){toast('Select your name first','err');return;}
   if(L_PREP[i][0]==='__SECTION__'||L_PREP[i][0]==='__OPTIONAL__')return;
+  if(L_PREP[i][1]?.startsWith('__QTY__'))return;
   const lbl=L_PREP[i][1];
   const isOpt=L_PREP[i][0]==='__OPT_ITEM__';
   const cur=co.prepItems[lbl]||'';
