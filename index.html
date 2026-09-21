@@ -2462,13 +2462,7 @@ async function completeCO(){
     ${co.custSig?`<img src="${co.custSig}" alt="client signature"><p style="font-size:10px;color:#888;margin:4px 0;">Signed: ${co.custAt}</p>`:'<p style="color:#e53e3e;font-weight:700;">No signature captured</p>'}
   </div>
 
-  <h2>👔 Management Sign-Off</h2>
-  <table>
-    <tr><th>Role</th><th>Name</th><th>Time</th><th>Status</th></tr>
-    <tr><td>Prep & Pack</td><td>${co.prepByAll?.join(' + ')||co.prepBy||'—'}</td><td>${co.prepAt||'—'}</td><td class="badge ok">Signed</td></tr>
-    <tr><td>Equipment</td><td>${co.equipByAll?.join(' + ')||co.prepBy||'—'}</td><td>${co.equipAt||'—'}</td><td class="badge ok">Signed</td></tr>
-    <tr><td>Manager</td><td>${co.mgmtBy||'—'}</td><td>${co.mgmtAt||'—'}</td><td class="badge ok">Cleared</td></tr>
-  </table>
+
 
   <div class="footer">
     Go Rent 4×4 Namibia · info@gorent4x4.com · gorent4x4.com<br>
