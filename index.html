@@ -548,25 +548,40 @@ function renderOV(){
   function movCard(m){
     const isToday = daysFrom(m.date)===0;
     const isOut   = m.type==='out';
-    const tag     = m.camping ? `<span style="color:#2a9d5c;font-weight:700;font-size:11px;">Camping ${m.pax} PAX</span>`
-                               : `<span style="color:#888;font-size:11px;">${m.pax} PAX · No camping</span>`;
+    // Check if this vehicle has an in-progress session
+    let inprog = null;
+    try{ const raw=localStorage.getItem('inprogress_'+m.fn); if(raw) inprog=JSON.parse(raw); }catch(e){}
+    const isInProgress = inprog && ((isOut && inprog.type==='checkout') || (!isOut && inprog.type==='checkin'));
+    const tag = m.camping ? `<span style="color:#2a9d5c;font-weight:700;font-size:11px;">Camping ${m.pax} PAX</span>`
+                          : `<span style="color:#888;font-size:11px;">${m.pax} PAX · No camping</span>`;
     const specHTML = m.special.length
       ? `<div style="color:#e07b00;font-size:10px;font-weight:700;margin-top:2px;">${m.special.join(' · ')}</div>`
       : '';
     const xbHTML = m.xb
       ? `<div style="color:#e07b00;font-size:10px;font-weight:700;">🌍 ${m.xb}</div>` : '';
-    return `<div style="border:${isToday&&m.special.length?'1.5px solid #f5a623':'1px solid #e8e8e8'};border-radius:10px;padding:12px 14px;margin-bottom:8px;background:${isToday&&m.special.length?'#fffbf0':'#fff'};cursor:pointer;" onclick="${m.type==='out'?`startCO('${m.fn}')`:m.v.st==='rented'?`startCI('${m.fn}')`:`startCO('${m.fn}')`}" >
+    // Border + background: red pulsing if in-progress, amber if special, default otherwise
+    const borderStyle = isInProgress
+      ? '2px solid #e53e3e'
+      : (isToday&&m.special.length ? '1.5px solid #f5a623' : '1px solid #e8e8e8');
+    const bgStyle = isInProgress ? '#fff5f5' : (isToday&&m.special.length ? '#fffbf0' : '#fff');
+    const animStyle = isInProgress ? 'animation:dashPulse 1.2s infinite;' : '';
+    const startedTime = inprog ? new Date(inprog.started).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div style="border:${borderStyle};border-radius:10px;padding:12px 14px;margin-bottom:8px;background:${bgStyle};cursor:pointer;${animStyle}" onclick="${isOut?`startCO('${m.fn}')`:m.v.st==='rented'?`startCI('${m.fn}')`:`startCO('${m.fn}')`}">
       <div style="display:flex;align-items:flex-start;gap:10px;">
-        <div style="width:32px;height:32px;border-radius:8px;background:${isOut?'#e8f0ff':'#e8f5ee'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="${isOut?'M5 12h14M13 6l6 6-6 6':'M19 12H5M11 18l-6-6 6-6'}" stroke="${isOut?'#4a6fa5':'#2a9d5c'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div style="width:32px;height:32px;border-radius:8px;background:${isInProgress?'#fed7d7':isOut?'#e8f0ff':'#e8f5ee'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          ${isInProgress
+            ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#e53e3e" stroke-width="2"/><path d="M12 7v5l3 3" stroke="#e53e3e" stroke-width="2" stroke-linecap="round"/></svg>`
+            : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="${isOut?'M5 12h14M13 6l6 6-6 6':'M19 12H5M11 18l-6-6 6-6'}" stroke="${isOut?'#4a6fa5':'#2a9d5c'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
         </div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:700;color:#111;line-height:1.3;">${m.fn} — ${isOut?'OUT':'BACK'} · ${m.cl}</div>
-          <div style="font-size:10px;font-weight:700;margin-top:3px;color:${isOut?'#4a6fa5':'#2a9d5c'};">${isOut?'→ Tap to start check-out':'→ Tap to start check-in'}</div>
+          <div style="font-size:13px;font-weight:700;color:${isInProgress?'#e53e3e':'#111'};line-height:1.3;">${m.fn} — ${isOut?'OUT':'BACK'} · ${m.cl}</div>
+          ${isInProgress
+            ? `<div style="font-size:10px;font-weight:800;color:#e53e3e;margin-top:2px;">⚠ STARTED AT ${startedTime} — NOT COMPLETED · Tap to continue</div>`
+            : `<div style="font-size:10px;font-weight:700;margin-top:3px;color:${isOut?'#4a6fa5':'#2a9d5c'};">${isOut?'→ Tap to start check-out':'→ Tap to start check-in'}</div>`}
           <div style="font-size:11px;color:#888;margin-top:2px;">${isOut?'Pickup':'Drop-off'}: ${m.loc}${m.xb?' · 🌍 '+m.xb:''}</div>
           ${tag}${specHTML}${xbHTML}
         </div>
-        ${m.special.length?'<span style="color:#e07b00;font-size:16px;">⚠</span>':''}
+        ${isInProgress ? '<span style="font-size:18px;">🔴</span>' : m.special.length ? '<span style="color:#e07b00;font-size:16px;">⚠</span>' : ''}
       </div>
     </div>`;
   }
@@ -694,6 +709,8 @@ function renderOV(){
 // ═══════════════════════════════════════════════════════════════
 function startCO(fn){
   const v=FLEET.find(x=>x.fn===fn);if(!v||v.st==='rented'){toast('Not available','err');return;}
+  // Mark as in-progress
+  try{localStorage.setItem('inprogress_'+fn, JSON.stringify({type:'checkout',fn,cl:v.cl,started:new Date().toISOString()}));}catch(e){}
   co={v,fn,
     prepBy:'',prepSig:null,prepAt:'',prepItems:{},prepPhotos:[],fuelOut:'Full',
     clientName:v.cl||'',clientEmail:'',clientPassport:null,clientID:null,
@@ -1681,6 +1698,7 @@ function signMgmt(){
 }
 
 async function completeCO(){
+  try{localStorage.removeItem('inprogress_'+co.fn);}catch(e){}
   co.v.st='rented';co.v.dmgd=co.dmgd||[];
   // Save checkout record
   const uncPrep=L_PREP.filter(([i,l])=>!co.prepItems[l]).map(([i,l])=>l);
@@ -1739,6 +1757,8 @@ async function completeCO(){
 // ═══════════════════════════════════════════════════════════════
 function startCI(fn){
   const v=FLEET.find(x=>x.fn===fn);if(!v||v.st!=='rented'){toast('Not on rent','err');return;}
+  // Mark as in-progress
+  try{localStorage.setItem('inprogress_'+fn, JSON.stringify({type:'checkin',fn,cl:v.cl,started:new Date().toISOString()}));}catch(e){}
   RET_GROUPS.forEach(g=>g.items.forEach(i=>{retSt[i]='ok';}));
   ci={v,fn,receivedBy:'',odoIn:v.odo+1200,fuelIn:'Full',notes:'',
       dmgd:[],dmgPhotos:[],custSig:null,custAt:'',
@@ -1952,6 +1972,7 @@ async function signMgmtCI(){
 }
 
 async function completeCI(){
+  try{localStorage.removeItem('inprogress_'+ci.fn);}catch(e){}
   const newDmg=ci.dmgd.filter(d=>d.types?.some(t=>t!=='pr'));
   ci.v.st=newDmg.length?'maintenance':'available';
   const allItems=RET_GROUPS.flatMap(g=>g.items);
