@@ -800,6 +800,74 @@ function goPage(p){
   document.getElementById('nb-'+p)?.classList.add('on');
   if(p==='ov')renderOV();
   else if(p==='rp')renderReports();
+  else if(p==='co')renderCOPicker();
+  else if(p==='ci')renderCIPicker();
+}
+
+function renderCOPicker(){
+  const body=document.getElementById('co-body');
+  if(!body)return;
+  // If a checkout is already in progress, show it
+  if(co.v){drawCO();return;}
+  // Otherwise show vehicle picker
+  const today=new Date().toISOString().split('T')[0];
+  const upcoming=FLEET.filter(v=>{
+    const d=new Date(v.pu+'T00:00:00');
+    const diff=Math.round((d-new Date(today+'T00:00:00'))/86400000);
+    return diff>=0&&diff<=7;
+  }).sort((a,b)=>a.pu>b.pu?1:-1);
+  body.innerHTML=`
+    <div style="padding:16px;">
+      <div style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;">▶ Select Vehicle to Check Out</div>
+      ${upcoming.length?upcoming.map(v=>{
+        const isToday=v.pu===today;
+        return \`<div onclick="startCO('\${v.fn}')" style="background:var(--g1);border:2px solid \${isToday?'#4a6fa5':'var(--g3)'};border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:16px;font-weight:900;color:var(--se);">\${v.fn}</div>
+              <div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">\${v.cl}</div>
+              <div style="font-size:11px;color:var(--g5);margin-top:3px;">\${v.reg} · \${new Date(v.pu+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;background:\${isToday?'#4a6fa5':'var(--g2)'};color:\${isToday?'#fff':'var(--g5)'};">\${isToday?'TODAY':'UPCOMING'}</div>
+            </div>
+          </div>
+        </div>\`;
+      }).join(''):`<div style="padding:30px;text-align:center;color:var(--g5);font-size:13px;">No check-outs scheduled for the next 7 days</div>`}
+    </div>`;
+}
+
+function renderCIPicker(){
+  const body=document.getElementById('ci-body');
+  if(!body)return;
+  // If a checkin is already in progress, show it
+  if(ci.v){drawCI();return;}
+  // Show vehicles currently on rent (st==='rented') or returning this week
+  const today=new Date().toISOString().split('T')[0];
+  const returning=FLEET.filter(v=>{
+    const d=new Date(v.rt+'T00:00:00');
+    const diff=Math.round((d-new Date(today+'T00:00:00'))/86400000);
+    return diff>=0&&diff<=7;
+  }).sort((a,b)=>a.rt>b.rt?1:-1);
+  body.innerHTML=`
+    <div style="padding:16px;">
+      <div style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;">◀ Select Vehicle to Check In</div>
+      ${returning.length?returning.map(v=>{
+        const isToday=v.rt===today;
+        return \`<div onclick="startCI('\${v.fn}')" style="background:var(--g1);border:2px solid \${isToday?'#2a9d5c':'var(--g3)'};border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:16px;font-weight:900;color:var(--se);">\${v.fn}</div>
+              <div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">\${v.cl}</div>
+              <div style="font-size:11px;color:var(--g5);margin-top:3px;">\${v.reg} · Return: \${new Date(v.rt+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;background:\${isToday?'#2a9d5c':'var(--g2)'};color:\${isToday?'#fff':'var(--g5)'};">\${isToday?'TODAY':'UPCOMING'}</div>
+            </div>
+          </div>
+        </div>\`;
+      }).join(''):`<div style="padding:30px;text-align:center;color:var(--g5);font-size:13px;">No check-ins scheduled for the next 7 days</div>`}
+    </div>`;
 }
 function toast(msg,t=''){
   const el=document.getElementById('toast');
