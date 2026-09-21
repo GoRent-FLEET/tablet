@@ -319,7 +319,50 @@ input[type=file]{display:none;}
 <body>
 
 <!-- LOGIN — bypassed for now -->
-<div id="login-screen" style="display:none;"></div>
+<div id="login-screen" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:999;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <div style="font-size:28px;font-weight:900;color:#fff;">Go&nbsp;Rent <span style="color:#3ddc84;">4×4</span></div>
+    <div style="font-size:11px;color:#666;margin-top:3px;text-transform:uppercase;letter-spacing:1px;">Check App</div>
+  </div>
+  <!-- NAMES -->
+  <div id="ls-names" style="width:100%;max-width:340px;">
+    <div style="font-size:12px;font-weight:700;color:#666;text-align:center;margin-bottom:14px;text-transform:uppercase;letter-spacing:1px;">Who are you?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <button onclick="lsPick('Bonga')"    style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Bonga</button>
+      <button onclick="lsPick('Dixon')"    style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Dixon</button>
+      <button onclick="lsPick('Vince')"    style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Vince</button>
+      <button onclick="lsPick('Joe')"      style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Joe</button>
+      <button onclick="lsPick('Nelson')"   style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Nelson</button>
+      <button onclick="lsPick('Robbie')"   style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Robbie</button>
+      <button onclick="lsPick('Peter')"    style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Peter</button>
+      <button onclick="lsPick('Simon')"    style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Simon</button>
+      <button onclick="lsPick('Christina')" style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Christina</button>
+      <button onclick="lsPick('Manager')"  style="padding:18px;border-radius:12px;border:2px solid #5a3e00;background:#2a1e00;color:#f5a623;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">👔 Manager</button>
+    </div>
+  </div>
+  <!-- PIN PAD -->
+  <div id="ls-pin" style="display:none;width:100%;max-width:300px;text-align:center;">
+    <button onclick="lsBack()" style="background:none;border:none;color:#666;font-size:14px;font-weight:700;cursor:pointer;display:block;margin-bottom:12px;touch-action:manipulation;">◀ Back</button>
+    <div id="ls-who" style="font-size:24px;font-weight:900;color:#3ddc84;margin-bottom:4px;"></div>
+    <div style="font-size:12px;color:#666;margin-bottom:16px;">Enter your PIN</div>
+    <div id="ls-dots" style="font-size:40px;letter-spacing:14px;color:#3ddc84;margin-bottom:22px;min-height:48px;">_ _ _ _</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:260px;margin:0 auto;">
+      <button onclick="lsPin('1')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;">1</button>
+      <button onclick="lsPin('2')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;">2</button>
+      <button onclick="lsPin('3')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;">3</button>
+      <button onclick="lsPin('4')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;">4</button>
+      <button onclick="lsPin('5')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;">5</button>
+      <button onclick="lsPin('6')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;">6</button>
+      <button onclick="lsPin('7')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;">7</button>
+      <button onclick="lsPin('8')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;">8</button>
+      <button onclick="lsPin('9')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;">9</button>
+      <button onclick="lsDel()"    style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:20px;font-weight:700;cursor:pointer;touch-action:manipulation;">⌫</button>
+      <button onclick="lsPin('0')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;">0</button>
+      <div></div>
+    </div>
+    <div id="ls-msg" style="margin-top:16px;font-size:15px;font-weight:700;min-height:22px;"></div>
+  </div>
+</div>
 
 <!-- APP -->
 <div id="app" style="display:none;height:100%;flex-direction:column;">
@@ -615,11 +658,7 @@ function loginUser(code){
   try{localStorage.setItem('gorent_user',JSON.stringify(staff));}catch(e){}
   return true;
 }
-function logoutUser(){
-  APP_USER=null;
-  try{localStorage.removeItem('gorent_user');}catch(e){}
-  showLogin();
-}
+function logoutUser(){ showLoginScreen(); }
 function showLogin(){
   _pin = ''; _who = '';
   APP_USER = null;
@@ -810,8 +849,19 @@ async function showApp(){
   renderOV();
 }
 async function restoreSession(){
-  // Auth bypassed — go straight to app
-  currentProfile={name:'Staff',role:'staff'};
+  // Check for saved login
+  try {
+    var saved = localStorage.getItem('gorent_user');
+    if (saved) {
+      APP_USER = JSON.parse(saved);
+      var nu = document.getElementById('nav-user-name');
+      if (nu) nu.textContent = '👤 ' + APP_USER.name;
+      var nl = document.getElementById('nav-logout');
+      if (nl) nl.style.display = '';
+    }
+  } catch(e) {}
+  if (!APP_USER) { showLoginScreen(); return; }
+  currentProfile={name:APP_USER.name,role:APP_USER.role};
   document.getElementById('nav-user').textContent='';
   await showApp();
 }
@@ -4387,6 +4437,88 @@ function buildContractHTML(c,sigUrl){
 
 
 
+
+// ── LOGIN SYSTEM ──────────────────────────────────────────────────
+var LS_PIN = '';
+var LS_WHO = '';
+
+function lsPick(name) {
+  LS_WHO = name;
+  LS_PIN = '';
+  document.getElementById('ls-names').style.display = 'none';
+  document.getElementById('ls-pin').style.display = 'block';
+  document.getElementById('ls-who').textContent = name;
+  document.getElementById('ls-dots').textContent = '_ _ _ _';
+  document.getElementById('ls-msg').textContent = '';
+}
+
+function lsBack() {
+  LS_PIN = ''; LS_WHO = '';
+  document.getElementById('ls-pin').style.display = 'none';
+  document.getElementById('ls-names').style.display = 'block';
+}
+
+function lsDots() {
+  var t = '';
+  for (var i = 0; i < 4; i++) t += (i < LS_PIN.length ? '●' : '_') + (i < 3 ? ' ' : '');
+  document.getElementById('ls-dots').textContent = t;
+}
+
+function lsPin(d) {
+  if (LS_PIN.length >= 4) return;
+  LS_PIN += d;
+  lsDots();
+  if (LS_PIN.length === 4) {
+    var match = null;
+    for (var i = 0; i < STAFF_ROSTER.length; i++) {
+      if (STAFF_ROSTER[i].name === LS_WHO && STAFF_ROSTER[i].code === LS_PIN) {
+        match = STAFF_ROSTER[i]; break;
+      }
+    }
+    if (match) {
+      APP_USER = match;
+      try { localStorage.setItem('gorent_user', JSON.stringify(match)); } catch(e) {}
+      var msg = document.getElementById('ls-msg');
+      msg.style.color = '#3ddc84';
+      msg.textContent = '✅ Logged in as ' + match.name + ' — Successful!';
+      // Update nav
+      var nu = document.getElementById('nav-user-name');
+      if (nu) nu.textContent = '👤 ' + match.name;
+      var nl = document.getElementById('nav-logout');
+      if (nl) nl.style.display = '';
+      // Reports tab visibility
+      var nbrp = document.getElementById('nb-rp');
+      if (nbrp) nbrp.style.display = (typeof REPORTS_ALLOWED !== 'undefined' && REPORTS_ALLOWED.includes(match.name)) ? '' : 'none';
+      LS_PIN = ''; LS_WHO = '';
+      // Call the existing showApp()
+      showApp();
+    } else {
+      var msg = document.getElementById('ls-msg');
+      msg.style.color = '#f05050';
+      msg.textContent = '❌ Wrong PIN — try again';
+      LS_PIN = '';
+      lsDots();
+      setTimeout(function() { msg.textContent = ''; }, 2000);
+    }
+  }
+}
+
+function lsDel() {
+  if (LS_PIN.length > 0) LS_PIN = LS_PIN.slice(0, -1);
+  lsDots();
+}
+
+function showLoginScreen() {
+  APP_USER = null;
+  LS_PIN = ''; LS_WHO = '';
+  try { localStorage.removeItem('gorent_user'); } catch(e) {}
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('ls-pin').style.display = 'none';
+  document.getElementById('ls-names').style.display = 'block';
+  var nl = document.getElementById('nav-logout');
+  if (nl) nl.style.display = 'none';
+}
 </script>
 </body>
 </html>
