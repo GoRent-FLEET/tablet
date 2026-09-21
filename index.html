@@ -1304,9 +1304,10 @@ function coStep0(){
     <div><div class="step-title">Step 1 — Vehicle Checks</div>
     <div class="step-sub">Tap each item: once = ✅ OK · twice = ⚠ Problem · Grey = NOT CHECKED = your liability</div></div>
   </div>
-  <div class="who-box">
-    <div class="who-lbl">👤 Who is preparing this vehicle?</div>
-    ${selStaff('co-p-nm',STAFF_PREP,co.prepBy)}
+  <div class="who-box" style="display:flex;align-items:center;gap:12px;">
+    <div style="width:38px;height:38px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#000;">${APP_USER&&APP_USER.name?APP_USER.name.slice(0,2).toUpperCase():'??'}</div>
+    <div><div style="font-size:15px;font-weight:900;color:var(--al);">${APP_USER&&APP_USER.name?APP_USER.name:'Unknown'}</div>
+    <div style="font-size:10px;color:var(--g5);">🔒 Preparing this vehicle</div></div>
   </div>
   ${licDiscBanner(co.v,'out')}
   <div class="fuel-row" style="flex-wrap:wrap;gap:10px;">
