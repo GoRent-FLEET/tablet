@@ -328,8 +328,11 @@ input[type=file]{display:none;}
     <button class="nb on" id="nb-ov" onclick="goPage('ov')">📊 Dashboard</button>
     <button class="nb" id="nb-co" onclick="goPage('co')">🚗 Check-Out</button>
     <button class="nb" id="nb-ci" onclick="goPage('ci')">🏠 Check-In</button>
-    <span id="nav-user" style="font-size:11px;font-weight:700;color:var(--se);padding:0 6px;margin-left:auto;white-space:nowrap;"></span><button id="nav-logout" onclick="logoutUser()" style="display:none;font-size:11px;font-weight:700;padding:5px 10px;border-radius:6px;border:1px solid var(--g3);background:transparent;color:var(--g5);cursor:pointer;margin-right:4px;">Sign Out</button><button class="nb" id="nb-rp" onclick="goPage('rp')">📋 Reports</button>
-    <div id="nav-user" style="display:none"></div>
+    <button class="nb" id="nb-rp" onclick="goPage('rp')">📋 Reports</button>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:6px;padding-right:6px;">
+      <span id="nav-user" style="font-size:11px;font-weight:700;color:var(--se);white-space:nowrap;"></span>
+      <button id="nav-logout" onclick="logoutUser()" style="display:none;font-size:11px;font-weight:700;padding:6px 12px;border-radius:8px;border:2px solid var(--re);background:var(--rg);color:var(--rl);cursor:pointer;white-space:nowrap;">🚪 Sign Out</button>
+    </div>
   </div>
   <div class="toast" id="toast"></div>
   <div id="upload-banner"></div>
