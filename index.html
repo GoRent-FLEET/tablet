@@ -715,10 +715,10 @@ function renderOV(){
       // Action button
       +(isOut
         ?'<button onclick="startCO(\''+v.fn+'\')" style="width:100%;padding:13px;background:'+(v.blocked?'var(--g2)':'var(--se)')+';border:2px solid '+(v.blocked?'var(--g3)':'var(--gb)')+';border-radius:var(--rs);color:'+(v.blocked?'var(--g5)':'#0a1a10')+';font-size:14px;font-weight:800;cursor:'+(v.blocked?'not-allowed':'pointer')+';">'
-          +(isInProgress?'🔴 Continue Check-Out →':'🔑 Start Check-Out →')
+          +(isInProgress?'🔴 Continue Check-Out →':'▶ Start Check-Out')
         +'</button>'
         :'<button onclick="startCI(\''+v.fn+'\')" style="width:100%;padding:13px;background:var(--se);border:2px solid var(--gb);border-radius:var(--rs);color:#0a1a10;font-size:14px;font-weight:800;cursor:pointer;">'
-          +(isInProgress?'🔴 Continue Check-In →':'🏠 Start Check-In →')
+          +(isInProgress?'🔴 Continue Check-In →':'◀ Start Check-In')
         +'</button>')
     +'</div>';
 
@@ -748,8 +748,8 @@ function renderOV(){
     +'</div>'
     // Check-Out / Check-In selector
     +'<div style="display:flex;gap:8px;">'
-      +'<button onclick="window._ovMode=window._ovMode===\'out\'?null:\'out\';window._ovExpanded=null;renderOV()" style="flex:1;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid '+(mode==='out'?'#4a6fa5':'var(--g3)')+';background:'+(mode==='out'?'rgba(74,111,165,.15)':'var(--g1)')+';color:'+(mode==='out'?'#7ba3d4':'var(--g5)')+';">🔑 Check-Out <span style="font-size:11px;background:'+(mode==='out'?'#4a6fa5':'var(--g2)')+';color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">'+(view==='week'?weekOut.length:pastOut.length)+'</span></button>'
-      +'<button onclick="window._ovMode=window._ovMode===\'in\'?null:\'in\';window._ovExpanded=null;renderOV()" style="flex:1;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid '+(mode==='in'?'#2a9d5c':'var(--g3)')+';background:'+(mode==='in'?'rgba(42,157,92,.15)':'var(--g1)')+';color:'+(mode==='in'?'var(--se)':'var(--g5)')+';">🏠 Check-In <span style="font-size:11px;background:'+(mode==='in'?'#2a9d5c':'var(--g2)')+';color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">'+(view==='week'?weekIn.length:pastIn.length)+'</span></button>'
+      +'<button onclick="window._ovMode=window._ovMode===\'out\'?null:\'out\';window._ovExpanded=null;renderOV()" style="flex:1;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid '+(mode==='out'?'#4a6fa5':'var(--g3)')+';background:'+(mode==='out'?'rgba(74,111,165,.15)':'var(--g1)')+';color:'+(mode==='out'?'#7ba3d4':'var(--g5)')+';">▶ CHECK-OUT <span style="font-size:11px;background:'+(mode==='out'?'#4a6fa5':'var(--g2)')+';color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">'+(view==='week'?weekOut.length:pastOut.length)+'</span></button>'
+      +'<button onclick="window._ovMode=window._ovMode===\'in\'?null:\'in\';window._ovExpanded=null;renderOV()" style="flex:1;padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid '+(mode==='in'?'#2a9d5c':'var(--g3)')+';background:'+(mode==='in'?'rgba(42,157,92,.15)':'var(--g1)')+';color:'+(mode==='in'?'var(--se)':'var(--g5)')+';">◀ CHECK-IN <span style="font-size:11px;background:'+(mode==='in'?'#2a9d5c':'var(--g2)')+';color:#fff;border-radius:10px;padding:1px 7px;margin-left:4px;">'+(view==='week'?weekIn.length:pastIn.length)+'</span></button>'
     +'</div>'
   +'</div>';
 
@@ -772,7 +772,7 @@ function renderOV(){
           +'<span style="font-size:18px;">'+(isOut?'🔑':'🏠')+'</span>'
           +'<div style="flex:1;">'
             +'<div style="font-size:13px;font-weight:800;color:var(--tx);">'+v.fn+' · '+v.cl+'</div>'
-            +'<div style="font-size:10px;color:var(--g5);">'+(isOut?'Check-out':'Check-in')+' · '+new Date(date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}).toUpperCase()+(isToday?' <strong style="color:'+accent+'">TODAY</strong>':'')+'</div>'
+            +'<div style="font-size:10px;color:var(--g5);">'+(isOut?'▶ CHECK-OUT':'◀ CHECK-IN')+' · '+new Date(date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}).toUpperCase()+(isToday?' <strong style="color:'+accent+'">TODAY</strong>':'')+'</div>'
           +'</div>'
           +'<span style="font-size:11px;font-weight:700;color:var(--g5);">Details ›</span>'
         +'</div>';
