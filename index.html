@@ -803,8 +803,8 @@ function goPage(p){
   }
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.nb').forEach(e=>e.classList.remove('on'));
-  document.getElementById('page-'+p)?.classList.add('on');
-  document.getElementById('nb-'+p)?.classList.add('on');
+  (function(){var _e=document.getElementById('page-'+p);if(_e)_e.classList.add('on');})();
+  (function(){var _e=document.getElementById('nb-'+p);if(_e)_e.classList.add('on');})();
   if(p==='ov')renderOV();
   else if(p==='rp')renderReports();
   else if(p==='co')renderCOPicker();
@@ -1255,15 +1255,15 @@ function coStep0(){
     if(item[0]==='__SECTION__'&&item[1].startsWith('🏕')) inVeh=false;
     if(inVeh) L_VEH.push(item);
   }
-  const _pst=l=>{const v=co.prepItems[l];return v?.st||v||'';};
-  const _pby=l=>{const v=co.prepItems[l];return v?.by||'';};
-  const _pat=l=>{const v=co.prepItems[l];return v?.at||'';};
+  const _pst=l=>{const v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';};
+  const _pby=l=>{const v=co.prepItems[l];return (v&&v.by)||'';};
+  const _pat=l=>{const v=co.prepItems[l];return (v&&v.at)||'';};
   const done=L_VEH.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_pst(l)&&_pst(l)!=='na').length;
   const checkable=L_VEH.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__').length;
   const pct=Math.round(done/checkable*100);
   const probs=L_VEH.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_pst(l)==='prob').map(([i,l])=>l);
   // Staff who have checked items in this section
-  const staffOnStep=Object.keys(co.prepCheckedBy||{}).filter(n=>co.prepLog?.some(e=>e.by===n));
+  const staffOnStep=Object.keys(co.prepCheckedBy||{}).filter(function(n){return co.prepLog&&co.prepLog.some(function(e){return e.by===n;});})
   return `
   <div class="step-intro">
     <div class="step-ico">🚗</div>
@@ -1320,7 +1320,7 @@ function coStep0(){
   ${staffOnStep.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">
     <div style="font-size:10px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on this step</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;">
-      ${staffOnStep.map(n=>{const cnt=co.prepLog?.filter(e=>e.by===n).length||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:12px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:10px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}
+      ${staffOnStep.map(n=>{const cnt=(co.prepLog?co.prepLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:12px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:10px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}
     </div>
   </div>`:''}
   ${photoHTML('co.prepPhotos','📷 Vehicle Photos','Photograph the vehicle exterior — all sides. Proof of condition before departure.',4)}
@@ -1334,15 +1334,15 @@ function coStep0(){
 }
 
 function tapPrep(i){
-  const nm=document.getElementById('co-p-nm')?.value;
+  const nm=(function(){var _e=document.getElementById('co-p-nm');return _e?_e.value:undefined;})();
   if(nm) co.prepBy=nm;
   else if(APP_USER) co.prepBy=APP_USER.name;
   if(!co.prepBy){toast('Select your name first','err');return;}
   if(L_PREP[i][0]==='__SECTION__'||L_PREP[i][0]==='__OPTIONAL__')return;
-  if(L_PREP[i][1]?.startsWith('__QTY__'))return;
+  if(L_PREP[i][1]&&L_PREP[i][1].startsWith('__QTY__'))return;
   const lbl=L_PREP[i][1];
   const isOpt=L_PREP[i][0]==='__OPT_ITEM__';
-  const prevSt=(co.prepItems[lbl]?.st)||co.prepItems[lbl]||'';
+  const prevSt=((co.prepItems[lbl]&&co.prepItems[lbl].st))||co.prepItems[lbl]||'';
   let newSt;
   if(isOpt) newSt=prevSt===''?'ok':prevSt==='ok'?'prob':prevSt==='prob'?'na':'';
   else newSt=prevSt===''?'ok':prevSt==='ok'?'prob':'';
@@ -1371,7 +1371,7 @@ function tapPrep(i){
 }
 
 function signPrep(){
-  const domVal = document.getElementById('co-p-nm')?.value;
+  const domVal = (function(){var _e=document.getElementById('co-p-nm');return _e?_e.value:undefined;})();
   if(domVal) co.prepBy = domVal;
   if(!co.prepBy){
     try{
@@ -1399,14 +1399,14 @@ function coStep1_equip(){
     if(item[0]==='__SECTION__'&&item[1].startsWith('🏕')) inEquip=true;
     if(inEquip) L_EQUIP.push(item);
   }
-  const _est=l=>{const v=co.prepItems[l];return v?.st||v||'';};
-  const _eby=l=>{const v=co.prepItems[l];return v?.by||'';};
-  const _eat=l=>{const v=co.prepItems[l];return v?.at||'';};
+  const _est=l=>{const v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';};
+  const _eby=l=>{const v=co.prepItems[l];return (v&&v.by)||'';};
+  const _eat=l=>{const v=co.prepItems[l];return (v&&v.at)||'';};
   const done=L_EQUIP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_est(l)&&_est(l)!=='na').length;
   const checkable=L_EQUIP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__').length;
   const pct=Math.round(done/checkable*100);
   const probs=L_EQUIP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_est(l)==='prob').map(([i,l])=>l);
-  const equipStaff=Object.keys(co.prepCheckedBy||{}).filter(n=>co.prepLog?.some(e=>e.by===n));
+  const equipStaff=Object.keys(co.prepCheckedBy||{}).filter(function(n){return co.prepLog&&co.prepLog.some(function(e){return e.by===n;});});
 
   return `
   <div class="step-intro">
@@ -1467,7 +1467,7 @@ function coStep1_equip(){
   ${equipStaff.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">
     <div style="font-size:10px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on equipment check</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;">
-      ${equipStaff.map(n=>{const cnt=co.prepLog?.filter(e=>e.by===n).length||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:12px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:10px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}
+      ${equipStaff.map(n=>{const cnt=(co.prepLog?co.prepLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:12px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:10px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}
     </div>
   </div>`:''}
   ${photoHTML('co.prepPhotos','📷 Equipment Photos','Photograph all packed equipment — tent, boxes, loose items. Client sees these at handover.',6)}
@@ -1481,13 +1481,13 @@ function coStep1_equip(){
 
 function tapPrepIdx(i){
   if(i<0||i>=L_PREP.length)return;
-  const nm=document.getElementById('co-p-nm')?.value;if(nm)co.prepBy=nm;
+  const nm=(function(){var _e=document.getElementById('co-p-nm');return _e?_e.value:undefined;})();if(nm)co.prepBy=nm;
   if(!co.prepBy){toast('Select your name first','err');return;}
   if(L_PREP[i][0]==='__SECTION__'||L_PREP[i][0]==='__OPTIONAL__')return;
-  if(L_PREP[i][1]?.startsWith('__QTY__'))return;
+  if(L_PREP[i][1]&&L_PREP[i][1].startsWith('__QTY__'))return;
   const lbl=L_PREP[i][1];
   const isOpt=L_PREP[i][0]==='__OPT_ITEM__';
-  const prevSt=(co.prepItems[lbl]?.st)||co.prepItems[lbl]||'';
+  const prevSt=((co.prepItems[lbl]&&co.prepItems[lbl].st))||co.prepItems[lbl]||'';
   let newSt;
   if(isOpt) newSt=prevSt===''?'ok':prevSt==='ok'?'prob':prevSt==='prob'?'na':'';
   else newSt=prevSt===''?'ok':prevSt==='ok'?'prob':'';
@@ -1510,7 +1510,7 @@ function tapPrepIdx(i){
 }
 
 function signEquip(){
-  const domVal=document.getElementById('co-p-nm')?.value;if(domVal)co.prepBy=domVal;
+  const domVal=(function(){var _e=document.getElementById('co-p-nm');return _e?_e.value:undefined;})();if(domVal)co.prepBy=domVal;
   if(!co.prepBy){toast('Select your name first','err');return;}
   if(!hasSig('co-equip-sig')){toast('Sign below to confirm','err');return;}
   co.equipSig=getSig('co-equip-sig');co.equipAt=now();
@@ -1920,33 +1920,33 @@ function coStep2(){
   <div class="sum-box" style="margin-bottom:12px">
     <div class="sum-title" style="margin-bottom:10px">Contract Details</div>
     <div class="fg">
-      <div class="fi"><label>Daily rate (N$)</label><input type="number" id="ct-rate" value="${co.contract?.daily_rate||''}" placeholder="0.00" oninput="(co.contract=co.contract||{}).daily_rate=+this.value;calcDays()"></div>
-      <div class="fi"><label>Rental days</label><input type="number" id="ct-days" value="${co.contract?.total_days||''}" readonly></div>
+      <div class="fi"><label>Daily rate (N$)</label><input type="number" id="ct-rate" value="${(co.contract&&co.contract.daily_rate)||''}" placeholder="0.00" oninput="(co.contract=co.contract||{}).daily_rate=+this.value;calcDays()"></div>
+      <div class="fi"><label>Rental days</label><input type="number" id="ct-days" value="${(co.contract&&co.contract.total_days)||''}" readonly></div>
     </div>
     <div class="fg">
-      <div class="fi"><label>Damage deposit (N$)</label><input type="number" id="ct-dep" value="${co.contract?.deposit_amount||''}" oninput="(co.contract=co.contract||{}).deposit_amount=+this.value"></div>
-      <div class="fi"><label>Fuel deposit (N$)</label><input type="number" id="ct-fdep" value="${co.contract?.fuel_deposit||7500}" oninput="(co.contract=co.contract||{}).fuel_deposit=+this.value"></div>
+      <div class="fi"><label>Damage deposit (N$)</label><input type="number" id="ct-dep" value="${(co.contract&&co.contract.deposit_amount)||''}" oninput="(co.contract=co.contract||{}).deposit_amount=+this.value"></div>
+      <div class="fi"><label>Fuel deposit (N$)</label><input type="number" id="ct-fdep" value="${(co.contract&&co.contract.fuel_deposit)||7500}" oninput="(co.contract=co.contract||{}).fuel_deposit=+this.value"></div>
     </div>
     <div class="fi"><label>Insurance option</label>
       <select id="ct-ins" onchange="(co.contract=co.contract||{}).insurance_option=this.value" style="color-scheme:dark">
         <option value="">— select —</option>
-        <option value="1" ${co.contract?.insurance_option==='1'?'selected':''}>Option 1 — Basic Cover | N$230/day | Deposit N$45,000</option>
-        <option value="2" ${co.contract?.insurance_option==='2'?'selected':''}>Option 2 — Extended Cover | N$362/day | Deposit N$30,000</option>
-        <option value="3" ${co.contract?.insurance_option==='3'?'selected':''}>Option 3 — Premium Cover (Zero Excess) | N$546/day</option>
+        <option value="1" ${(co.contract&&co.contract.insurance_option)==='1'?'selected':''}>Option 1 — Basic Cover | N$230/day | Deposit N$45,000</option>
+        <option value="2" ${(co.contract&&co.contract.insurance_option)==='2'?'selected':''}>Option 2 — Extended Cover | N$362/day | Deposit N$30,000</option>
+        <option value="3" ${(co.contract&&co.contract.insurance_option)==='3'?'selected':''}>Option 3 — Premium Cover (Zero Excess) | N$546/day</option>
       </select>
     </div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:4px">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
-        <input type="checkbox" id="ct-aws" ${co.contract?.addon_windscreen?'checked':''} onchange="(co.contract=co.contract||{}).addon_windscreen=this.checked" style="width:18px;height:18px">
+        <input type="checkbox" id="ct-aws" ${(co.contract&&co.contract.addon_windscreen)?'checked':''} onchange="(co.contract=co.contract||{}).addon_windscreen=this.checked" style="width:18px;height:18px">
         Windscreen & Tyre cover (+N$184/day)
       </label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
-        <input type="checkbox" id="ct-aeq" ${co.contract?.addon_equipment?'checked':''} onchange="(co.contract=co.contract||{}).addon_equipment=this.checked" style="width:18px;height:18px">
+        <input type="checkbox" id="ct-aeq" ${(co.contract&&co.contract.addon_equipment)?'checked':''} onchange="(co.contract=co.contract||{}).addon_equipment=this.checked" style="width:18px;height:18px">
         Camping Equipment cover (+N$103.50/day)
       </label>
     </div>
-    <div class="fi"><label>Cross-border authorised</label><input id="ct-xb" value="${co.contract?.cross_border||co.v.xb||''}" placeholder="e.g. Botswana" oninput="(co.contract=co.contract||{}).cross_border=this.value"></div>
-    <div class="fi"><label>Additional drivers (one per line)</label><textarea id="ct-add" placeholder="Full name / DOB / Nationality / Licence # / Expiry" oninput="(co.contract=co.contract||{}).additional_drivers=this.value" style="min-height:60px">${co.contract?.additional_drivers||''}</textarea></div>
+    <div class="fi"><label>Cross-border authorised</label><input id="ct-xb" value="${(co.contract&&co.contract.cross_border)||co.v.xb||''}" placeholder="e.g. Botswana" oninput="(co.contract=co.contract||{}).cross_border=this.value"></div>
+    <div class="fi"><label>Additional drivers (one per line)</label><textarea id="ct-add" placeholder="Full name / DOB / Nationality / Licence # / Expiry" oninput="(co.contract=co.contract||{}).additional_drivers=this.value" style="min-height:60px">${(co.contract&&co.contract.additional_drivers)||''}</textarea></div>
   </div>
   <button class="btn g" onclick="previewAndSignContract()">📋 Preview Full Contract &amp; Sign →</button>`;
 }
@@ -1954,7 +1954,7 @@ function coStep2(){
 function calcDays(){
   const days=co.v.pu&&co.v.rt?Math.max(1,Math.round((new Date(co.v.rt)-new Date(co.v.pu))/86400000)):0;
   (co.contract=co.contract||{}).total_days=days;
-  (co.contract=co.contract||{}).total_rental=days*(+document.getElementById('ct-rate')?.value||0);
+  (co.contract=co.contract||{}).total_rental=days*(+(function(){var _e=document.getElementById('ct-rate');return _e?_e.value:undefined;})()||0);
   const el=document.getElementById('ct-days');if(el)el.value=days;
 }
 
@@ -1975,18 +1975,18 @@ function gatherContract(){
   co.contract.return_date=co.v.rt;
   co.contract.odo_out=co.v.odo;
   co.contract.fuel_out=co.fuelOut;
-  co.contract.pickup_location=document.getElementById('ct-ploc')?.value||'Go Rent 4×4 Workshop, Windhoek';
-  co.contract.return_location=document.getElementById('ct-rloc')?.value||'Go Rent 4×4 Workshop, Windhoek';
-  co.contract.deposit_method=document.getElementById('ct-dmethod')?.value||co.contract.deposit_method;
-  co.contract.deposit_amount=+document.getElementById('ct-dep')?.value||co.contract.deposit_amount;
-  co.contract.quote_number=document.getElementById('ct-quote')?.value||co.contract.quote_number||co.v.quote||'';
-  co.contract.deposit_amount=+document.getElementById('ct-dep')?.value||co.contract.deposit_amount;
-  co.contract.fuel_deposit=+document.getElementById('ct-fdep')?.value||co.contract.fuel_deposit||7500;
-  co.contract.insurance_option=document.getElementById('ct-ins')?.value||co.contract.insurance_option;
-  co.contract.addon_windscreen=document.getElementById('ct-aws')?.checked||co.contract.addon_windscreen;
-  co.contract.addon_equipment=document.getElementById('ct-aeq')?.checked||co.contract.addon_equipment;
-  co.contract.cross_border=document.getElementById('ct-xb')?.value||co.contract.cross_border;
-  co.contract.additional_drivers=document.getElementById('ct-add')?.value||co.contract.additional_drivers;
+  co.contract.pickup_location=(function(){var _e=document.getElementById('ct-ploc');return _e?_e.value:undefined;})()||'Go Rent 4×4 Workshop, Windhoek';
+  co.contract.return_location=(function(){var _e=document.getElementById('ct-rloc');return _e?_e.value:undefined;})()||'Go Rent 4×4 Workshop, Windhoek';
+  co.contract.deposit_method=(function(){var _e=document.getElementById('ct-dmethod');return _e?_e.value:undefined;})()||co.contract.deposit_method;
+  co.contract.deposit_amount=+(function(){var _e=document.getElementById('ct-dep');return _e?_e.value:undefined;})()||co.contract.deposit_amount;
+  co.contract.quote_number=(function(){var _e=document.getElementById('ct-quote');return _e?_e.value:undefined;})()||co.contract.quote_number||co.v.quote||'';
+  co.contract.deposit_amount=+(function(){var _e=document.getElementById('ct-dep');return _e?_e.value:undefined;})()||co.contract.deposit_amount;
+  co.contract.fuel_deposit=+(function(){var _e=document.getElementById('ct-fdep');return _e?_e.value:undefined;})()||co.contract.fuel_deposit||7500;
+  co.contract.insurance_option=(function(){var _e=document.getElementById('ct-ins');return _e?_e.value:undefined;})()||co.contract.insurance_option;
+  co.contract.addon_windscreen=(function(){var _e=document.getElementById('ct-aws');return _e?_e.checked:false;})()||co.contract.addon_windscreen;
+  co.contract.addon_equipment=(function(){var _e=document.getElementById('ct-aeq');return _e?_e.checked:false;})()||co.contract.addon_equipment;
+  co.contract.cross_border=(function(){var _e=document.getElementById('ct-xb');return _e?_e.value:undefined;})()||co.contract.cross_border;
+  co.contract.additional_drivers=(function(){var _e=document.getElementById('ct-add');return _e?_e.value:undefined;})()||co.contract.additional_drivers;
   const days=co.v.pu&&co.v.rt?Math.max(1,Math.round((new Date(co.v.rt)-new Date(co.v.pu))/86400000)):0;
   co.contract.total_days=days;
 
@@ -2025,7 +2025,7 @@ function previewAndSignContract(){
       <!-- Declaration -->
       <!-- Declaration + name confirmation + signature -->
       <div style="background:#fff8e6;border-top:2px solid #f5a623;padding:10px 16px;font-size:12px;color:#333;line-height:1.6;">
-        By signing below, <strong>${co.contract?.client_name||co.clientName}</strong> confirms they have <strong>read and understood</strong> this entire agreement including all insurance exclusions, speed limits, no-go areas, and negligence provisions. This agreement is legally binding under the laws of Namibia.
+        By signing below, <strong>${(co.contract&&co.contract.client_name)||co.clientName}</strong> confirms they have <strong>read and understood</strong> this entire agreement including all insurance exclusions, speed limits, no-go areas, and negligence provisions. This agreement is legally binding under the laws of Namibia.
       </div>
 
       <!-- Client types their own name -->
@@ -2033,9 +2033,9 @@ function previewAndSignContract(){
         <div style="font-size:11px;font-weight:700;color:#1e8449;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">✍️ Type your full name to confirm identity</div>
         <input id="ct-name-confirm" type="text" placeholder="Type your full name exactly as on your passport"
           style="width:100%;padding:12px 14px;border:2px solid #1e8449;border-radius:8px;font-size:15px;font-family:inherit;color:#111;background:#fff;"
-          oninput="document.getElementById('ct-name-match').textContent=this.value.trim().toLowerCase()===(co.contract?.client_name||co.clientName||'').toLowerCase()?'✓ Name matches':'⚠ Name does not match — check spelling'">
+          oninput="document.getElementById('ct-name-match').textContent=this.value.trim().toLowerCase()===((co.contract&&co.contract.client_name)||co.clientName||'').toLowerCase()?'✓ Name matches':'⚠ Name does not match — check spelling'">
         <div id="ct-name-match" style="font-size:11px;color:#888;margin-top:5px;font-weight:700;min-height:16px;"></div>
-        <div style="font-size:10px;color:#888;margin-top:3px;">Must match exactly: <strong style="color:#333;">${co.contract?.client_name||co.clientName||'—'}</strong></div>
+        <div style="font-size:10px;color:#888;margin-top:3px;">Must match exactly: <strong style="color:#333;">${(co.contract&&co.contract.client_name)||co.clientName||'—'}</strong></div>
       </div>
 
       <!-- Signature canvas -->
@@ -2089,8 +2089,8 @@ function clrContractSig(){ window._ctClr&&window._ctClr(); }
 
 async function submitContractSig(){
   const nameInput=document.getElementById('ct-name-confirm');
-  const typedName=(nameInput?.value||'').trim();
-  const expectedName=(co.contract?.client_name||co.clientName||'').trim();
+  const typedName=((nameInput&&nameInput.value)||'').trim();
+  const expectedName=((co.contract&&co.contract.client_name)||co.clientName||'').trim();
   const nameOk=typedName.toLowerCase()===expectedName.toLowerCase();
 
   if(!typedName){
@@ -2125,7 +2125,7 @@ async function signContract(sigData){
   if(!sigData){toast('No signature','err');return;}
   co.contract.client_signed_at=new Date().toISOString();
   co.contract.client_sig_url=sigData;
-  co.contract.staff_signed_by=currentProfile?.name||'staff';
+  co.contract.staff_signed_by=(currentProfile&&currentProfile.name)||'staff';
   co.contract.staff_signed_at=new Date().toISOString();
   co.contract.status='signed';
   co.contractSigned=true;
@@ -2143,7 +2143,7 @@ async function signContract(sigData){
   // Save to DB
   const{error}=await SB.from('rental_contracts').insert({
     ...co.contract,contract_html:finalHTML,
-    booking_id:co.fn+'_'+co.v.pu,created_by:currentProfile?.name||'staff',
+    booking_id:co.fn+'_'+co.v.pu,created_by:(currentProfile&&currentProfile.name)||'staff',
     created_at:new Date().toISOString(),updated_at:new Date().toISOString(),
   });
   hideBanner();
@@ -2360,7 +2360,7 @@ function coStep4_dmg(){
 }
 
 function tapMech(i){
-  const nm=document.getElementById('co-h-nm')?.value;if(nm)co.mechBy=nm;
+  const nm=(function(){var _e=document.getElementById('co-h-nm');return _e?_e.value:undefined;})();if(nm)co.mechBy=nm;
   if(!co.mechBy){toast('Select your name first','err');return;}
   const lbl=L_MECH[i][1];
   co.mechItems[lbl]=co.mechItems[lbl]===''||!co.mechItems[lbl]?'ok':co.mechItems[lbl]==='ok'?'prob':'';
@@ -2375,7 +2375,7 @@ function signHandover(){
   if(!hasSig('co-c-sig')){toast('Customer must sign','err');return;}
   co.custSig=getSig('co-c-sig');co.custAt=now();
   co.dmgd=getDmgData();
-  co.mechBy=document.getElementById('co-h-nm')?.value||co.mechBy;
+  co.mechBy=(function(){var _e=document.getElementById('co-h-nm');return _e?_e.value:undefined;})()||co.mechBy;
   uploadPhotos(co.dmgPhotos,co.fn,co.clientName||co.v.cl,'damage-out');
   toast('Step 5 signed ✅','ok');coStep=6;drawCO();
 }
@@ -2393,7 +2393,7 @@ function coStep5_client(){
     if(!inEquip) continue;
     if(ico==='__SECTION__'||ico==='__OPTIONAL__') continue;
     const realLbl=lbl.startsWith('__QTY__')?lbl.replace('__QTY__',''):lbl;
-    const st=(co.prepItems[lbl]?.st)||co.prepItems[lbl]||(co.prepItems[realLbl]?.st)||co.prepItems[realLbl]||'';
+    const st=((co.prepItems[lbl]&&co.prepItems[lbl].st))||co.prepItems[lbl]||((co.prepItems[realLbl]&&co.prepItems[realLbl].st))||co.prepItems[realLbl]||'';
     if(st&&st!=='na') equipSummary.push({lbl:realLbl,st,qty:co.prepItems[realLbl]||''});
   }
 
@@ -2576,7 +2576,7 @@ function tapHO(k){
 }
 
 function coStep6_mgmt(){
-  const _pst=l=>{const v=co.prepItems[l];return v?.st||v||'';};
+  const _pst=l=>{const v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';};
   const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&i!=='__OPT_ITEM__'&&!l.startsWith('__QTY__')&&!_pst(l)).map(([i,l])=>l);
   const uncMech=L_MECH.filter(([i,l])=>!co.mechItems[l]).map(([i,l])=>l);
   const probPrep=L_PREP.filter(([i,l])=>_pst(l)==='prob').map(([i,l])=>l);
@@ -2669,11 +2669,11 @@ function coStep6_mgmt(){
 }
 
 function mgmtResolve(lbl, section){
-  const nm=document.getElementById('co-m-nm')?.value||co.mgmtBy;
+  const nm=(function(){var _e=document.getElementById('co-m-nm');return _e?_e.value:undefined;})()||co.mgmtBy;
   if(!nm){toast('Select manager name first','err');return;}
   co.mgmtBy=nm;
   const noteId='mgmt-note-'+section+'-'+lbl.replace(/[^a-zA-Z0-9]/g,'_');
-  const note=document.getElementById(noteId)?.value||'';
+  const note=(function(){var _e=document.getElementById(noteId);return _e?_e.value:undefined;})()||'';
   if(!co.mgmtResolved) co.mgmtResolved={};
   co.mgmtResolved[lbl]={by:nm, at:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), note};
   // Redraw step
@@ -2686,7 +2686,7 @@ function mgmtResolve(lbl, section){
 }
 
 function signMgmt(){
-  co.mgmtBy=document.getElementById('co-m-nm')?.value.trim()||co.mgmtBy;
+  co.mgmtBy=(function(){var _e=document.getElementById('co-m-nm');return _e?_e.value:undefined;})().trim()||co.mgmtBy;
   if(!co.mgmtBy){toast('Enter manager name','err');return;}
   if(!hasSig('co-m-sig')){toast('Manager must sign','err');return;}
   co.mgmtSig=getSig('co-m-sig');co.mgmtAt=now();
@@ -2697,7 +2697,7 @@ async function completeCO(){
   try{localStorage.removeItem(ipKey(co.fn));}catch(e){}
   co.v.st='rented'; co.v.dmgd=co.dmgd||[];
 
-  const _pst=l=>{const v=co.prepItems[l];return v?.st||v||'';};
+  const _pst=l=>{const v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';};
   const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&i!=='__OPT_ITEM__'&&!l.startsWith('__QTY__')&&!_pst(l)).map(([i,l])=>l);
   const uncMech=L_MECH.filter(([i,l])=>!co.mechItems[l]).map(([i,l])=>l);
 
@@ -2858,7 +2858,7 @@ async function completeCO(){
         <div class="acc-hdr">Accountability Record</div>
         <div class="acc-row ${!uncPrep.length?'good':'bad'}">
           <div class="acc-ico">🧹</div>
-          <div><div class="acc-name">Prep & Pack — ${co.prepByAll?.join(' + ')||co.prepBy||'—'}</div>
+          <div><div class="acc-name">Prep & Pack — ${(co.prepByAll&&co.prepByAll.join(' + '))||co.prepBy||'—'}</div>
           <div class="acc-detail">${co.prepAt||''}${uncPrep.length?' · ❌ Not checked: '+uncPrep.join(', '):'  · ✅ All checked'}</div></div>
           <span class="acc-badge ${!uncPrep.length?'ok':'warn'}">${!uncPrep.length?'OK':'Issues'}</span>
         </div>
@@ -2879,7 +2879,7 @@ async function completeCO(){
 }
 
 async function sendHandoverEmail(){
-  const email=document.getElementById('send-email')?.value?.trim();
+  const email=(function(){var _e=document.getElementById('send-email');return _e?_e.value:undefined;})()?.trim();
   if(!email){toast('Enter email address','err');return;}
   const btn=document.getElementById('btn-email');
   if(btn){btn.textContent='Sending...';btn.disabled=true;}
@@ -2913,7 +2913,7 @@ async function sendHandoverEmail(){
 }
 
 function sendHandoverWA(){
-  const phone=document.getElementById('send-wa')?.value?.trim().replace(/\s+/g,'');
+  const phone=(function(){var _e=document.getElementById('send-wa');return _e?_e.value:undefined;})()?.trim().replace(/\s+/g,'');
   if(!phone){toast('Enter WhatsApp number','err');return;}
   const intlPhone=phone.startsWith('+')?phone.replace('+',''):'264'+phone.replace(/^0/,'');
   const msg=encodeURIComponent(
@@ -2947,7 +2947,7 @@ function startCI(fn){
     if(prev.staff){ci.receivedBy=prev.staff;}
   }catch(e){}
   RET_GROUPS.forEach(g=>g.items.forEach(i=>{retSt[i]='ok';}));
-  ci={v,fn,receivedBy:'',odoIn:v.odo+1200,odometerOut:co?.odometerOut||v.odo,fuelIn:'Full',notes:'',
+  ci={v,fn,receivedBy:'',odoIn:v.odo+1200,odometerOut:(co&&co.odometerOut)||v.odo,fuelIn:'Full',notes:'',
       dmgd:[],dmgPhotos:[],custSig:null,custAt:'',
       mgmtName:'',mgmtSig:null,mgmtAt:'',deposit:'Full deposit returned',mgmtNotes:'',
       retItems:{},retSig:null,retAt:''};
@@ -2964,7 +2964,7 @@ function drawCI(){
   const missing=allItems.filter(i=>retSt[i]==='missing');
   const damaged=allItems.filter(i=>retSt[i]==='dmg');
   ci.dmgd=getDmgData();
-  const newDmg=ci.dmgd.filter(d=>d.types?.some(t=>t!=='pr'));
+  const newDmg=ci.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
   const fuelShort=r.fuelIn!==v.fuelOut;
   const hasIssues=newDmg.length||fuelShort||missing.length||damaged.length;
   const km=r.odoIn-(ci.odometerOut||v.odo);
@@ -2978,7 +2978,7 @@ function drawCI(){
   ];
 
   const bar=CI_STEPS.map(s=>{
-    const done=(s.n===0&&!!r.retSig)||(s.n===1&&!!r.dmgPhotos?.length)||(s.n===2&&allItems.every(i=>retSt[i]&&retSt[i]!==''))||(s.n===3&&!!r.custSig)||(s.n===4&&!!r.mgmtSig);
+    const done=(s.n===0&&!!r.retSig)||(s.n===1&&!!(r.dmgPhotos&&r.dmgPhotos.length))||(s.n===2&&allItems.every(i=>retSt[i]&&retSt[i]!==''))||(s.n===3&&!!r.custSig)||(s.n===4&&!!r.mgmtSig);
     const active=s.n===ciStep;
     return `<div class="stg ${active?'active':done?'done':''}" onclick="ciStep=${s.n};drawCI()">
       <div style="font-size:16px">${done&&!active?'✅':s.ico}</div>
@@ -3013,9 +3013,9 @@ function drawCI(){
 
 function ciStep0_CI(){
   const r=ci,v=r.v;
-  const _rst=l=>{const x=ci.retItems[l];return x?.st||x||'';};
-  const _rby=l=>{const x=ci.retItems[l];return x?.by||'';};
-  const _rat=l=>{const x=ci.retItems[l];return x?.at||'';};
+  const _rst=l=>{const x=ci.retItems[l];return (x&&x.st!==undefined?x.st:x)||'';};
+  const _rby=l=>{const x=ci.retItems[l];return (x&&x.by)||'';};
+  const _rat=l=>{const x=ci.retItems[l];return (x&&x.at)||'';};
   // Use L_PREP as the return checklist — same items as check-out
   const done=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&(l.startsWith('__QTY__')?_rst(l.replace('__QTY__','')):_rst(l))&&(_rst(l)!=='na')).length;
   const checkable=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__').length;
@@ -3109,7 +3109,7 @@ function ciStep0_CI(){
   }).join('')}</div>
 
   ${probs.length?`<div class="al warn">⚠ Problems noted: ${probs.join(' · ')}</div>`:''}
-  ${retStaff.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;"><div style="font-size:10px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on return check</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${retStaff.map(n=>{const cnt=ci.retLog?.filter(e=>e.by===n).length||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:12px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:10px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}</div></div>`:''}
+  ${retStaff.length>1?`<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;"><div style="font-size:10px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on return check</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${retStaff.map(n=>{const cnt=(ci.retLog?ci.retLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:12px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:10px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' checked</div></div></div>';}).join('')}</div></div>`:''}
   ${photoHTML('ci.dmgPhotos','📷 Vehicle Return Photos','Photo the exterior before unloading. Shows client condition matches what they signed.',6)}
 
   ${r.retSig?
@@ -3121,10 +3121,10 @@ function ciStep0_CI(){
 }
 
 function tapRetItem(i){
-  const nm=document.getElementById('ci-rcv')?.value;if(nm)ci.receivedBy=nm;
+  const nm=(function(){var _e=document.getElementById('ci-rcv');return _e?_e.value:undefined;})();if(nm)ci.receivedBy=nm;
   if(!ci.receivedBy){toast('Select your name first','err');return;}
   if(L_PREP[i][0]==='__SECTION__'||L_PREP[i][0]==='__OPTIONAL__')return;
-  if(L_PREP[i][1]?.startsWith('__QTY__'))return;
+  if(L_PREP[i][1]&&L_PREP[i][1].startsWith('__QTY__'))return;
   const lbl=L_PREP[i][1];
   const isOpt=L_PREP[i][0]==='__OPT_ITEM__';
   const prevSt=(ci.retItems[lbl]?.st)||ci.retItems[lbl]||'';
@@ -3152,11 +3152,11 @@ function tapRetItem(i){
 }
 
 function signRetCheck(){
-  const domVal=document.getElementById('ci-rcv')?.value;if(domVal)ci.receivedBy=domVal;
+  const domVal=(function(){var _e=document.getElementById('ci-rcv');return _e?_e.value:undefined;})();if(domVal)ci.receivedBy=domVal;
   if(!ci.receivedBy){toast('Select your name first','err');return;}
   if(!hasSig('ci-ret-sig')){toast('Sign below to confirm','err');return;}
-  ci.odoIn=+document.getElementById('ci-odo')?.value||ci.odoIn;
-  ci.fuelIn=document.getElementById('ci-fuel')?.value||ci.fuelIn;
+  ci.odoIn=+(function(){var _e=document.getElementById('ci-odo');return _e?_e.value:undefined;})()||ci.odoIn;
+  ci.fuelIn=(function(){var _e=document.getElementById('ci-fuel');return _e?_e.value:undefined;})()||ci.fuelIn;
   ci.retSig=getSig('ci-ret-sig');ci.retAt=now();
   try{
     const raw=localStorage.getItem(ipKey(ci.fn));
@@ -3173,7 +3173,7 @@ function ciStep1_CI(){
     <div><div class="step-title">Step 2 — Damage Inspection</div>
     <div class="step-sub">Mark any new damage — blue=scratch · red=dent · yellow=pre-existing from departure</div></div>
   </div>
-  ${v.dmgd?.length?
+  ${(v.dmgd&&v.dmgd.length)?
     `<div class="al info" style="margin-bottom:8px;font-size:11px">⭐ Yellow markings = pre-existing from departure. Blue/Red = NEW damage = client liability.</div>`:
     `<div class="al ok" style="margin-bottom:8px;font-size:11px">✓ No damage recorded at check-out. Mark any new damage found now.</div>`}
   ${insHTML()}
@@ -3199,7 +3199,7 @@ function ciStep3_CI(){
   const allItems=RET_GROUPS.flatMap(g=>g.items);
   const missing=allItems.filter(i=>retSt[i]==='missing');
   const damaged=allItems.filter(i=>retSt[i]==='dmg');
-  const newDmg=r.dmgd.filter(d=>d.types?.some(t=>t!=='pr'));
+  const newDmg=r.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
   const fuelShort=r.fuelIn!==v.fuelOut;
   const hasIssues=newDmg.length||fuelShort||missing.length||damaged.length;
   const km=r.odoIn-(ci.odometerOut||v.odo);
@@ -3260,7 +3260,7 @@ function ciStep4_CI(){
   const allItems=RET_GROUPS.flatMap(g=>g.items);
   const missing=allItems.filter(i=>retSt[i]==='missing');
   const damaged=allItems.filter(i=>retSt[i]==='dmg');
-  const newDmg=r.dmgd.filter(d=>d.types?.some(t=>t!=='pr'));
+  const newDmg=r.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
   const fuelShort=r.fuelIn!==v.fuelOut;
   const hasIssues=newDmg.length||fuelShort||missing.length||damaged.length;
   const km=r.odoIn-(ci.odometerOut||v.odo);
@@ -3289,7 +3289,7 @@ function ciStep4_CI(){
     ${newDmg.length?`<div style="font-size:12px;color:var(--rl);margin-bottom:4px">🔴 Get repair quote for ${newDmg.map(d=>d.view_name).join(', ')} — charge to ${v.cl}</div>`:''}
     ${fuelShort?`<div style="font-size:12px;color:var(--al);margin-bottom:4px">⛽ Charge refill: ${v.fuelOut||'Full'} → ${r.fuelIn}</div>`:''}
     ${missing.length?`<div style="font-size:12px;color:var(--rl)">❌ Charge replacement: ${missing.join(', ')}</div>`:''}
-    <div style="font-size:10px;color:var(--am);margin-top:8px">📷 ${r.dmgPhotos?.length||0} photos on file as evidence</div>
+    <div style="font-size:10px;color:var(--am);margin-top:8px">📷 ${(r.dmgPhotos&&r.dmgPhotos.length)||0} photos on file as evidence</div>
   </div>`:''}
 
   ${r.mgmtSig?
@@ -3362,14 +3362,14 @@ function ciReturnView(v,r,newDmg,fuelShort,missing,damaged){
 async function signCustCI(){
   if(!ci.receivedBy){toast('Select who received the vehicle first','err');ciStep=0;drawCI();return;}
   if(!hasSig('ci-c-sig')){toast('Customer must sign','err');return;}
-  ci.notes=document.getElementById('ci-notes')?.value||ci.notes;
+  ci.notes=(function(){var _e=document.getElementById('ci-notes');return _e?_e.value:undefined;})()||ci.notes;
   ci.custSig=getSig('ci-c-sig');ci.custAt=now();
   uploadPhotos(ci.dmgPhotos,ci.fn,ci.v.cl,'damage-in');
   // Send management alert if issues
   const allItems=RET_GROUPS.flatMap(g=>g.items);
   const missing=allItems.filter(i=>retSt[i]==='missing');
   const damaged=allItems.filter(i=>retSt[i]==='dmg');
-  const newDmg=ci.dmgd.filter(d=>d.types?.some(t=>t!=='pr'));
+  const newDmg=ci.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
   const fuelShort=ci.fuelIn!==ci.v.fuelOut;
   if(newDmg.length||fuelShort||missing.length||damaged.length){
     SB.from('management_alerts').insert({
@@ -3387,9 +3387,9 @@ async function signCustCI(){
 }
 
 async function signMgmtCI(){
-  ci.mgmtName=document.getElementById('ci-mgmt')?.value.trim()||ci.mgmtName;
-  ci.deposit=document.getElementById('ci-dep')?.value||ci.deposit;
-  ci.mgmtNotes=document.getElementById('ci-mnotes')?.value||ci.mgmtNotes;
+  ci.mgmtName=(function(){var _e=document.getElementById('ci-mgmt');return _e?_e.value:undefined;})().trim()||ci.mgmtName;
+  ci.deposit=(function(){var _e=document.getElementById('ci-dep');return _e?_e.value:undefined;})()||ci.deposit;
+  ci.mgmtNotes=(function(){var _e=document.getElementById('ci-mnotes');return _e?_e.value:undefined;})()||ci.mgmtNotes;
   if(!ci.mgmtName){toast('Enter manager name','err');return;}
   if(!hasSig('ci-m-sig')){toast('Manager must sign','err');return;}
   ci.mgmtSig=getSig('ci-m-sig');ci.mgmtAt=now();
@@ -3398,7 +3398,7 @@ async function signMgmtCI(){
 
 async function completeCI(){
   try{localStorage.removeItem(ipKey(ci.fn));}catch(e){}
-  const newDmg=ci.dmgd.filter(d=>d.types?.some(t=>t!=='pr'));
+  const newDmg=ci.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
   ci.v.st=newDmg.length?'maintenance':'available';
   const allItems=RET_GROUPS.flatMap(g=>g.items);
   const missing=allItems.filter(i=>retSt[i]==='missing');
@@ -3427,7 +3427,7 @@ async function completeCI(){
       ${newDmg.length?`<div style="font-size:12px;color:var(--rl);padding:4px 0">🔴 Damage repair: ${newDmg.map(d=>d.view_name).join(', ')}</div>`:''}
       ${ci.fuelIn!==ci.v.fuelOut?`<div style="font-size:12px;color:var(--al);padding:4px 0">⛽ Fuel: ${ci.v.fuelOut||'Full'} out → ${ci.fuelIn} in</div>`:''}
       ${missing.length?`<div style="font-size:12px;color:var(--rl);padding:4px 0">❌ Replace: ${missing.join(', ')}</div>`:''}
-      <div style="font-size:10px;color:var(--am);margin-top:8px">📷 ${ci.dmgPhotos?.length||0} damage photos · Signed contract on file · Management alerted</div>
+      <div style="font-size:10px;color:var(--am);margin-top:8px">📷 ${(ci.dmgPhotos&&ci.dmgPhotos.length)||0} damage photos · Signed contract on file · Management alerted</div>
     </div>`:'<div class="al ok" style="margin-bottom:12px">✅ Clean return — full deposit released</div>'}
     <div class="al ${ci.v.st==='maintenance'?'warn':'ok'}">
       ${ci.v.st==='maintenance'?'⚠ Vehicle flagged for maintenance before next rental':'✓ Vehicle back in available fleet'}
@@ -3457,7 +3457,7 @@ function rpTab(btn,id){
 function rpFleet(){
   return FLEET.map(v=>{
     const svcLeft=v.svc?(v.svc.lastKm+v.svc.intKm)-v.odo:null;
-    const licDays=v._licExpiry||v.lic?.expiry ? Math.round((new Date(v._licExpiry||v.lic?.expiry)-new Date('2026-07-15'))/86400000) : null;
+    const licDays=v._licExpiry||(v.lic&&v.lic.expiry) ? Math.round((new Date(v._licExpiry||(v.lic&&v.lic.expiry))-new Date('2026-07-15'))/86400000) : null;
     const tyrLeft=v.tyres?(v.tyres.lastKm+v.tyres.intKm)-v.odo:null;
     const tyrKmDone=v.tyres?v.odo-v.tyres.lastKm:null;
     const crit=(svcLeft!==null&&svcLeft<=0)||(licDays!==null&&licDays<=30)||(tyrLeft!==null&&tyrLeft<=0);
@@ -3490,7 +3490,7 @@ function rpFleet(){
           </button>
         </div>
         <div id="svc-info-${v.fn}">
-          ${v.svc?.date||v.svc?.lastKm?
+          ${(v.svc&&v.svc.date)||(v.svc&&v.svc.lastKm)?
             `<div style="display:flex;gap:8px;flex-wrap:wrap;">
               ${v.svc.date?`<span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:10px;">📅 Date: <strong style="color:var(--tx)">${new Date(v.svc.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</strong></span>`:''}
               ${v.svc.lastKm?`<span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:10px;">🛣 At: <strong style="color:var(--tx)">${v.svc.lastKm.toLocaleString()} km</strong></span>`:''}
@@ -3503,17 +3503,17 @@ function rpFleet(){
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
             <div style="flex:1;min-width:120px;">
               <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Service date</div>
-              <input type="date" id="svc-date-${v.fn}" value="${v.svc?.date||''}"
+              <input type="date" id="svc-date-${v.fn}" value="${(v.svc&&v.svc.date)||''}"
                 style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:13px;">
             </div>
             <div style="flex:1;min-width:110px;">
               <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Odometer (km)</div>
-              <input type="number" id="svc-km-${v.fn}" value="${v.svc?.lastKm||''}" placeholder="${v.odo}"
+              <input type="number" id="svc-km-${v.fn}" value="${(v.svc&&v.svc.lastKm)||''}" placeholder="${v.odo}"
                 style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:13px;font-weight:700;">
             </div>
             <div style="flex:1;min-width:80px;">
               <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Interval (km)</div>
-              <input type="number" id="svc-int-${v.fn}" value="${v.svc?.intKm||10000}"
+              <input type="number" id="svc-int-${v.fn}" value="${(v.svc&&v.svc.intKm)||10000}"
                 style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:13px;">
             </div>
             <div style="display:flex;gap:6px;flex-shrink:0;">
@@ -3583,8 +3583,8 @@ function showNewTyres(fn){
 async function saveNewTyres(fn){
   const kmEl=document.getElementById('tyre-km-'+fn);
   const intEl=document.getElementById('tyre-int-'+fn);
-  const km=parseInt(kmEl?.value);
-  const intKm=parseInt(intEl?.value)||22000;
+  const km=parseInt((kmEl&&kmEl.value));
+  const intKm=parseInt((intEl&&intEl.value))||22000;
   if(!km||km<0){toast('Enter odometer reading','err');return;}
   const v=FLEET.find(x=>x.fn===fn);
   if(!v){toast('Vehicle not found','err');return;}
@@ -3598,7 +3598,7 @@ async function saveNewTyres(fn){
       fleet_no:fn,
       fitted_at_km:km,
       interval_km:intKm,
-      prev_fitted_at_km:prev?.lastKm||null,
+      prev_fitted_at_km:(prev&&prev.lastKm)||null,
       prev_km_done:prev?km-prev.lastKm:null,
       fitted_date:new Date().toISOString().split('T')[0],
       notes:'New tyres logged via Fleet report'
@@ -3635,9 +3635,9 @@ function showSvcForm(fn){
 }
 
 async function saveSvc(fn){
-  const date=document.getElementById('svc-date-'+fn)?.value;
-  const km=parseInt(document.getElementById('svc-km-'+fn)?.value);
-  const intKm=parseInt(document.getElementById('svc-int-'+fn)?.value)||10000;
+  const date=(function(){var _e=document.getElementById('svc-date-'+fn);return _e?_e.value:undefined;})();
+  const km=parseInt((function(){var _e=document.getElementById('svc-km-'+fn);return _e?_e.value:undefined;})());
+  const intKm=parseInt((function(){var _e=document.getElementById('svc-int-'+fn);return _e?_e.value:undefined;})())||10000;
   if(!km){toast('Enter odometer reading','err');return;}
   const v=FLEET.find(x=>x.fn===fn);
   if(!v) return;
@@ -3684,9 +3684,9 @@ async function loadHistory(){
   if(!el)return;
   el.innerHTML='<div style="color:var(--g5);padding:20px;text-align:center">Loading activity log...</div>';
 
-  const q=(document.getElementById('rp-q')?.value||'').toLowerCase();
-  const filter=document.getElementById('rp-filter')?.value||'all';
-  const person=document.getElementById('rp-person')?.value||'all';
+  const q=((function(){var _e=document.getElementById('rp-q');return _e?_e.value:undefined;})()||'').toLowerCase();
+  const filter=(function(){var _e=document.getElementById('rp-filter');return _e?_e.value:undefined;})()||'all';
+  const person=(function(){var _e=document.getElementById('rp-person');return _e?_e.value:undefined;})()||'all';
 
   const [{data:cos},{data:cis}]=await Promise.all([
     SB.from('checkouts').select('*').order('created_at',{ascending:false}).limit(100),
@@ -3712,7 +3712,7 @@ async function loadHistory(){
 
   function recordCard(c){
     const isOut=c._type==='out';
-    const hasIssues=c.new_damage||c.fuel_short||(c.missing_items?.length>0)||(c.unchecked_prep?.length>0);
+    const hasIssues=c.new_damage||c.fuel_short||((c.missing_items&&c.missing_items.length)>0)||((c.unchecked_prep&&c.unchecked_prep.length)>0);
     const accent=isOut?'#4a6fa5':'#2a9d5c';
     const border=hasIssues?'var(--re)':isOut?'rgba(74,111,165,.35)':'rgba(42,157,92,.35)';
 
@@ -3760,13 +3760,13 @@ async function loadHistory(){
         +(isOut?[
           ['🛣 ODO out',(c.odo_out||'').toString()+(c.odo_out?' km':'—')],
           ['⛽ Fuel out',c.fuel_out||'—'],
-          ['✅ Prep',(c.unchecked_prep?.length?'⚠ '+c.unchecked_prep.length+' skipped':'All checked')],
-          ['🔍 Damage out',(c.damage_panels?.length?'⚠ '+c.damage_panels.length+' panel(s)':'None')],
+          ['✅ Prep',((c.unchecked_prep&&c.unchecked_prep.length)?'⚠ '+c.unchecked_prep.length+' skipped':'All checked')],
+          ['🔍 Damage out',((c.damage_panels&&c.damage_panels.length)?'⚠ '+c.damage_panels.length+' panel(s)':'None')],
         ]:[
           ['🛣 KM driven',(c.km_driven?c.km_driven.toLocaleString()+' km':'—')],
           ['⛽ Fuel in',c.fuel_in||'—'],
           ['💰 Deposit',c.deposit_decision||'—'],
-          ['🔍 New damage',(c.new_damage_panels?.length?'⚠ '+c.new_damage_panels.length+' panel(s)':'None')],
+          ['🔍 New damage',((c.new_damage_panels&&c.new_damage_panels.length)?'⚠ '+c.new_damage_panels.length+' panel(s)':'None')],
         ]).map(([l,v])=>'<div style="text-align:center;background:var(--g0);border-radius:6px;padding:6px 4px;">'
           +'<div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:2px;">'+l+'</div>'
           +'<div style="font-size:11px;font-weight:700;color:var(--tx);">'+v+'</div>'
@@ -3776,8 +3776,8 @@ async function loadHistory(){
       +(hasIssues?'<div style="padding:8px 14px;background:rgba(240,80,80,.06);display:flex;flex-wrap:wrap;gap:6px;">'
         +(c.new_damage?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--rg);color:var(--rl);border:1px solid var(--re);">🔴 New damage</span>':'')
         +(c.fuel_short?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⛽ Fuel short</span>':'')
-        +((c.missing_items?.length)?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--rg);color:var(--rl);border:1px solid var(--re);">❌ '+c.missing_items.length+' missing</span>':'')
-        +((c.unchecked_prep?.length)?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⚠ '+c.unchecked_prep.length+' items unchecked</span>':'')
+        +(((c.missing_items&&c.missing_items.length))?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--rg);color:var(--rl);border:1px solid var(--re);">❌ '+c.missing_items.length+' missing</span>':'')
+        +(((c.unchecked_prep&&c.unchecked_prep.length))?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⚠ '+c.unchecked_prep.length+' items unchecked</span>':'')
       +'</div>':'')
     +'</div>';
   }
@@ -3819,7 +3819,7 @@ async function loadAlerts(){
   const el=document.getElementById('rp-alerts');
   el.innerHTML='<div style="color:var(--g5);padding:20px;text-align:center">Loading...</div>';
   const{data}=await SB.from('management_alerts').select('*').order('created_at',{ascending:false}).limit(30);
-  if(!data?.length){el.innerHTML='<div class="al ok">✅ No alerts</div>';return;}
+  if(!(data&&data.length)){el.innerHTML='<div class="al ok">✅ No alerts</div>';return;}
   el.innerHTML=data.map(a=>`<div class="rpt-card" style="border-color:${a.resolved?'var(--g3)':'var(--re)'}">
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div>
@@ -3832,9 +3832,9 @@ async function loadAlerts(){
     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">
       ${a.new_damage?'<span class="bdg r">🔴 Damage</span>':''}
       ${a.fuel_short?'<span class="bdg a">⛽ Fuel</span>':''}
-      ${a.missing_items?.length?`<span class="bdg r">❌ ${a.missing_items.length} missing</span>`:''}
+      ${(a.missing_items&&a.missing_items.length)?`<span class="bdg r">❌ ${a.missing_items.length} missing</span>`:''}
     </div>
-    ${!a.resolved?`<button onclick="SB.from('management_alerts').update({resolved:true,resolved_by:'${currentProfile?.name||'mgmt'}',resolved_at:new Date().toISOString()}).eq('id','${a.id}').then(()=>{toast('Resolved ✅','ok');loadAlerts()})" style="margin-top:8px;padding:6px 14px;border-radius:6px;border:1px solid var(--gb);background:var(--sg);color:var(--se);font-size:11px;font-weight:700;cursor:pointer">✅ Mark Resolved</button>`:''}
+    ${!a.resolved?`<button onclick="SB.from('management_alerts').update({resolved:true,resolved_by:'${(currentProfile&&currentProfile.name)||'mgmt'}',resolved_at:new Date().toISOString()}).eq('id','${a.id}').then(()=>{toast('Resolved ✅','ok');loadAlerts()})" style="margin-top:8px;padding:6px 14px;border-radius:6px;border:1px solid var(--gb);background:var(--sg);color:var(--se);font-size:11px;font-weight:700;cursor:pointer">✅ Mark Resolved</button>`:''}
     <button onclick="openInsurancePack('','${(a.client||'').replace(/'/g,"\\x27")}','${a.fleet_no||''}');event.stopPropagation()" style="margin-top:8px;margin-left:6px;padding:6px 14px;border-radius:6px;border:1px solid #c0392b;background:#c0392b;color:#fff;font-size:11px;font-weight:700;cursor:pointer">🚨 Insurance Pack</button>
   </div>`).join('');
 }
@@ -3907,7 +3907,7 @@ function unlockStaff(id, fn){
 function licDiscBanner(v, context){
   if(!v) return '';
   // Use overridden expiry if staff has entered one, else fleet default
-  const expiry = (v._licExpiry||'') || (v.lic?.expiry||'');
+  const expiry = (v._licExpiry||'') || ((v.lic&&v.lic.expiry)||'');
   const today = new Date('2026-07-15');
 
   let statusHTML = '';
@@ -4016,7 +4016,7 @@ function redraw(){
   else drawCI();
 }
 async function uploadPhotos(arr,fn,client,stage){
-  if(!arr?.length)return;
+  if(!(arr&&arr.length))return;
   const cln=(client||'unknown').replace(/[^a-zA-Z0-9]/g,'_');
   const date=new Date().toISOString().split('T')[0];
   banner(`Uploading ${arr.length} photo(s) — ${fn}/${client}/${stage}`);
@@ -4089,7 +4089,7 @@ function buildIG(v){
     cell.addEventListener('mousedown',e=>{e.preventDefault();window._id=true;window._ip=imarks[v][isize][r+','+c]!==itool;iCT(cell,v,r,c);});
     cell.addEventListener('mouseover',()=>{if(window._id&&window._ip)iCP(cell,v,r,c);});
     cell.addEventListener('touchstart',e=>{e.preventDefault();iCT(cell,v,r,c);},{passive:false});
-    cell.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];const e2=document.elementFromPoint(t.clientX,t.clientY);if(e2?.classList.contains('ins-cell'))VIEWS.forEach(vv=>{if(document.getElementById('ins-g-'+vv)===e2.parentElement)iCP(e2,vv,+e2.dataset.r,+e2.dataset.c);});},{passive:false});
+    cell.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];const e2=document.elementFromPoint(t.clientX,t.clientY);if((e2&&e2.classList).contains('ins-cell'))VIEWS.forEach(vv=>{if(document.getElementById('ins-g-'+vv)===e2.parentElement)iCP(e2,vv,+e2.dataset.r,+e2.dataset.c);});},{passive:false});
     el.appendChild(cell);
   }
 }
@@ -4177,15 +4177,15 @@ async function openInsurancePack(contractId,clientName,fleetNo){
   <div class="urgent">⚠ CONFIDENTIAL — FOR INSURANCE PURPOSES ONLY</div>
   <h2>1. Client Information</h2>
   <div class="grid2">
-    <div class="box">${[['Name',cl?.full_name||clientName||'—'],['Nationality',cl?.nationality||'—'],['Date of birth',cl?.date_of_birth||'—'],['Email',cl?.email||'—'],['Phone',cl?.phone||'—']].map(([l,v])=>`<div class="row"><span class="lbl">${l}:</span><span>${v}</span></div>`).join('')}</div>
-    <div class="box">${[['Passport',cl?.passport_number||'—'],['ID number',cl?.id_number||'—'],["Driver's licence",cl?.license_number||'—'],['Licence country',cl?.license_country||'—'],['Licence expiry',cl?.license_expiry||'—']].map(([l,v])=>`<div class="row"><span class="lbl">${l}:</span><span>${v}</span></div>`).join('')}</div>
+    <div class="box">${[['Name',(cl&&cl.full_name)||clientName||'—'],['Nationality',(cl&&cl.nationality)||'—'],['Date of birth',(cl&&cl.date_of_birth)||'—'],['Email',(cl&&cl.email)||'—'],['Phone',(cl&&cl.phone)||'—']].map(([l,v])=>`<div class="row"><span class="lbl">${l}:</span><span>${v}</span></div>`).join('')}</div>
+    <div class="box">${[['Passport',(cl&&cl.passport_number)||'—'],['ID number',(cl&&cl.id_number)||'—'],["Driver's licence",(cl&&cl.license_number)||'—'],['Licence country',(cl&&cl.license_country)||'—'],['Licence expiry',(cl&&cl.license_expiry)||'—']].map(([l,v])=>`<div class="row"><span class="lbl">${l}:</span><span>${v}</span></div>`).join('')}</div>
   </div>
   <h2>2. Identity Documents</h2>
   <div class="doc-grid">
-    ${[['Passport Photo',cl?.passport_photo_url],["Driver's Licence — Front",cl?.license_front_url],['ID Document',cl?.id_photo_url],["Driver's Licence — Back",cl?.license_back_url]].map(([l,u])=>`<div class="doc-box"><div class="doc-lbl">${l}</div>${u?`<img src="${u}" crossorigin="anonymous">`:' <div style="padding:30px;text-align:center;color:#aaa;font-size:11px">Not on file</div>'}</div>`).join('')}
+    ${[['Passport Photo',(cl&&cl.passport_photo_url)],["Driver's Licence — Front",(cl&&cl.license_front_url)],['ID Document',(cl&&cl.id_photo_url)],["Driver's Licence — Back",(cl&&cl.license_back_url)]].map(([l,u])=>`<div class="doc-box"><div class="doc-lbl">${l}</div>${u?`<img src="${u}" crossorigin="anonymous">`:' <div style="padding:30px;text-align:center;color:#aaa;font-size:11px">Not on file</div>'}</div>`).join('')}
   </div>
   <h2>3. Rental Contract</h2>
-  ${contract?.contract_html?`<div style="border:1px solid #ccc;border-radius:4px;padding:14px;font-size:11px;line-height:1.6">${contract.contract_html}</div>`:
+  ${(contract&&contract.contract_html)?`<div style="border:1px solid #ccc;border-radius:4px;padding:14px;font-size:11px;line-height:1.6">${contract.contract_html}</div>`:
   `<div style="padding:20px;border:1px dashed #ccc;text-align:center;color:#aaa">No signed contract on file</div>`}
   <h2>4. Vehicle Condition at Departure</h2>
   ${dmgPhotos.length?`<div class="dmg-grid">${dmgPhotos.map(u=>`<img src="${u}" crossorigin="anonymous">`).join('')}</div>`:
@@ -4242,15 +4242,15 @@ function buildContractHTML(c,sigUrl){
         <div style="display:grid;grid-template-columns:2fr 1.5fr 1.5fr;gap:0;margin-bottom:4px;border:1px solid #ccc;border-radius:3px;overflow:hidden;">
           <div style="padding:6px 8px;border-right:1px solid #ccc;font-size:11px;">
             <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Additional Driver ${i+1} — Full Name</div>
-            <div style="color:${d?.name?'#111':'#ccc'};font-weight:${d?.name?'600':'400'}">${d?.name||''}</div>
+            <div style="color:${(d&&d.name)?'#111':'#ccc'};font-weight:${(d&&d.name)?'600':'400'}">${(d&&d.name)||''}</div>
           </div>
           <div style="padding:6px 8px;border-right:1px solid #ccc;font-size:11px;">
             <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Date of Birth / Nationality</div>
-            <div style="color:${(d?.dob||d?.nationality)?'#111':'#ccc'}">${[d?.dob,d?.nationality].filter(Boolean).join(' / ')||''}</div>
+            <div style="color:${((d&&d.dob)||(d&&d.nationality))?'#111':'#ccc'}">${[(d&&d.dob),(d&&d.nationality)].filter(Boolean).join(' / ')||''}</div>
           </div>
           <div style="padding:6px 8px;font-size:11px;">
             <div style="font-size:9px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">Licence # / Expiry</div>
-            <div style="color:${(d?.licNo||d?.licExpiry)?'#111':'#ccc'}">${[d?.licNo,d?.licExpiry].filter(Boolean).join(' / ')||''}</div>
+            <div style="color:${((d&&d.licNo)||(d&&d.licExpiry))?'#111':'#ccc'}">${[(d&&d.licNo),(d&&d.licExpiry)].filter(Boolean).join(' / ')||''}</div>
           </div>
         </div>`);
     }
