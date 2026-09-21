@@ -3207,7 +3207,7 @@ async function completeCO(){
     odo_out:co.odometerOut||co.v.odo, unchecked_prep:uncPrep, unchecked_mech:uncMech,
     damage_panels:co.dmgd, created_at:new Date().toISOString(),
   }).catch(()=>{});
-  await SB.from('vehicles').update({status:'rented',updated_at:new Date().toISOString()}).eq('fleet_no',co.fn).catch(()=>{});
+  // Read-only tablet: Fleet Manager data (vehicles/bookings) is never changed from here
 
   // Build handover HTML document for client
   const hasDmg=co.dmgd&&co.dmgd.length>0;
@@ -3920,7 +3920,7 @@ async function completeCI(){
     deposit_decision:ci.deposit,manager_notes:ci.mgmtNotes,client_notes:ci.notes,
     created_at:new Date().toISOString(),
   });
-  await SB.from('vehicles').update({odo:ci.odoIn,status:ci.v.st,updated_at:new Date().toISOString()}).eq('fleet_no',ci.fn);
+  // Read-only tablet: Fleet Manager data (vehicles/bookings) is never changed from here
   const hasIssues=newDmg.length||(ci.fuelIn!==ci.v.fuelOut)||missing.length||damaged.length;
   document.getElementById('ci-body').innerHTML=`
     <div class="done"><div class="done-ico">${hasIssues?'⚠️':'✅'}</div>
@@ -4086,6 +4086,7 @@ function showNewTyres(fn){
 }
 
 async function saveNewTyres(fn){
+  toast('Read-only — please update this in the Fleet Manager','warn');return;
   const kmEl=document.getElementById('tyre-km-'+fn);
   const intEl=document.getElementById('tyre-int-'+fn);
   const km=parseInt((kmEl&&kmEl.value));
@@ -4140,6 +4141,7 @@ function showSvcForm(fn){
 }
 
 async function saveSvc(fn){
+  toast('Read-only — please update this in the Fleet Manager','warn');return;
   const date=(function(){var _e=document.getElementById('svc-date-'+fn);return _e?_e.value:undefined;})();
   const km=parseInt((function(){var _e=document.getElementById('svc-km-'+fn);return _e?_e.value:undefined;})());
   const intKm=parseInt((function(){var _e=document.getElementById('svc-int-'+fn);return _e?_e.value:undefined;})())||10000;
@@ -4469,6 +4471,7 @@ function licDiscBanner(v, context){
 }
 
 async function saveLicExpiry(fn, expiry, context){
+  toast('Read-only — please update this in the Fleet Manager','warn');return;
   if(!expiry){toast('Enter expiry date first','err');return;}
   const v=(context==='out'?co.v:ci.v);
   v._licExpiry=expiry;
