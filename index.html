@@ -814,7 +814,7 @@ function goPage(p){
 function renderCOPicker(){
   var body=document.getElementById('co-body');
   if(!body)return;
-  if(co&&co.v){drawCO();return;}
+  if(co&&co.v){ try{drawCO();}catch(err){toast('Error: '+err.message,'err');} return;}
   var today=new Date().toISOString().split('T')[0];
   var upcoming=FLEET.filter(function(v){
     var diff=Math.round((new Date(v.pu+'T00:00:00')-new Date(today+'T00:00:00'))/86400000);
@@ -1179,7 +1179,12 @@ function startCO(fn){
     custSig:null,custAt:'',
     mgmtBy:'',mgmtSig:null,mgmtAt:'',
   };
-  initIM();coStep=0;goPage('co');drawCO();
+  initIM();coStep=0;goPage('co');
+  try{ drawCO(); } catch(err){ 
+    toast('drawCO error: '+err.message,'err');
+    console.error('drawCO error:',err);
+    document.getElementById('co-body').innerHTML='<div style="padding:20px;color:red;font-size:13px;">Error: '+err.message+'</div>';
+  }
 }
 
 const CO_STEPS=[
