@@ -462,6 +462,7 @@ input[type=file]{display:none;}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
+const TENT_ICON='<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M2.5 20.5L12 4l9.5 16.5z" stroke="#60a5fa" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 4v2.5M8.5 20.5L12 14l3.5 6.5" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 20.5h21" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round"/></svg>';
 const L_PREP=[
   ['__SECTION__','🧹 Exterior & Interior','Body, glass, interior, canopy and locks'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M12 2C8 2 5 5 5 9c0 4 7 13 7 13s7-9 7-13c0-4-3-7-7-7z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M9 8s1 3 3 3 3-3 3-3\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Exterior washed','Body, roof, bumpers, canopy — all clean'],
@@ -1717,7 +1718,7 @@ function coStep0(){
   <div class="chk-list">${L_VEH.map(function(item,i){var ico=item[0]||'',lbl=item[1]||'',det=item[2]||'';
     if(ico==='__CAMPING__'){
       if(!co.v.camping) return ''; // skip tent items if no camping booked
-      ico='⛺';
+      ico=TENT_ICON;
     }
     if(ico==='__SECTION__'||ico==='__OPTIONAL__'){
       const isOpt=ico==='__OPTIONAL__';
@@ -1963,7 +1964,7 @@ function coStep1_equip(){
     }
     const eby=_eby(realLbl);const eat=_eat(realLbl);
     return `<div class="ci ${st==='ok'?'ok':st==='prob'?'prob':''}" onclick="tapPrepIdx(${li})">
-      <div class="ci-icon">${ico==='__OPT_ITEM__'?'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>':ico}</div>
+      <div class="ci-icon">${ico==='__OPT_ITEM__'?'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#5a7090" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M8 12h8M12 8v8" stroke="#5a7090" stroke-width="1.5" stroke-linecap="round"/></svg>':(ico==='__CAMPING__'?TENT_ICON:ico)}</div>
       <div class="ci-text">
         <div class="ci-lbl">${realLbl}${isOptItem?'<span style="font-size:13px;color:var(--g5);margin-left:6px;background:var(--g2);padding:1px 6px;border-radius:8px;">optional</span>':''}</div>
         <div class="ci-det">${det}${eby?' <span style="font-size:13px;color:var(--se);font-weight:700;margin-left:6px;">✓ '+eby+(eat?' · '+eat:'')+'</span>':''}</div>
