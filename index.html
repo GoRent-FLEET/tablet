@@ -94,6 +94,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
 .prog-n{font-size:16px;font-weight:800;color:var(--se);}
 
 /* WHO */
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;appearance:none;margin:0;}input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 .who-box{background:var(--g0);border:2px solid var(--am);border-radius:var(--r);padding:14px;margin-bottom:12px;}
 .who-lbl{font-size:12px;font-weight:700;color:var(--al);margin-bottom:8px;}
 select{width:100%;padding:12px 14px;background:var(--g1);border:2px solid var(--g3);border-radius:var(--rs);color:var(--tx);font-size:15px;font-family:var(--font);color-scheme:dark;}
@@ -1639,7 +1640,7 @@ function coStep0(){
   <div class="fuel-row" style="flex-wrap:wrap;gap:10px;">
     <div style="flex:1;min-width:160px;">
       <div class="fuel-lbl">🛣 Odometer OUT (km)</div>
-      <input type="number" id="co-odo-out" value="${co.odometerOut||co.v.odo||''}"
+      <input type="number" inputmode="numeric" pattern="[0-9]*" id="co-odo-out" value="${co.odometerOut||co.v.odo||''}"
         placeholder="e.g. 42350" oninput="co.odometerOut=+this.value"
         style="padding:10px 14px;font-size:15px;font-weight:700;background:var(--g0);border:2px solid var(--gb);border-radius:var(--rs);color:var(--tx);width:100%;margin-top:6px;">
     </div>
@@ -2362,12 +2363,12 @@ function coStep2(){
   <div class="sum-box" style="margin-bottom:12px">
     <div class="sum-title" style="margin-bottom:10px">Contract Details</div>
     <div class="fg">
-      <div class="fi"><label>Daily rate (N$)</label><input type="number" id="ct-rate" value="${(co.contract&&co.contract.daily_rate)||''}" placeholder="0.00" oninput="(co.contract=co.contract||{}).daily_rate=+this.value;calcDays()"></div>
-      <div class="fi"><label>Rental days</label><input type="number" id="ct-days" value="${(co.contract&&co.contract.total_days)||''}" readonly></div>
+      <div class="fi"><label>Daily rate (N$)</label><input type="number" inputmode="decimal" id="ct-rate" value="${(co.contract&&co.contract.daily_rate)||''}" placeholder="0.00" oninput="(co.contract=co.contract||{}).daily_rate=+this.value;calcDays()"></div>
+      <div class="fi"><label>Rental days</label><input type="number" inputmode="numeric" pattern="[0-9]*" id="ct-days" value="${(co.contract&&co.contract.total_days)||''}" readonly></div>
     </div>
     <div class="fg">
-      <div class="fi"><label>Damage deposit (N$)</label><input type="number" id="ct-dep" value="${(co.contract&&co.contract.deposit_amount)||''}" oninput="(co.contract=co.contract||{}).deposit_amount=+this.value"></div>
-      <div class="fi"><label>Fuel deposit (N$)</label><input type="number" id="ct-fdep" value="${(co.contract&&co.contract.fuel_deposit)||7500}" oninput="(co.contract=co.contract||{}).fuel_deposit=+this.value"></div>
+      <div class="fi"><label>Damage deposit (N$)</label><input type="number" inputmode="decimal" id="ct-dep" value="${(co.contract&&co.contract.deposit_amount)||''}" oninput="(co.contract=co.contract||{}).deposit_amount=+this.value"></div>
+      <div class="fi"><label>Fuel deposit (N$)</label><input type="number" inputmode="decimal" id="ct-fdep" value="${(co.contract&&co.contract.fuel_deposit)||7500}" oninput="(co.contract=co.contract||{}).fuel_deposit=+this.value"></div>
     </div>
     <div class="fi"><label>Insurance option</label>
       <select id="ct-ins" onchange="(co.contract=co.contract||{}).insurance_option=this.value" style="color-scheme:dark">
@@ -3534,7 +3535,7 @@ function ciStep0_CI(){
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
     <div>
       <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">🛣 Odometer IN (km) *</div>
-      <input type="number" id="ci-odo" value="${r.odoIn}"
+      <input type="number" inputmode="numeric" pattern="[0-9]*" id="ci-odo" value="${r.odoIn}"
         oninput="ci.odoIn=+this.value;document.getElementById('ci-km-disp').textContent=(+this.value-(ci.odometerOut||v.odo)).toLocaleString()+' km driven';drawCI()"
         style="padding:12px 14px;font-size:16px;font-weight:700;background:var(--g0);border:2px solid var(--gb);border-radius:var(--rs);color:var(--tx);width:100%;">
       <div id="ci-km-disp" style="font-size:14px;color:var(--se);margin-top:4px;font-weight:700;">${km>0?km.toLocaleString()+' km driven':''}</div>
@@ -4009,12 +4010,12 @@ function rpFleet(){
             </div>
             <div style="flex:1;min-width:110px;">
               <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Odometer (km)</div>
-              <input type="number" id="svc-km-${v.fn}" value="${(v.svc&&v.svc.lastKm)||''}" placeholder="${v.odo}"
+              <input type="number" inputmode="numeric" pattern="[0-9]*" id="svc-km-${v.fn}" value="${(v.svc&&v.svc.lastKm)||''}" placeholder="${v.odo}"
                 style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:15px;font-weight:700;">
             </div>
             <div style="flex:1;min-width:80px;">
               <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Interval (km)</div>
-              <input type="number" id="svc-int-${v.fn}" value="${(v.svc&&v.svc.intKm)||10000}"
+              <input type="number" inputmode="numeric" pattern="[0-9]*" id="svc-int-${v.fn}" value="${(v.svc&&v.svc.intKm)||10000}"
                 style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:15px;">
             </div>
             <div style="display:flex;gap:6px;flex-shrink:0;">
@@ -4049,12 +4050,12 @@ function rpFleet(){
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
             <div style="flex:1;min-width:130px;">
               <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Odometer when fitted (km)</div>
-              <input type="number" id="tyre-km-${v.fn}" placeholder="e.g. ${v.odo}"
+              <input type="number" inputmode="numeric" pattern="[0-9]*" id="tyre-km-${v.fn}" placeholder="e.g. ${v.odo}"
                 style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:14px;font-weight:700;">
             </div>
             <div style="flex:1;min-width:100px;">
               <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Interval (km)</div>
-              <input type="number" id="tyre-int-${v.fn}" value="22000"
+              <input type="number" inputmode="numeric" pattern="[0-9]*" id="tyre-int-${v.fn}" value="22000"
                 style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:14px;font-weight:700;">
             </div>
             <div style="display:flex;gap:6px;">
