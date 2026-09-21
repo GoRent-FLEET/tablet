@@ -1212,44 +1212,57 @@ function drawCO(){
   }).join('');
 
   var body='';
+  var _stepLine=0;
   try{
-    if(coStep===0) body=coStep0();
-    else if(coStep===1) body=coStep1_equip();
-    else if(coStep===2) body=coStep1();
-    else if(coStep===3) body=coStep2();
-    else if(coStep===4) body=coStep4_dmg();
-    else if(coStep===5) body=coStep5_client();
-    else body=coStep6_mgmt();
+    _stepLine=1;
+    if(coStep===0){_stepLine=2; body=coStep0();}
+    else if(coStep===1){_stepLine=3; body=coStep1_equip();}
+    else if(coStep===2){_stepLine=4; body=coStep1();}
+    else if(coStep===3){_stepLine=5; body=coStep2();}
+    else if(coStep===4){_stepLine=6; body=coStep4_dmg();}
+    else if(coStep===5){_stepLine=7; body=coStep5_client();}
+    else{_stepLine=8; body=coStep6_mgmt();}
+    _stepLine=9;
+    if(!body||body.length<10) body='<div style="padding:20px;color:orange;">Step '+coStep+' returned empty</div>';
   }catch(stepErr){
-    body='<div style="padding:20px;color:red;font-size:14px;font-weight:700;">Step '+coStep+' error: '+stepErr.message+'</div>';
-    toast('Step error: '+stepErr.message,'err');
+    var _msg='Step '+coStep+' (line '+_stepLine+') error: '+stepErr.message;
+    body='<div style="padding:20px;color:red;font-size:13px;font-weight:700;">'+_msg+'</div>';
+    toast(_msg,'err');
+    console.error(_msg, stepErr);
   }
 
-  document.getElementById('co-body').innerHTML=`
-    <div class="fhdr">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
-          <div class="fhdr-fn">${co.fn} <span>${co.v.reg}</span></div>
-          <div class="fhdr-cl">${co.clientName||co.v.cl||'No booking'}</div>
-          <div class="fhdr-cl" style="font-size:10px;opacity:.7;margin-top:1px">📅 ${co.v.pu||'?'} → ${co.v.rt||'?'}</div>
-        </div>
-        <div style="text-align:right">
-          <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;${co.v.camping?'background:rgba(61,220,132,.15);color:var(--se);border:1px solid var(--gb)':'background:var(--g2);color:var(--g5);border:1px solid var(--g3)'}">
-            ${co.v.camping?'🏕 Camping':'🏨 No camping'}
-          </span><br>
-          <span style="font-size:10px;color:var(--g5);margin-top:3px;display:inline-block">👥 ${co.v.pax||'?'} pax${co.v.xb?' · 🌍 '+co.v.xb:''}</span>
-        </div>
-      </div>
-      ${(co.v.special||[]).length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px">
-        ${(co.v.special||[]).map(t=>`<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am)">⚠ ${t}</span>`).join('')}
-      </div>`:''}
-    </div>
-    <div class="stg-bar s7">${bar}</div>
-    <div id="cos">${body}</div>
-    <div class="btn-row">
-      ${coStep>0?`<button class="btn s" style="flex:1" onclick="coGoStep(coStep-1)">← Back</button>`:''}
-      ${coStep<6?`<button class="btn g" style="flex:2" onclick="coGoStep(coStep+1)">Next →</button>`:''}
-    </div>`;
+  var _cov=co.v;
+  var _specialHtml='';
+  if(_cov.special&&_cov.special.length){
+    _specialHtml='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px">';
+    for(var _si=0;_si<_cov.special.length;_si++){
+      _specialHtml+='<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am)">⚠ '+_cov.special[_si]+'</span>';
+    }
+    _specialHtml+='</div>';
+  }
+  var _campStyle=_cov.camping?'background:rgba(61,220,132,.15);color:var(--se);border:1px solid var(--gb)':'background:var(--g2);color:var(--g5);border:1px solid var(--g3)';
+  var _campLbl=_cov.camping?'🏕 Camping':'🏨 No camping';
+  var _xbHtml=_cov.xb?' · 🌍 '+_cov.xb:'';
+  var _backBtn=coStep>0?'<button class="btn s" style="flex:1" onclick="coGoStep(coStep-1)">← Back</button>':'';
+  var _nextBtn=coStep<6?'<button class="btn g" style="flex:2" onclick="coGoStep(coStep+1)">Next →</button>':'';
+  document.getElementById('co-body').innerHTML=
+    '<div class="fhdr">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
+        '<div>'+
+          '<div class="fhdr-fn">'+co.fn+' <span>'+_cov.reg+'</span></div>'+
+          '<div class="fhdr-cl">'+(co.clientName||_cov.cl||'No booking')+'</div>'+
+          '<div class="fhdr-cl" style="font-size:10px;opacity:.7;margin-top:1px">📅 '+(_cov.pu||'?')+' → '+(_cov.rt||'?')+'</div>'+
+        '</div>'+
+        '<div style="text-align:right">'+
+          '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;'+_campStyle+'">'+_campLbl+'</span><br>'+
+          '<span style="font-size:10px;color:var(--g5);margin-top:3px;display:inline-block">👥 '+(_cov.pax||'?')+' pax'+_xbHtml+'</span>'+
+        '</div>'+
+      '</div>'+
+      _specialHtml+
+    '</div>'+
+    '<div class="stg-bar s7">'+bar+'</div>'+
+    '<div id="cos">'+body+'</div>'+
+    '<div class="btn-row">'+_backBtn+_nextBtn+'</div>';
   setTimeout(()=>['co-p-sig','co-equip-sig','co-c-sig','co-m-sig'].forEach(initSig),80);
   if(coStep===3)setTimeout(()=>{VIEWS.forEach(v=>buildIG(v));renderIS();},100);
 }
