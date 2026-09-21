@@ -902,14 +902,23 @@ async function loadProfile(){
   else{currentProfile={name:currentUser.email.split('@')[0],role:'staff'};document.getElementById('nav-user').textContent=currentProfile.name;}
 }
 async function showApp(){
-  // Switch screens immediately - don't wait for data
   document.getElementById('login-screen').style.display='none';
   const app=document.getElementById('app');
   app.style.display='flex';
-  // Load data with error protection
-  try { await loadFleetFromDB(); } catch(e){ console.warn('loadFleetFromDB:',e); }
-  try { await loadClients(); } catch(e){ console.warn('loadClients:',e); }
+  // Make sure dashboard page is visible
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('on'); });
+  document.querySelectorAll('.nb').forEach(function(b){ b.classList.remove('on'); });
+  var pov=document.getElementById('page-ov'); if(pov) pov.classList.add('on');
+  var nbov=document.getElementById('nb-ov'); if(nbov) nbov.classList.add('on');
+  // Reports tab visibility
+  if(APP_USER && typeof REPORTS_ALLOWED !== 'undefined'){
+    var nbrp=document.getElementById('nb-rp');
+    if(nbrp) nbrp.style.display=REPORTS_ALLOWED.includes(APP_USER.name)?'':'none';
+  }
   try { renderOV(); } catch(e){ console.warn('renderOV:',e); }
+  try { await loadFleetFromDB(); } catch(e){ console.warn('loadFleet:',e); }
+  try { await loadClients(); } catch(e){ console.warn('loadClients:',e); }
+  try { renderOV(); } catch(e){ console.warn('renderOV2:',e); }
 }
 async function restoreSession(){
   // Check for saved login
@@ -4558,6 +4567,13 @@ function lsPin(d) {
       var ap = document.getElementById('app');
       ls.setAttribute('style','display:none!important');
       ap.setAttribute('style','display:flex!important;height:100%;flex-direction:column;');
+      // Show the dashboard page
+      document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('on'); });
+      document.querySelectorAll('.nb').forEach(function(b){ b.classList.remove('on'); });
+      var pov = document.getElementById('page-ov');
+      if(pov) pov.classList.add('on');
+      var nbov = document.getElementById('nb-ov');
+      if(nbov) nbov.classList.add('on');
       try { renderOV(); } catch(e) { console.warn('renderOV:',e); }
       try { loadFleetFromDB().then(function(){ loadClients().then(function(){ try{renderOV();}catch(e){} }); }); } catch(e) {}
     } else {
