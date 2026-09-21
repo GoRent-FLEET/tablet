@@ -986,6 +986,9 @@ async function loadClients(){
 
 // ── REAL BOOKINGS (from Fleet Manager "bookings" table) ─────────
 var BOOKINGS_LOADED=false;
+var DISCS={};var ALL_FLEET_NOS=[];
+var DISC_WARN_DAYS=45;
+function discDaysLeft(exp){if(!exp)return null;var t=new Date();t.setHours(0,0,0,0);return Math.round((new Date(exp+'T00:00:00')-t)/86400000);}
 function _bx(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function _isRemoteLoc(l){return !!(l&&String(l).trim()&&!/windhoek|whk|hkia|hosea/i.test(l));}
 function _fmtFlight(s,kind){
@@ -1030,6 +1033,13 @@ async function loadBookings(){
     var vmap={};(vres.data||[]).forEach(function(v){vmap[v.fleet_no]=v;});
     FLEET.length=0;
     (r.data||[]).forEach(function(b){if(b.fleet_no)FLEET.push(bkToVeh(b,vmap[b.fleet_no],today));});
+    // Licence disc dates entered on the tablet (vehicle_discs table)
+    try{
+      var dr=await SB.from('vehicle_discs').select('fleet_no,expiry');
+      DISCS={};(dr.data||[]).forEach(function(d){DISCS[d.fleet_no]=d.expiry;});
+      FLEET.forEach(function(v){if(DISCS[v.fn])v.lic={expiry:DISCS[v.fn]};});
+    }catch(e){}
+    ALL_FLEET_NOS=(vres.data||[]).map(function(v){return v.fleet_no;}).filter(Boolean);
     // Start km = last km recorded when the vehicle was returned (tablet check-ins)
     try{
       var cr=await SB.from('checkins').select('fleet_no,odo_in,created_at').order('created_at',{ascending:false}).limit(1000);
@@ -1387,6 +1397,19 @@ function renderOV(){
         +'<span style="font-size:10px;font-weight:900;color:#c07a00;letter-spacing:.3px;white-space:nowrap;">STAFF ACTIVE:</span>'
         +chips+'</div>';
     })():'')
+    // Licence disc alerts (45 days ahead)
+    +(function(){
+      var list=Object.keys(DISCS).map(function(fn){return {fn:fn,exp:DISCS[fn],d:discDaysLeft(DISCS[fn])};})
+        .filter(function(x){return x.d!==null&&x.d<=DISC_WARN_DAYS;}).sort(function(a,b){return a.d-b.d;});
+      if(!list.length) return '';
+      var chips=list.map(function(x){
+        var exp=x.d<0;
+        return '<span style="font-size:11px;font-weight:800;padding:3px 9px;border-radius:12px;white-space:nowrap;background:'+(exp?'#fde2e2':'#fff3d6')+';color:'+(exp?'#b91c1c':'#92400e')+';border:1px solid '+(exp?'#f5a3a3':'#f6cf7a')+';">'
+          +x.fn+' · '+(exp?'EXPIRED':x.d===0?'expires today':x.d+' day'+(x.d===1?'':'s'))+' ('+new Date(x.exp+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})+')</span>';
+      }).join('');
+      return '<div style="background:#fffbeb;border-bottom:1px solid #f6cf7a;padding:7px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;">'
+        +'<span style="font-size:11px;font-weight:900;color:#92400e;letter-spacing:.3px;white-space:nowrap;">🪪 LICENCE DISCS DUE:</span>'+chips+'</div>';
+    })()
         // 3 columns
     +'<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);flex:1;overflow:hidden;background:#f5f5f7;">'
 
@@ -1582,8 +1605,9 @@ function drawCO(){
     (function(){
       var licExp=(_cov.lic&&_cov.lic.expiry)||'';
       var licDiff=licExp?Math.round((new Date(licExp+'T00:00:00')-new Date())/86400000):99;
-      var licCol=licDiff<30?'var(--rl)':licDiff<60?'var(--al)':'rgba(255,255,255,.5)';
-      var licTxt=licExp?(licDiff<0?'⚠ Disc EXPIRED':'Disc: '+new Date(licExp+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'})):'No disc date';
+      licDiff=licExp?discDaysLeft(licExp):99;
+      var licCol=!licExp?'var(--al)':licDiff<0?'var(--rl)':licDiff<=DISC_WARN_DAYS?'var(--al)':'rgba(255,255,255,.5)';
+      var licTxt=licExp?(licDiff<0?'⚠ Disc EXPIRED':'🪪 Disc: '+new Date(licExp+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'})+(licDiff<=DISC_WARN_DAYS?' ('+licDiff+'d)':'')):'＋ Add disc date';
       var fuelTxt='Fuel: '+(co.fuelOut||_cov.fuelOut||'Full');
       var fuelCol='rgba(255,255,255,.5)';
       var odoTxt='ODO: '+(_cov.odo||'—')+' km';
@@ -1594,7 +1618,7 @@ function drawCO(){
       var tyreTxt=tyreKm!==null?(tyreKm<=0?'⚠ Tyres DUE':'Tyres in '+tyreKm+' km'):'';
       var tyreCol=tyreKm!==null&&tyreKm<=0?'var(--rl)':tyreKm!==null&&tyreKm<2000?'var(--al)':'rgba(255,255,255,.5)';
       return '<div style="display:flex;flex-wrap:wrap;gap:5px;padding:6px 14px 8px;border-top:1px solid rgba(255,255,255,.1);">'
-        +'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+licCol+';">'+licTxt+'</span>'
+        +'<button onclick="co._discEdit=!co._discEdit;drawCO();" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+licCol+';border:1px dashed '+licCol+';cursor:pointer;">'+licTxt+' ✎</button>'
         +(svcTxt?'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+svcCol+';">'+svcTxt+'</span>':'')
         +(tyreTxt?'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+tyreCol+';">'+tyreTxt+'</span>':'')
         +'</div>'
@@ -1614,7 +1638,8 @@ function drawCO(){
             +'<span style="font-size:10px;color:rgba(255,255,255,.45);">'+src+'</span>'
             +'<div style="display:flex;align-items:center;gap:4px;margin-left:auto;"><span style="font-size:11px;font-weight:800;color:rgba(255,255,255,.6);margin-right:2px;">⛽ FUEL OUT</span>'+fb+'</div>'
             +'</div>';
-        })();
+        })()
+        +(co._discEdit?'<div style="padding:0 14px 10px;"><div id="lic-banner-out">'+licDiscBanner(_cov,'out')+'</div></div>':'');
     })()+
     '</div>'+
     '<div class="stg-bar s7">'+bar+'</div>'+
@@ -4002,7 +4027,7 @@ function rpTab(btn,id){
 function rpFleet(){
   return FLEET.map(v=>{
     const svcLeft=v.svc?(v.svc.lastKm+v.svc.intKm)-v.odo:null;
-    const licDays=v._licExpiry||(v.lic&&v.lic.expiry) ? Math.round((new Date(v._licExpiry||(v.lic&&v.lic.expiry))-new Date('2026-07-15'))/86400000) : null;
+    const licDays=v._licExpiry||(v.lic&&v.lic.expiry) ? Math.round((new Date(v._licExpiry||(v.lic&&v.lic.expiry))-new Date())/86400000) : null;
     const tyrLeft=v.tyres?(v.tyres.lastKm+v.tyres.intKm)-v.odo:null;
     const tyrKmDone=v.tyres?v.odo-v.tyres.lastKm:null;
     const crit=(svcLeft!==null&&svcLeft<=0)||(licDays!==null&&licDays<=30)||(tyrLeft!==null&&tyrLeft<=0);
@@ -4456,7 +4481,7 @@ function licDiscBanner(v, context){
   if(!v) return '';
   // Use overridden expiry if staff has entered one, else fleet default
   const expiry = (v._licExpiry||'') || ((v.lic&&v.lic.expiry)||'');
-  const today = new Date('2026-07-15');
+  const today = new Date(); today.setHours(0,0,0,0);
 
   let statusHTML = '';
   if(expiry){
@@ -4511,21 +4536,16 @@ function licDiscBanner(v, context){
 }
 
 async function saveLicExpiry(fn, expiry, context){
-  toast('Read-only — please update this in the Fleet Manager','warn');return;
   if(!expiry){toast('Enter expiry date first','err');return;}
-  const v=(context==='out'?co.v:ci.v);
-  v._licExpiry=expiry;
-  v.lic=v.lic||{};
-  v.lic.expiry=expiry;
-  // Save to Supabase vehicles table
-  try{
-    await SB.from('vehicles').update({lic_expiry:expiry,updated_at:new Date().toISOString()}).eq('fleet_no',fn);
-    toast('Licence disc saved ✅','ok');
-  }catch(e){
-    toast('Saved locally — DB update pending','ok');
-  }
-  // Redraw to reflect new status
-  if(context==='out') drawCO(); else drawCI();
+  var v=(context==='out'?co.v:ci.v);
+  fn=v.fn; // the button passes a placeholder; use the vehicle's fleet no
+  var r=await SB.from('vehicle_discs').upsert({fleet_no:fn,expiry:expiry,updated_by:(APP_USER&&APP_USER.name)||'',updated_at:new Date().toISOString()});
+  if(r&&r.error){toast('Could not save disc date: '+r.error.message,'err');return;}
+  DISCS[fn]=expiry;
+  FLEET.forEach(function(x){if(x.fn===fn){x.lic={expiry:expiry};x._licExpiry=expiry;}});
+  v.lic={expiry:expiry};v._licExpiry=expiry;
+  if(context==='out'){co._discEdit=false;drawCO();}else drawCI();
+  toast('Licence disc date saved ✅','ok');
 }
 function now(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
 function okSVG(){return`<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(61,220,132,.15)" stroke="#3ddc84" stroke-width="2"/><path d="M7 12l4 4 6-7" stroke="#3ddc84" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
