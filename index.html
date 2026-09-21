@@ -1074,7 +1074,7 @@ function renderOV(){
         </div>`).join('')}
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
-        ${v.camping?'<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🏕 Camping</span>':'<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--g2);color:var(--g5);">🏨 No camping</span>'}
+        ${v.camping?'<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🏕 ${v.pax} Pax Camping</span>':'<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--g2);color:var(--g5);">🏨 No camping</span>'}
         ${v.tent?'<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">⛺ Tent</span>':''}
         ${v.fridge?'<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🧊 Fridge</span>':''}
         ${v.sleepingBags?`<span style="font-size:13px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--sg);color:var(--se);border:1px solid var(--gb);">🛏 ${v.sleepingBags} sleeping bags</span>`:''}
@@ -1103,7 +1103,7 @@ function renderOV(){
           <div style="font-size:15px;font-weight:700;color:var(--tx);margin-top:1px;">${v.cl}</div>
           <div style="font-size:14px;margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             ${dayLabel}
-            ${v.camping?`<span style="color:var(--se);font-weight:700;">🏕 ${v.pax} pax</span>`:`<span style="color:var(--g5);">🏨 ${v.pax} pax</span>`}
+            ${v.camping?`<span style="color:var(--se);font-weight:700;">🏕 ${v.pax} Pax Camping</span>`:`<span style="color:var(--g5);">🚫 No Camping</span>`}
             ${v.xb?`<span style="color:var(--al);font-weight:700;">🌍 ${v.xb}</span>`:''}
           </div>
           ${isInProgress?`<div style="font-size:13px;font-weight:800;color:#e53e3e;margin-top:3px;">🔴 IN PROGRESS · ${inprog.staff}</div>`:''}
