@@ -627,15 +627,14 @@ function showLogin(){
   document.getElementById('nav-user').textContent='';
   document.getElementById('nav-logout').style.display='none';
   // Reset to name selection view
-  _loginName = null;
+  window._loginName = null;
   const nv = document.getElementById('login-name-view');
   const pv = document.getElementById('login-pin-view');
   if(nv) nv.style.display='';
   if(pv) pv.style.display='none';
 }
-let _loginName = null;
 function selectLoginName(name){
-  _loginName = name;
+  window._loginName = name;
   document.getElementById('login-name-view').style.display='none';
   const pv = document.getElementById('login-pin-view');
   pv.style.display='flex';
@@ -652,18 +651,20 @@ function showApp(){
 }
 function _updateDots(){
   const inp=document.getElementById('pin-input');
+  if(!inp) return;
   const dots=document.getElementById('pin-dots').querySelectorAll('.pdot');
   dots.forEach((dot,i)=>dot.classList.toggle('filled',i<inp.value.length));
 }
 function tapPin(d){
   const inp=document.getElementById('pin-input');
-  if(inp.value.length>=4) return;
+  if(!inp||inp.value.length>=4) return;
   inp.value+=d;
   _updateDots();
   if(inp.value.length===4){
     setTimeout(()=>{
-      // Must match selected name AND code
-      const staff=STAFF_ROSTER.find(s=>s.name===_loginName&&s.code===inp.value.trim());
+      const name = window._loginName;
+      const code = inp.value.trim();
+      const staff = STAFF_ROSTER.find(s=>s.name===name && s.code===code);
       if(staff){
         APP_USER=staff;
         try{localStorage.setItem('gorent_user',JSON.stringify(staff));}catch(e){}
@@ -674,18 +675,22 @@ function tapPin(d){
         _updateDots();
         setTimeout(()=>{document.getElementById('pin-error').textContent='';},2000);
       }
-    },200);
+    },300);
   }
 }
 function clearPin(){
   const inp=document.getElementById('pin-input');
+  if(!inp) return;
   inp.value=inp.value.slice(0,-1);
   _updateDots();
 }
 function backToNames(){
-  _loginName=null;
+  window._loginName=null;
   document.getElementById('login-pin-view').style.display='none';
   document.getElementById('login-name-view').style.display='';
+  document.getElementById('pin-input').value='';
+  document.getElementById('pin-error').textContent='';
+  _updateDots();
 }
 
 // ── APP STATE ────────────────────────────────────────────────────
