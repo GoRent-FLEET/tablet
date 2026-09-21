@@ -1020,7 +1020,7 @@ function renderOV(){
     </button>`:'';
 
     const detail=!isExp?'':(`<div style="border-top:1px solid var(--g2);padding:12px 14px;background:var(--g0);">
-      <div style="background:var(--g1);border-radius:8px;padding:10px 12px;border:1px solid var(--g2);margin-bottom:8px;">
+      <div style="background:var(--g1);border-radius:8px;padding:10px 12px;border:1px solid var(--g2);margin-bottom:8px;${clientVisible?'':' display:none'}">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
           <span style="font-size:20px;">✈️</span>
           <span style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;">Flight Details</span>
