@@ -773,8 +773,18 @@ function coStep0(){
     <div class="who-lbl">👤 Who is preparing this vehicle?</div>
     ${selStaff('co-p-nm',STAFF_PREP,co.prepBy)}
   </div>
+  <div class="fuel-row" style="flex-wrap:wrap;gap:10px;">
+    <div style="flex:1;min-width:160px;">
+      <div class="fuel-lbl">🛣 Odometer OUT (km)</div>
+      <input type="number" id="co-odo-out" value="${co.odometerOut||co.v.odo||''}"
+        placeholder="e.g. 42350"
+        oninput="co.odometerOut=+this.value"
+        style="padding:10px 14px;font-size:15px;font-weight:700;background:var(--g0);border:2px solid var(--gb);border-radius:var(--rs);color:var(--tx);width:100%;margin-top:6px;">
+    </div>
+  </div>
+  ${licDiscBanner(co.v,'out')}
   <div class="fuel-row">
-    <div class="fuel-lbl">⛽ Fuel level</div>
+    <div class="fuel-lbl">⛽ Fuel level OUT</div>
     <div class="fuel-btns">${['Empty','1/4','1/2','3/4','Full'].map(f=>
       `<button class="fbtn${co.fuelOut===f?' on':''}" onclick="co.fuelOut='${f}';this.closest('.fuel-btns').querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${f}</button>`).join('')}</div>
   </div>
@@ -1926,7 +1936,7 @@ function drawCI(){
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:12px">
       <div class="info-item"><div class="info-lbl">Odo OUT</div><div class="info-val">${v.odo.toLocaleString()} km</div></div>
       <div class="info-item"><div class="info-lbl">Fuel OUT</div><div class="info-val">${v.fuelOut||'Full'}</div></div>
-      <div class="fi" style="margin:0"><label style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase">Odo IN *</label>
+      <div class="fi" style="margin:0"><label style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase">Odo IN * (km)</label>
         <input type="number" id="ci-odo" value="${r.odoIn}" oninput="ci.odoIn=+this.value;document.getElementById('ci-km').textContent=(+this.value-v.odo).toLocaleString()+' km driven'" style="padding:10px">
       </div>
       <div class="fi" style="margin:0"><label style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase">Fuel IN *</label>
@@ -1935,7 +1945,10 @@ function drawCI(){
         </select>
       </div>
     </div>
-    <div class="al blue" style="margin-bottom:12px">🛣 <span id="ci-km">${km>0?km.toLocaleString()+' km driven':''}</span></div>
+    <div class="al blue" style="margin-bottom:8px">🛣 <span id="ci-km">${km>0?km.toLocaleString()+' km driven':''}</span>&nbsp;&nbsp;
+      <span style="font-size:10px;color:var(--g5);">ODO out: ${v.odo.toLocaleString()} km</span>
+    </div>
+    \${licDiscBanner(v,'in')}
 
     <!-- 3. DAMAGE INSPECTOR -->
     <div style="background:var(--g1);border:2px solid var(--g2);border-radius:var(--r);padding:12px 14px;margin-bottom:14px">
@@ -2292,6 +2305,31 @@ function unlockStaff(id, fn){
   else if(id==='ci-rcv') ci.receivedBy='';
   if(document.getElementById('page-co').classList.contains('on')) drawCO();
   else drawCI();
+}
+function licDiscBanner(v, context){
+  if(!v||!v.lic||!v.lic.expiry) return '';
+  const today=new Date('2026-07-15');
+  const exp=new Date(v.lic.expiry+'T00:00:00');
+  const daysLeft=Math.round((exp-today)/86400000);
+  const expired=daysLeft<0;
+  const warn=daysLeft>=0&&daysLeft<=45;
+  const ok=daysLeft>45;
+  if(context==='in'&&ok) return ''; // check-in: only show if issue
+  const label=expired?'EXPIRED':'expires '+exp.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  const bg=expired?'var(--rg)':warn?'var(--ag)':'var(--sg)';
+  const border=expired?'var(--re)':warn?'var(--am)':'var(--gb)';
+  const col=expired?'var(--rl)':warn?'var(--al)':'var(--se)';
+  const icon=expired?'❌':warn?'⚠️':'✅';
+  const sub=expired
+    ? (context==='out'?'⛔ DO NOT CHECK OUT — report to management immediately.':'Notify management immediately.')
+    : ('Expires in '+daysLeft+' day'+(daysLeft!==1?'s':'')+' — notify management'+(context==='out'?' before departure.':'.'));
+  const sub2=ok?'Valid for '+daysLeft+' more day'+(daysLeft!==1?'s':''):'';
+  return '<div style="background:'+bg+';border:2px solid '+border+';border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;">'
+    +'<span style="font-size:22px;">'+icon+'</span>'
+    +'<div><div style="font-size:12px;font-weight:800;color:'+col+';">Licence Disc — '+label+'</div>'
+    +(expired||warn?'<div style="font-size:11px;color:'+col+';margin-top:2px;">'+sub+'</div>':'')
+    +(ok&&context==='out'?'<div style="font-size:11px;color:'+col+';margin-top:2px;">'+sub2+'</div>':'')
+    +'</div></div>';
 }
 function now(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
 function okSVG(){return`<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="rgba(61,220,132,.15)" stroke="#3ddc84" stroke-width="2"/><path d="M7 12l4 4 6-7" stroke="#3ddc84" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
