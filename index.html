@@ -1428,9 +1428,8 @@ function coStep0(){
   </div>
   <div class="chk-list">${L_VEH.map(([ico,lbl,det],i)=>{
     if(ico==='__CAMPING__'){
-      // Skip tent items entirely if vehicle has no camping
-      if(!co.v.camping) continue;
-      ico='⛺'; // render as normal checkable with tent icon
+      if(!co.v.camping) return ''; // skip tent items if no camping booked
+      ico='⛺';
     }
     if(ico==='__SECTION__'||ico==='__OPTIONAL__'){
       const isOpt=ico==='__OPTIONAL__';
