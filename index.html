@@ -2138,42 +2138,113 @@ function coStep5_client(){
 }
 
 function coStep6_mgmt(){
-  const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&i!=='__OPT_ITEM__'&&!co.prepItems[l]).map(([i,l])=>l);
+  const _pst=l=>{const v=co.prepItems[l];return v?.st||v||'';};
+  const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&i!=='__OPT_ITEM__'&&!l.startsWith('__QTY__')&&!_pst(l)).map(([i,l])=>l);
   const uncMech=L_MECH.filter(([i,l])=>!co.mechItems[l]).map(([i,l])=>l);
-  const probPrep=L_PREP.filter(([i,l])=>co.prepItems[l]==='prob').map(([i,l])=>l);
+  const probPrep=L_PREP.filter(([i,l])=>_pst(l)==='prob').map(([i,l])=>l);
   const probMech=L_MECH.filter(([i,l])=>co.mechItems[l]==='prob').map(([i,l])=>l);
+
+  // Items management can resolve inline — note + tick
+  const mgmtResolved=co.mgmtResolved||{};
+
+  function missingBlock(items, label, icon, section){
+    if(!items.length) return '';
+    return `<div style="background:var(--rg);border:2px solid var(--re);border-radius:var(--rs);margin-bottom:10px;overflow:hidden;">
+      <div style="padding:9px 14px;background:rgba(240,80,80,.12);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--re);">
+        <span style="font-size:16px;">${icon}</span>
+        <div style="font-size:11px;font-weight:800;color:var(--rl);text-transform:uppercase;letter-spacing:.4px;">${label}</div>
+        <div style="margin-left:auto;font-size:10px;font-weight:700;background:var(--re);color:#fff;padding:2px 8px;border-radius:8px;">${items.filter(l=>!mgmtResolved[l]).length} outstanding</div>
+      </div>
+      <div style="padding:8px 10px;display:flex;flex-direction:column;gap:5px;">
+        ${items.map(lbl=>{
+          const res=mgmtResolved[lbl];
+          return `<div style="display:flex;align-items:flex-start;gap:8px;background:${res?'var(--sg)':'var(--g0)'};border:1px solid ${res?'var(--gb)':'var(--re)'};border-radius:8px;padding:8px 10px;">
+            <div style="flex:1;">
+              <div style="font-size:12px;font-weight:700;color:${res?'var(--se)':'var(--rl)'};">${res?'✅':'❌'} ${lbl}</div>
+              ${res?`<div style="font-size:10px;color:var(--se);margin-top:2px;">Resolved by ${res.by} · ${res.at}${res.note?' — '+res.note:''}</div>`
+                   :`<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
+                      <input id="mgmt-note-${section}-${lbl.replace(/[^a-zA-Z0-9]/g,'_')}" placeholder="Add note (optional)"
+                        style="color-scheme:dark;flex:1;min-width:120px;padding:6px 8px;border-radius:6px;border:1px solid var(--g3);background:var(--g1);color:var(--tx);font-size:11px;">
+                      <button onclick="mgmtResolve('${lbl}','${section}')"
+                        style="padding:6px 12px;background:var(--sg);border:2px solid var(--gb);border-radius:6px;color:var(--se);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                        ✓ Mark resolved
+                      </button>
+                    </div>`}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  const allResolved=(uncPrep.every(l=>mgmtResolved[l]))&&(uncMech.every(l=>mgmtResolved[l]));
+  const hasIssues=uncPrep.length||uncMech.length;
+
   return `
   <div class="step-intro">
     <div class="step-ico">👔</div>
-    <div><div class="step-title">Step 5 — Management Sign-Off</div>
-    <div class="step-sub">Review all stages and clear vehicle for departure</div></div>
+    <div><div class="step-title">Step 7 — Management Sign-Off</div>
+    <div class="step-sub">Review all stages · resolve any gaps · clear vehicle for departure</div></div>
   </div>
+
+  <!-- Summary grid -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
     ${[
-      ['🧹','Prep & Pack',(co.prepByAll&&co.prepByAll.length>1?co.prepByAll.join(' + '):co.prepBy),!!co.prepSig,uncPrep.length+probPrep.length],
-      ['🔧','Mechanical',co.mechBy,true,uncMech.length+probMech.length],
+      ['🚗','Vehicle',co.prepByAll&&co.prepByAll.length>1?co.prepByAll.join(' + '):co.prepBy,!!co.prepSig,uncPrep.length+probPrep.length],
+      ['🏕','Equipment',co.equipByAll&&co.equipByAll.length>1?co.equipByAll.join(' + '):co.prepBy,!!co.equipSig,0],
+      ['📷','Client ID',co.clientPassport||co.licFront?'On file':'Missing',!!(co.clientPassport||co.licFront),0],
       ['📋','Contract',co.clientName,co.contractSigned,0],
-      ['✍️','Handover',co.clientName,!!co.custSig,0],
-      ['⛽','Fuel out',co.fuelOut,true,0],
-      ['📷','ID docs',co.clientPassport||co.licFront?'On file':'Missing',!!(co.clientPassport||co.licFront),0],
+      ['🔍','Damage',co.mechBy||'—',true,uncMech.length+probMech.length],
+      ['✍️','Client signed',co.clientName,!!co.custSig,0],
     ].map(([ico,lbl,who,done,issues])=>`
       <div style="text-align:center;border:2px solid ${done&&!issues?'var(--gb)':done&&issues?'var(--am)':'var(--re)'};border-radius:var(--r);padding:10px 6px;background:${done&&!issues?'var(--sg)':done&&issues?'var(--ag)':'var(--rg)'}">
         <div style="font-size:20px">${ico}</div>
         <div style="font-size:10px;font-weight:700;color:${done&&!issues?'var(--se)':done&&issues?'var(--al)':'var(--rl)'};margin:3px 0">${lbl}</div>
-        <div style="font-size:10px;color:${done?'var(--g5)':'var(--re)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${who||'—'}</div>
+        <div style="font-size:10px;color:${done?'var(--g5)':'var(--rl)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${who||'—'}</div>
         <div style="font-size:16px;margin-top:4px">${done&&!issues?'✅':done&&issues?'⚠️':'❌'}</div>
         ${issues?`<div style="font-size:9px;color:var(--al)">${issues} unchecked</div>`:''}
       </div>`).join('')}
   </div>
-  ${uncPrep.length?`<div class="al warn">❌ Prep NOT checked: ${uncPrep.join(' · ')}</div>`:''}
-  ${uncMech.length?`<div class="al warn">❌ Mech NOT checked: ${uncMech.join(' · ')}</div>`:''}
-  ${probPrep.length||probMech.length?`<div class="al info">⚠ Problems noted — verify before departure</div>`:''}
+
+  <!-- Problems noted -->
+  ${probPrep.length||probMech.length?`<div class="al warn" style="margin-bottom:10px;">⚠ Problems noted on departure — verify before clearing: ${[...probPrep,...probMech].join(' · ')}</div>`:''}
+
+  <!-- Missing items — management resolves inline -->
+  ${missingBlock(uncPrep,'Prep items not checked','❌','prep')}
+  ${missingBlock(uncMech,'Mechanical items not checked','❌','mech')}
+
+  ${hasIssues&&!allResolved?`<div class="al warn" style="margin-bottom:10px;">⚠ ${uncPrep.filter(l=>!mgmtResolved[l]).length+uncMech.filter(l=>!mgmtResolved[l]).length} item(s) still unresolved — resolve above or sign to override</div>`:''}
+  ${hasIssues&&allResolved?`<div class="al ok" style="margin-bottom:10px;">✅ All gaps resolved by management</div>`:''}
+
+  <!-- Manager sign -->
   ${co.mgmtSig?
     `<div class="signed">✅<div class="signed-name">${co.mgmtBy} — Vehicle cleared for departure</div><div class="signed-time">${co.mgmtAt}</div></div>
     <button class="btn g" style="margin-top:10px" onclick="completeCO()">✅ Complete Check-Out</button>`:
-    `<div class="fi"><label>Manager name *</label><input id="co-m-nm" value="${co.mgmtBy}" placeholder="Manager name" oninput="co.mgmtBy=this.value"></div>
-    <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">Manager — sign to clear</span><span class="sig-clr" onclick="clrSig('co-m-sig')">Clear</span></div><canvas class="sig-cv" id="co-m-sig"></canvas></div>
+    `<div class="fi"><label>Manager name *</label>
+      ${selStaff('co-m-nm',STAFF_HO,co.mgmtBy)}
+    </div>
+    ${hasIssues&&!allResolved?`<div style="background:var(--ag);border:1px solid var(--am);border-radius:var(--rs);padding:8px 12px;margin-bottom:8px;font-size:11px;color:var(--al);">
+      ⚠ Signing with unresolved items — you take responsibility for these gaps
+    </div>`:''}
+    <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">Manager — sign to clear vehicle</span><span class="sig-clr" onclick="clrSig('co-m-sig')">Clear</span></div><canvas class="sig-cv" id="co-m-sig"></canvas></div>
     <button class="btn g" onclick="signMgmt()">✅ Clear Vehicle for Departure</button>`}`;
+}
+
+function mgmtResolve(lbl, section){
+  const nm=document.getElementById('co-m-nm')?.value||co.mgmtBy;
+  if(!nm){toast('Select manager name first','err');return;}
+  co.mgmtBy=nm;
+  const noteId='mgmt-note-'+section+'-'+lbl.replace(/[^a-zA-Z0-9]/g,'_');
+  const note=document.getElementById(noteId)?.value||'';
+  if(!co.mgmtResolved) co.mgmtResolved={};
+  co.mgmtResolved[lbl]={by:nm, at:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), note};
+  // Redraw step
+  const s=document.getElementById('cos');
+  if(s){
+    s.innerHTML=coStep6_mgmt();
+    setTimeout(()=>initSig('co-m-sig'),60);
+  }
+  toast(`"${lbl}" resolved ✅`,'ok');
 }
 
 function signMgmt(){
