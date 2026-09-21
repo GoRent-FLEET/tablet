@@ -707,6 +707,9 @@ function pinTap(d) {
       if (pov) { pov.classList.add('on'); pov.style.display = 'flex'; }
       var nb = document.getElementById('nb-ov');
       if (nb) nb.classList.add('on');
+      // Show/hide Reports tab based on role
+      var nbrp = document.getElementById('nb-rp');
+      if(nbrp) nbrp.style.display = REPORTS_ALLOWED.includes(matched.name) ? '' : 'none';
       renderOV();
     } else {
       document.getElementById('s2msg').style.color = '#f05050';
@@ -747,8 +750,15 @@ function initIM(){VIEWS.forEach(v=>{imarks[v]={S:{},M:{},L:{}};});}
 initIM();
 
 // ── NAV ──────────────────────────────────────────────────────────
+const REPORTS_ALLOWED=['Manager','Simon','Peter','Nelson','Joe','Vince','Robbie'];
+function canViewReports(){ return APP_USER && REPORTS_ALLOWED.includes(APP_USER.name); }
+
 function goPage(p){
   if(!APP_USER){showLogin();return;}
+  if(p==='rp' && !canViewReports()){
+    toast('🔒 Reports — Management access only','err');
+    return;
+  }
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.nb').forEach(e=>e.classList.remove('on'));
   document.getElementById('page-'+p)?.classList.add('on');
