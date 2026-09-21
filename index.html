@@ -819,7 +819,7 @@ function coStep0(){
         <div class="ci-icon">${ico}</div>
         <div class="ci-text">
           <div class="ci-lbl">${realLbl}</div>
-          <div class="ci-det">${ico2} In good condition</div>
+          <div class="ci-det">${det}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
           <select onchange="co.prepItems['${realLbl}']=this.value;if(!co.prepBy){toast('Select your name first','err');this.value='';return;}const s=document.getElementById('cos');if(s){s.innerHTML=coStep0();setTimeout(()=>initSig('co-p-sig'),60);}"
