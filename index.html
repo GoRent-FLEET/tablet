@@ -1233,9 +1233,9 @@ function renderOV(){
     var inprog=null; try{var r=localStorage.getItem(ipKey(v.fn));if(r)inprog=JSON.parse(r);}catch(e){}
     var isIP=inprog&&((isOut&&inprog.type==='checkout')||(!isOut&&inprog.type==='checkin'));
     if(isIP){bg='#fff5f5';border='#e53e3e';}
-    // For management: find ALL staff working on this vehicle
+    // Everyone: find ALL staff working on this vehicle
     var allStaffOnVeh=[];
-    if(isManagement()){
+    if(true){
       try{
         for(var _si=0;_si<localStorage.length;_si++){
           var _sk=localStorage.key(_si);
@@ -1401,8 +1401,8 @@ function renderOV(){
     +'</div>'
     +'</div>'
     +'</div>'
-    // Staff activity panel (management only)
-    +(isManagement()?(function(){
+    // Staff activity panel (everyone)
+    +(true?(function(){
       var active=getActiveStaff();
       if(!active.length) return '';
       var chips=active.map(function(a){
