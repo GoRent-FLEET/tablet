@@ -326,6 +326,19 @@ input[type=file]{display:none;}
 </head>
 <body>
 
+<!-- DEVICE SIGN-IN — one time per tablet, unlocks real bookings -->
+<div id="device-login" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:1000;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
+  <div style="font-size:28px;font-weight:900;color:#fff;margin-bottom:4px;">Go&nbsp;Rent <span style="color:#3ddc84;">4×4</span></div>
+  <div style="font-size:12px;color:#888;margin-bottom:22px;text-transform:uppercase;letter-spacing:1px;">Tablet setup — manager only</div>
+  <div style="width:100%;max-width:340px;">
+    <input id="dl-email" type="email" autocomplete="username" placeholder="Tablet email" style="width:100%;padding:14px;border-radius:10px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:16px;margin-bottom:10px;">
+    <input id="dl-pass" type="password" autocomplete="current-password" placeholder="Password" style="width:100%;padding:14px;border-radius:10px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:16px;margin-bottom:14px;">
+    <button id="dl-btn" onclick="deviceSignIn()" style="width:100%;padding:15px;border-radius:10px;border:none;background:#3ddc84;color:#062;font-size:16px;font-weight:900;cursor:pointer;">Sign in this tablet</button>
+    <div id="dl-msg" style="color:#f05050;font-size:13px;text-align:center;margin-top:12px;min-height:18px;"></div>
+    <div style="color:#666;font-size:11px;text-align:center;margin-top:8px;">Only needed once per tablet. Staff then log in with their PIN as usual.</div>
+  </div>
+</div>
+
 <!-- LOGIN — bypassed for now -->
 <div id="login-screen" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:999;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-y:auto;">
   <div style="text-align:center;margin-bottom:20px;">
@@ -545,7 +558,7 @@ const L_MECH=[
   ['<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="8" cy="10" r="4" stroke="#a78bfa" stroke-width="1.8"/><path d="M11.4 12.6L20 21" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/></svg>','Keys & remote','All keys and remote present and working']
 ];
 const RET_GROUPS=[{"g": "Tent & sleeping", "items": ["Tent + ladder + pins", "Tent mattress & bedding", "Sleeping bags"]}, {"g": "Kitchen", "items": ["Gas stove & burner", "Pots, pans & utensils (complete)", "Cutlery, plates & cups (complete)", "Braai grid"]}, {"g": "Camp furniture", "items": ["Table", "Chairs (correct qty)", "Camping lights", "Binoculars"]}, {"g": "Fridge & fuel", "items": ["Fridge", "Jerrycans (correct qty)"]}, {"g": "Safety & recovery", "items": ["Fire extinguisher", "First aid kit", "Jack & wheel spanner", "Tool kit", "Tow strap", "Shovel & axe", "Jump leads", "Warning triangles x2", "Tyre repair kit"]}, {"g": "Docs & keys", "items": ["Vehicle licence & insurance", "All keys & remote"]}];
-const FLEET=[
+const FLEET_DEMO=[
   {fn:'H-015',reg:'N242-221W',cl:'Mark Beckermann',   pu:'2026-09-21',rt:'2026-10-04',pax:4,xb:null,quote:'Q-0343',puLocation:'Go Rent Office, Windhoek',doLocation:'Windhoek Hosea Kutako (HKIA)',
    flightIn:'FR 1234 · arr 09:30 WDH',flightOut:'FR 1235 · dep 16:00 WDH',transfer:'Airport pickup & dropoff',transferPays:'included',location:'Windhoek Hosea Kutako (HKIA)',email:'mark.beckermann@email.com',phone:'+49 170 1234567',
    camping:true, tent:true, extraFuel:true, sleepingBags:2, fridge:true,
@@ -588,6 +601,7 @@ const FLEET=[
    st:'available',odo:52100,dmgd:[],blocked:'Spare tyre flat — repair before departure',
    svc:{lastKm:47000,intKm:10000,date:'2026-03-22'},lic:{expiry:'2027-01-31'},tyres:{lastKm:35000,intKm:22000}},
 ];
+const FLEET=[]; // filled from the real bookings table after sign-in
 // ═══════════════════════════════════════════════════════════════
 //  GO RENT 4×4 — FLEET MANAGEMENT APP
 //  Flow: Prepare → Handover (ID + Contract + Damage) → Trip → Return → Report
@@ -930,6 +944,7 @@ async function showApp(){
   setTimeout(function(){ try{ checkResume(); }catch(e){} }, 500);
 }
 async function restoreSession(){
+  try{var _ds=await SB.auth.getSession();if(!(_ds&&_ds.data&&_ds.data.session)){showDeviceLogin();return;}}catch(e){showDeviceLogin();return;}
   // Check for saved login
   try {
     var saved = localStorage.getItem('gorent_user');
@@ -947,6 +962,7 @@ async function restoreSession(){
   await showApp();
 }
 async function loadFleetFromDB(){
+  if(await loadBookings())return;
   const {data}=await SB.from('vehicles').select('*');
   if(!data)return;
   data.forEach(row=>{
@@ -961,12 +977,157 @@ async function loadClients(){
   clientList=data||[];
 }
 
+// ── REAL BOOKINGS (from Fleet Manager "bookings" table) ─────────
+var BOOKINGS_LOADED=false;
+function _bx(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function _isRemoteLoc(l){return !!(l&&String(l).trim()&&!/windhoek|whk|hkia|hosea/i.test(l));}
+function _fmtFlight(s,kind){
+  if(!s)return '';
+  var p=String(s).split('/');var num=(p[0]||'').trim();var last=(p[p.length-1]||'').trim();
+  var time=/^\d{1,2}:\d{2}$/.test(last)?last:'';
+  return num+(time?' · '+kind+' '+time:'');
+}
+function _dmy(d){if(!d)return '';var p=String(d).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d;}
+function _addDays(d,n){var x=new Date(d+'T00:00:00');x.setDate(x.getDate()+n);return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2);}
+function bkToVeh(b,vr,today){
+  vr=vr||{};
+  var tr=b.airport_transfer||'';var trl=tr.toLowerCase();
+  var inc=/on us|included/.test(trl);var cli=/client to pay|paid transfer/.test(trl);
+  var remote=_isRemoteLoc(b.pickup_loc)||_isRemoteLoc(b.dropoff_loc);
+  var campTxt=b.camping||'';
+  var camping=/camping/i.test(campTxt)&&!/no camping/i.test(campTxt);
+  var pax=parseInt(String(b.pax||'').replace(/\D/g,''),10)||parseInt(campTxt.replace(/\D/g,''),10)||0;
+  var out=b.pickup_date&&b.return_date&&b.pickup_date<today&&today<=b.return_date;
+  return {bid:String(b.id),b:b,fn:b.fleet_no||'',reg:vr.registration||'',cl:b.client||'',pu:b.pickup_date,rt:b.return_date,
+    quote:b.quote||'',pax:pax,xb:(b.cross_border&&b.cross_border!=='None')?b.cross_border:null,
+    puLocation:b.pickup_loc||'Windhoek',doLocation:b.dropoff_loc||'Windhoek',
+    flightIn:_fmtFlight(b.arrival_flight,'arr'),flightOut:_fmtFlight(b.departure_flight,'dep'),
+    transfer:(inc||cli)?tr:'',transferPays:inc?'included':(cli?'client':''),location:b.pickup_loc||'',
+    email:b.email||'',phone:b.phone||'',
+    camping:camping,tent:camping,extraFuel:b.extra_fuel==='Yes',sleepingBags:camping?pax:0,fridge:camping,
+    extras:[],special:remote?['Remote arrangements']:[],
+    st:(vr.status==='rented'||out)?'rented':'available',odo:vr.odo||0,dmgd:[],
+    svc:{lastKm:vr.svc_last_km||0,intKm:vr.svc_interval_km||10000,date:vr.svc_last_date||''},
+    lic:{expiry:vr.lic_expiry||''},tyres:{lastKm:vr.tyre_last_km||0,intKm:vr.tyre_interval_km||22000},
+    blocked:vr.blocked_reason||null,bufferDays:vr.buffer_days||0};
+}
+async function loadBookings(){
+  try{
+    var s=await SB.auth.getSession();
+    if(!(s&&s.data&&s.data.session))return false;
+    var today=new Date().toISOString().split('T')[0];
+    var from=_addDays(today,-9),to=_addDays(today,9);
+    var r=await SB.from('bookings').select('id,quote,fleet_no,client,email,phone,nationality,driver_age,drivers,camping,pax,pickup_date,return_date,pickup_loc,dropoff_loc,cross_border,satphone,baby_seat,extra_fuel,itinerary,notes,arrival_flight,arrival_flight_date,departure_flight,departure_flight_date,airport_transfer').lte('pickup_date',to).gte('return_date',from);
+    if(r.error){toast('Could not load bookings: '+r.error.message,'err');return false;}
+    var vres=await SB.from('vehicles').select('*');
+    var vmap={};(vres.data||[]).forEach(function(v){vmap[v.fleet_no]=v;});
+    FLEET.length=0;
+    (r.data||[]).forEach(function(b){if(b.fleet_no)FLEET.push(bkToVeh(b,vmap[b.fleet_no],today));});
+    BOOKINGS_LOADED=true;
+    return true;
+  }catch(e){console.warn('loadBookings',e);return false;}
+}
+// Pick the right booking when a vehicle has more than one in the window
+function pickVeh(fn,mode){
+  if(window._forceBid){var f=FLEET.filter(function(x){return x.bid===window._forceBid&&x.fn===fn;})[0];window._forceBid=null;if(f)return f;}
+  var list=FLEET.filter(function(x){return x.fn===fn;});
+  if(list.length<2)return list[0];
+  var today=new Date().toISOString().split('T')[0];
+  var key=mode==='in'?'rt':'pu';
+  list.sort(function(a,b){
+    var da=Math.abs(new Date(a[key]+'T00:00:00')-new Date(today+'T00:00:00'));
+    var db=Math.abs(new Date(b[key]+'T00:00:00')-new Date(today+'T00:00:00'));
+    return da-db;
+  });
+  return list[0];
+}
+// ── DEVICE SIGN-IN (one-time per tablet) ────────────────────────
+function showDeviceLogin(){
+  var d=document.getElementById('device-login');if(d)d.style.display='flex';
+  var ls=document.getElementById('login-screen');if(ls)ls.style.display='none';
+  var ap=document.getElementById('app');if(ap)ap.style.display='none';
+}
+async function deviceSignIn(){
+  var em=document.getElementById('dl-email').value.trim();
+  var pw=document.getElementById('dl-pass').value;
+  var msg=document.getElementById('dl-msg');var btn=document.getElementById('dl-btn');
+  msg.textContent='';
+  if(!em||!pw){msg.textContent='Enter the tablet email and password';return;}
+  btn.disabled=true;btn.textContent='Signing in…';
+  var r=await SB.auth.signInWithPassword({email:em,password:pw});
+  btn.disabled=false;btn.textContent='Sign in this tablet';
+  if(r.error){msg.textContent=r.error.message;return;}
+  document.getElementById('dl-pass').value='';
+  document.getElementById('device-login').style.display='none';
+  await restoreSession();
+}
+// ── BOOKING DETAIL PANEL (Fleet Manager layout, no deposits) ────
+function closeBookingDetail(){var m=document.getElementById('bk-modal');if(m)m.parentNode.removeChild(m);}
+function showBookingDetail(v){
+  closeBookingDetail();
+  var b=v.b||{};
+  var remote=_isRemoteLoc(v.puLocation)||_isRemoteLoc(v.doLocation);
+  var lbl='font-size:12px;font-weight:800;letter-spacing:1px;color:#6b7280;text-transform:uppercase;margin-bottom:6px;';
+  var val='font-size:17px;font-weight:600;color:#111827;';
+  function cell(l,vHtml,extra){return '<div style="padding:14px 18px;border-bottom:1px solid #e5e7eb;'+(extra||'')+'"><div style="'+lbl+'">'+l+'</div><div style="'+val+'">'+vHtml+'</div></div>';}
+  function row(a,c){return '<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);">'+a+(c||'<div style="border-bottom:1px solid #e5e7eb;"></div>')+'</div>';}
+  function col(t,c){return '<span style="color:'+c+';">'+t+'</span>';}
+  function yn(x){return _bx(x||'No');}
+  var model=/^H-/i.test(v.fn)?'Toyota Hilux':'';
+  var age=b.driver_age==='over25'?'Over 25 years old':(b.driver_age==='under23'?'Under 23 years old':_bx(b.driver_age||'—'));
+  var xb=(b.cross_border&&b.cross_border!=='None')?col(_bx(b.cross_border),'#2a9d5c'):'None';
+  var tr=b.airport_transfer||'';var trl=tr.toLowerCase();
+  var trCol=/on us|included/.test(trl)?'#2a9d5c':(/client|paid/.test(trl)?'#d97706':'#6b7280');
+  var h='';
+  if(remote){
+    h+='<div style="background:#c53030;color:#fff;border-radius:12px;padding:14px 18px;margin:0 0 12px;display:flex;gap:12px;align-items:center;">'
+      +'<div style="font-size:24px;">⚠</div><div><div style="font-weight:800;font-size:15px;">REMOTE ARRANGEMENTS REQUIRED</div>'
+      +'<div style="font-size:14px;">Pickup/drop-off outside Windhoek — arrange vehicle transfer in advance.</div></div></div>';
+  }
+  h+=row(cell('Client',_bx(v.cl)),cell('Quote #',col(_bx(b.quote||v.quote||'—'),'#d97706')));
+  h+=row(cell('Fleet / Vehicle','<span style="font-family:Menlo,monospace;color:#d97706;">'+_bx(v.fn)+(model?' · '+model:'')+'</span>'),cell('Nationality',_bx(b.nationality||'—')));
+  h+=row(cell('Pickup date',col(_dmy(v.pu),'#2a9d5c')),cell('Return date',col(_dmy(v.rt),'#2563eb')));
+  h+=row(cell('Camping / PAX',_bx(b.camping||'—')),'');
+  h+=cell('Pickup → Drop off'+(remote?' — ⚠ Remote arrangements':''),_bx(v.puLocation)+' → '+_bx(v.doLocation),remote?'background:#fdf2f2;':'');
+  if(remote)h=h.replace('<div style="'+lbl+'">Pickup → Drop off','<div style="'+lbl+'color:#c53030;">Pickup → Drop off').replace('<div style="'+val+'">'+_bx(v.puLocation)+' → ','<div style="'+val+'color:#c53030;">'+_bx(v.puLocation)+' → ');
+  h+=row(cell('Drivers',_bx(b.drivers||'—')),'');
+  if(v.bufferDays>0&&v.rt){
+    h+=cell('Buffer period',col(_addDays(v.rt,1)+' → '+_addDays(v.rt,v.bufferDays)+' — cleaning &amp; maintenance','#d4a017'));
+  }
+  var fbox=function(t,icon,d,f){return '<div style="background:#eff4ff;border:1px solid #b6ccf5;border-radius:12px;padding:12px 16px;margin:6px 0;">'
+    +'<div style="font-size:12px;font-weight:800;letter-spacing:1px;color:#1d4ed8;display:flex;align-items:center;gap:8px;">'+icon+t+'</div>'
+    +'<div style="font-family:Menlo,monospace;font-size:16px;font-weight:700;color:#1d4ed8;margin-top:6px;">'+_dmy(d)+(d?' · ':'')+_bx(f)+'</div></div>';};
+  var ic='<svg width="16" height="16" viewBox="0 0 24 24" fill="#1d4ed8" style="display:block"><path d="';
+  if(b.arrival_flight)h+=fbox('ARRIVAL FLIGHT',ic+'M2.5 19h19v2h-19v-2zm7.18-5.73l4.35 1.16 5.31 1.42c.8.21 1.62-.26 1.84-1.06.21-.8-.26-1.62-1.06-1.84l-5.31-1.42-2.76-9.02L10.12 2v8.28L5.15 8.95l-.93-2.32-1.45-.39v5.17l1.6.43 5.31 1.43z"/></svg>',b.arrival_flight_date,b.arrival_flight);
+  if(b.departure_flight)h+=fbox('DEPARTURE FLIGHT',ic+'M2.5 19h19v2h-19v-2zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92 10l-6.9-6.43-1.93.51 4.14 7.17-4.97 1.33-1.97-1.54-1.45.39 2.59 4.49 16.57-4.43c.81-.23 1.28-1.05 1.07-1.85z"/></svg>',b.departure_flight_date,b.departure_flight);
+  h+=row(cell('Airport transfer',col(_bx(tr||'—'),trCol)),'');
+  h+='<div style="font-size:13px;font-weight:800;letter-spacing:1.5px;color:#d97706;padding:18px 18px 8px;border-bottom:1px solid #e5e7eb;">ADDITIONAL DETAILS</div>';
+  h+=row(cell('Client age',age),cell('Cross border',xb));
+  h+=row(cell('Baby seat',yn(b.baby_seat)),cell('Satphone',yn(b.satphone)));
+  h+=row(cell('Extra fuel',yn(b.extra_fuel)),cell('Itinerary received',yn(b.itinerary)));
+  h+=cell('Additional notes',b.notes?_bx(b.notes):'<span style="color:#9ca3af;">—</span>');
+  var m=document.createElement('div');
+  m.id='bk-modal';
+  m.setAttribute('style','position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:30px 12px;overflow-y:auto;-webkit-overflow-scrolling:touch;');
+  m.onclick=function(e){if(e.target===m)closeBookingDetail();};
+  m.innerHTML='<div style="background:#fff;border-radius:16px;width:100%;max-width:640px;padding:16px 12px 20px;box-shadow:0 10px 40px rgba(0,0,0,.25);font-family:inherit;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;padding:0 6px 12px;">'
+    +'<div style="font-size:18px;font-weight:900;color:#111827;">'+_bx(v.fn)+' · '+_bx(v.cl)+'</div>'
+    +'<button onclick="closeBookingDetail()" style="width:40px;height:40px;border-radius:20px;border:1px solid #e5e7eb;background:#f9fafb;font-size:18px;cursor:pointer;">✕</button>'
+    +'</div>'+h+'</div>';
+  document.body.appendChild(m);
+}
+function ovExpandTo(m,key){
+  var v=FLEET.filter(function(x){return x.bid===key;})[0]||FLEET.filter(function(x){return x.fn===key;})[0];
+  if(!v)return;
+  showBookingDetail(v);
+}
+
 // ── OVERVIEW ─────────────────────────────────────────────────────
 function doAction(fn,isOut){if(isOut)startCO(fn);else startCI(fn);}
 function ovSetMode(m){window._ovMode=window._ovMode===m?null:m;window._ovExpanded=null;renderOV();}
 function ovSetView(v){window._ovView=v;window._ovMode=null;window._ovExpanded=null;renderOV();}
 function ovExpand(fn){window._ovExpanded=window._ovExpanded===fn?null:fn;renderOV();}
-function ovExpandTo(m,fn){window._ovMode=m;window._ovExpanded=fn;renderOV();}
 
 function renderOV(){
   const TODAY=new Date().toISOString().split('T')[0];
@@ -1045,8 +1206,7 @@ function renderOV(){
         }
       }catch(e){}
     }
-    return '<div onclick="ovExpandTo(\''+(isOut?'out':'in')+'\',\''+v.fn+'\')" '
-      +'ontouchend="event.preventDefault();ovExpandTo(\''+(isOut?'out':'in')+'\',\''+v.fn+'\')" '
+    return '<div onclick="ovExpandTo(\''+(isOut?'out':'in')+'\',\''+(v.bid||v.fn)+'\')" '
       +'style="background:'+bg+';border:1px solid '+border+';border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;touch-action:manipulation;display:flex;align-items:flex-start;gap:10px;">'
       +'<div style="width:36px;height:36px;border-radius:10px;background:'+(isOut?'#4a6fa5':'#2a9d5c')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
       +'<span style="color:#fff;font-size:18px;font-weight:900;line-height:1;">'+(isOut?'↗':'↙')+'</span>'
@@ -1078,8 +1238,7 @@ function renderOV(){
     var transferLabel = v.transfer?(v.transferPays==='included'?'Transfer on US':'Client to pay for transfer'):'';
     var transferCol = v.transferPays==='included'?'#2a9d5c':'#d97706';
     var type = isArrival?'out':'in';
-    return '<div onclick="ovExpandTo(\''+type+'\',\''+v.fn+'\')" '
-      +'ontouchend="event.preventDefault();ovExpandTo(\''+type+'\',\''+v.fn+'\')" '
+    return '<div onclick="ovExpandTo(\''+type+'\',\''+(v.bid||v.fn)+'\')" '
       +'style="background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;gap:14px;">'
       +'<div style="width:44px;height:44px;border-radius:10px;background:'+(isArrival?'#e8ebfc':'#efe8fd')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+(isArrival?'<svg width="22" height="22" viewBox="0 0 24 24" fill="#3b4fd8" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M2.5 19h19v2h-19v-2zm7.18-5.73l4.35 1.16 5.31 1.42c.8.21 1.62-.26 1.84-1.06.21-.8-.26-1.62-1.06-1.84l-5.31-1.42-2.76-9.02L10.12 2v8.28L5.15 8.95l-.93-2.32-1.45-.39v5.17l1.6.43 5.31 1.43z"/></svg>':'<svg width="22" height="22" viewBox="0 0 24 24" fill="#7c3aed" xmlns="http://www.w3.org/2000/svg" style="display:block"><path d="M2.5 19h19v2h-19v-2zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92 10l-6.9-6.43-1.93.51 4.14 7.17-4.97 1.33-1.97-1.54-1.45.39 2.59 4.49 16.57-4.43c.81-.23 1.28-1.05 1.07-1.85z"/></svg>')+'</div>'
       +'<div style="flex:1;min-width:0;">'
@@ -1279,7 +1438,7 @@ function renderOV(){
 //  Step 4: Management clears vehicle for departure
 // ═══════════════════════════════════════════════════════════════
 function startCO(fn){
-  const v=FLEET.find(function(x){return x.fn===fn;});
+  const v=pickVeh(fn,'out');
   if(!v){toast('Vehicle '+fn+' not found','err');return;}
   if(v.st==='rented'){toast('Already checked out','err');return;}
   toast('Starting check-out: '+fn,'ok');
@@ -3251,7 +3410,7 @@ function sendHandoverWA(){
 //  Damage → Equipment → Customer sign → Management → DONE
 // ═══════════════════════════════════════════════════════════════
 function startCI(fn){
-  const v=FLEET.find(x=>x.fn===fn);if(!v){toast('Vehicle not found','err');return;}
+  const v=pickVeh(fn,'in');if(!v){toast('Vehicle not found','err');return;}
   // Accept if vehicle is rented OR has a return date in the past/today (may not have been updated)
   const today=new Date().toISOString().split('T')[0];
   const daysToReturn=v.rt?Math.round((new Date(v.rt+'T00:00:00')-new Date(today+'T00:00:00'))/86400000):99;
