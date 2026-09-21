@@ -806,7 +806,7 @@ function startCO(fn){
     prepBy:'',prepSig:null,prepAt:'',prepItems:{},prepPhotos:[],fuelOut:'Full',
     prepLog:[],prepCheckedBy:{},
     equipSig:null,equipAt:'',equipLog:[],
-    clientName:v.cl||'',clientEmail:'',clientPhone:'',quoteNo:'',clientPassport:null,clientID:null,
+    clientName:v.cl||'',clientEmail:'',clientPhone:'',quoteNo:'',pickupArrangement:'',dropoffArrangement:'',remoteLocation:'',clientNotes:'',clientPassport:null,clientID:null,
     licFront:null,licBack:null,
     contract:null,contractSigned:false,
     dmgDone:false,
@@ -1221,6 +1221,34 @@ function coStep1(){
         <div class="fi"><label>💬 WhatsApp number</label>
           <input type="tel" value="${co.clientPhone||''}" placeholder="+264 81 ..." oninput="co.clientPhone=this.value"
             style="border-color:${co.clientPhone?'var(--gb)':'var(--g3)'}">
+        </div>
+      </div>`:''}
+
+      ${isPrimary?`
+      <!-- Pickup / dropoff & notes -->
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
+        <div class="fi">
+          <label>📍 Pickup arrangement</label>
+          <input value="${co.pickupArrangement||co.v.transfer||''}" placeholder="e.g. Airport pickup · Hosea Kutako · 09:30"
+            oninput="co.pickupArrangement=this.value"
+            style="border-color:${co.pickupArrangement||co.v.transfer?'var(--gb)':'var(--g3)'}">
+        </div>
+        <div class="fi">
+          <label>📍 Return / dropoff arrangement</label>
+          <input value="${co.dropoffArrangement||''}" placeholder="e.g. Airport dropoff · Hosea Kutako · 16:00"
+            oninput="co.dropoffArrangement=this.value"
+            style="border-color:${co.dropoffArrangement?'var(--gb)':'var(--g3)'}">
+        </div>
+        <div class="fi">
+          <label>📍 Remote location pickup/dropoff</label>
+          <input value="${co.remoteLocation||''}" placeholder="e.g. Sossusvlei campsite · GPS: -24.7, 15.3 · no cell signal"
+            oninput="co.remoteLocation=this.value"
+            style="border-color:${co.remoteLocation?'var(--gb)':'var(--g3)'}">
+        </div>
+        <div class="fi">
+          <label>📝 Notes</label>
+          <textarea oninput="co.clientNotes=this.value" placeholder="Special requests, dietary needs, baby seat, extra equipment, anything to note..."
+            style="width:100%;min-height:70px;padding:10px 12px;border-radius:var(--rs);border:2px solid ${co.clientNotes?'var(--gb)':'var(--g3)'};background:var(--g0);color:var(--tx);font-size:13px;resize:vertical;font-family:inherit;">${co.clientNotes||''}</textarea>
         </div>
       </div>`:''}
 
