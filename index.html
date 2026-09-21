@@ -461,12 +461,12 @@ const L_PREP=[
   ['__CAMPING__','Bedding for tent','Sleeping bags, pillows, sheets — packed and complete (camping vehicles only)'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M14.7 6.3a1 1 0 010 1.4L7.4 15l-3 1 1-3 7.3-7.3a1 1 0 011.4 0z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M3 21h18\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Canopy bolts fastened','All canopy mounting bolts checked and tightened'],
   ['__SECTION__','🏕 Camping Equipment','Check all equipment is present, clean and packed'],
-  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M12 3L2 21h20L12 3z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M9 21v-5l3-3 3 3v5\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Tent canvas & flysheet','Canvas, flysheet, poles, zips clean and undamaged — ladder present and pins locked'],
-  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M14.7 6.3a1 1 0 010 1.4L7.4 15l-3 1 1-3 7.3-7.3a1 1 0 011.4 0z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M3 21h18\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Tent straps','All tent straps present, no fraying, buckles working'],
-  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M14.7 6.3a1 1 0 010 1.4L7.4 15l-3 1 1-3 7.3-7.3a1 1 0 011.4 0z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M3 21h18\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Tent hinges & locks','All tent hinges secure, locks functioning correctly'],
-  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M14.7 6.3a1 1 0 010 1.4L7.4 15l-3 1 1-3 7.3-7.3a1 1 0 011.4 0z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M3 21h18\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Tent ladder','Present, rungs intact, hinge pins locked and secure'],
-  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"2\" y=\"8\" width=\"20\" height=\"8\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/></svg>','Tent mattress','Clean, no damage'],
-  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M4 7h16v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Fitted sheet','Clean fitted sheet on mattress — packed'],
+  ['__CAMPING__'','Tent canvas & flysheet','Canvas, flysheet, poles, zips clean and undamaged — ladder present and pins locked'],
+  ['__CAMPING__'','Tent straps','All tent straps present, no fraying, buckles working'],
+  ['__CAMPING__'','Tent hinges & locks','All tent hinges secure, locks functioning correctly'],
+  ['__CAMPING__'','Tent ladder','Present, rungs intact, hinge pins locked and secure'],
+  ['__CAMPING__'','Tent mattress','Clean, no damage'],
+  ['__CAMPING__'','Fitted sheet','Clean fitted sheet on mattress — packed'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M3 7h18v10H3z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M3 12h18\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/><circle cx=\"7\" cy=\"9.5\" r=\"1.5\" fill=\"#60a5fa\"/></svg>','__QTY__Sleeping bags','5','Present — correct quantity packed'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M3 10h18M7 10v8M17 10v8\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Towels','Correct quantity, clean and dry'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"5\" y=\"2\" width=\"14\" height=\"20\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M5 9h14\" stroke=\"#60a5fa\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Fridge','Powers on, correct temp, clean inside'],
@@ -1427,6 +1427,11 @@ function coStep0(){
     ${pct===100?'<span style="color:var(--se);font-weight:700;margin-left:8px">✅ All done!</span>':''}</div>
   </div>
   <div class="chk-list">${L_VEH.map(([ico,lbl,det],i)=>{
+    if(ico==='__CAMPING__'){
+      // Skip tent items entirely if vehicle has no camping
+      if(!co.v.camping) continue;
+      ico='⛺'; // render as normal checkable with tent icon
+    }
     if(ico==='__SECTION__'||ico==='__OPTIONAL__'){
       const isOpt=ico==='__OPTIONAL__';
       const isMain=!isOpt&&(lbl.startsWith('🚗 Vehicle')||lbl.startsWith('📦')||lbl.startsWith('📦 Loose'));
