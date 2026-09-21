@@ -61,7 +61,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
 .stg-bar.s7{grid-template-columns:repeat(7,1fr);}
 .stg-bar.s2{grid-template-columns:1fr 1fr;}
 .stg-bar.s3{grid-template-columns:1fr 1fr 1fr;}
-.stg{padding:9px 4px;text-align:center;font-size:9px;font-weight:700;color:var(--g5);cursor:pointer;background:var(--g1);border:2px solid var(--g2);border-radius:var(--rs);transition:all .15s;}
+.stg{padding:5px 2px;text-align:center;font-size:9px;font-weight:700;color:var(--g5);cursor:pointer;background:var(--g1);border:2px solid var(--g2);border-radius:var(--rs);transition:all .15s;}
 .stg.done{border-color:var(--gb);background:var(--sg);color:var(--se);}
 .stg.active{border-color:var(--pu);background:var(--ps);color:#c4b5fd;}
 .stg.locked{opacity:.3;cursor:not-allowed;}
@@ -1313,10 +1313,10 @@ function drawCO(){
                   s.n===3?co.equipBy:s.n===4?'':s.n===5?co.dmgBy:
                   s.n===6?co.custBy:co.mgmtBy)||'';
     const active=s.n===coStep;
-    return `<div class="stg ${active?'active':done?'done':''}" onclick="coGoStep(${s.n})" style="position:relative;">
-      ${done&&!active&&stepBy?`<div style="position:absolute;top:-1px;left:0;right:0;font-size:8px;font-weight:900;color:var(--se);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px;background:var(--sg);border-radius:4px 4px 0 0;line-height:14px;">${stepBy}</div>`:''}
-      <div style="font-size:15px;margin-top:${done&&!active&&stepBy?'12px':'2px'}">${done&&!active?'✅':s.ico}</div>
-      <div style="font-size:9px;margin-top:2px;font-weight:800">${s.lbl}</div>
+    return `<div class="stg ${active?'active':done?'done':''}" onclick="coGoStep(${s.n})" style="position:relative;overflow:hidden;">
+      ${done&&!active&&stepBy?`<div style="font-size:7px;font-weight:900;color:var(--se);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 2px;background:var(--sg);line-height:11px;letter-spacing:-.2px;">${stepBy}</div>`:'<div style="line-height:3px;">&nbsp;</div>'}
+      <div style="font-size:13px;line-height:1.2;">${done&&!active?'✅':s.ico}</div>
+      <div style="font-size:8px;font-weight:800;margin-top:1px;line-height:1.1;">${s.lbl}</div>
     </div>`;
   }).join('');
 
