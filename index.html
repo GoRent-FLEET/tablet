@@ -555,7 +555,7 @@ const L_MECH=[
         <div style="font-size:13px;font-weight:700;color:${done&&!issues?'var(--se)':done&&issues?'var(--al)':'var(--rl)'};margin:3px 0">${lbl}</div>
         <div style="font-size:13px;color:${done?'var(--g5)':'var(--rl)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${who||'—'}</div>
         <div style="font-size:16px;margin-top:4px">${done&&!issues?'✅':done&&issues?'⚠️':'❌'}</div>
-        ${issues?`<div style="font-size:13px;color:var(--al)">${issues} unchecked</div>`:''}
+        ${issues?'<div style="font-size:13px;color:var(--al)">'+issues+' unchecked</div>':''}
       </div>`).join('')}
   </div>
 
