@@ -324,6 +324,7 @@ input[type=file]{display:none;}
     <div style="font-size:28px;font-weight:900;color:#fff;">Go&nbsp;Rent <span style="color:#3ddc84;">4×4</span></div>
     <div style="font-size:11px;color:#666;margin-top:3px;text-transform:uppercase;letter-spacing:1px;">Check App</div>
   </div>
+  <button onclick="debugSwitch()" style="background:#f5a623;color:#000;font-size:18px;font-weight:900;padding:16px 32px;border:none;border-radius:12px;cursor:pointer;touch-action:manipulation;margin-bottom:16px;">🔧 DEBUG: Enter App</button>
   <!-- NAMES -->
   <div id="ls-names" style="width:100%;max-width:340px;">
     <div style="font-size:12px;font-weight:700;color:#666;text-align:center;margin-bottom:14px;text-transform:uppercase;letter-spacing:1px;">Who are you?</div>
@@ -4532,6 +4533,16 @@ function showLoginScreen() {
   document.getElementById('ls-names').style.display = 'block';
   var nl = document.getElementById('nav-logout');
   if (nl) nl.style.display = 'none';
+}
+
+function debugSwitch(){
+  alert('Switching now...');
+  document.getElementById('login-screen').style.setProperty('display','none','important');
+  document.getElementById('app').style.setProperty('display','flex','important');
+  document.getElementById('app').style.height = '100%';
+  document.getElementById('app').style.flexDirection = 'column';
+  alert('Done! If you see this but not the app, the app div has a problem.');
+  try{ renderOV(); }catch(e){ alert('renderOV error: '+e.message); }
 }
 </script>
 </body>
