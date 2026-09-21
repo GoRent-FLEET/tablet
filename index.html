@@ -512,7 +512,7 @@ const L_PREP=[
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><circle cx=\"12\" cy=\"12\" r=\"9\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M8 12l3 3 5-5\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Warning triangles','Present (reflective)'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M14.7 6.3a1 1 0 010 1.4L7.4 15l-3 1 1-3 7.3-7.3a1 1 0 011.4 0z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M3 21h18\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Reflective vests','Correct quantity present'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M14.7 6.3a1 1 0 010 1.4L7.4 15l-3 1 1-3 7.3-7.3a1 1 0 011.4 0z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M3 21h18\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Jumper cables','Present and in good condition'],
-  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"9\" y=\"6\" width=\"8\" height=\"16\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M11 6V3h4v3\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Fire extinguisher','Gauge green, pin intact, mounted securely'],,
+  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"9\" y=\"6\" width=\"8\" height=\"16\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M11 6V3h4v3\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Fire extinguisher','Gauge green, pin intact, mounted securely'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M14.7 6.3a1 1 0 010 1.4L7.4 15l-3 1 1-3 7.3-7.3a1 1 0 011.4 0z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M3 21h18\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','First aid kit','Complete first aid kit — check contents and seal'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M14.7 6.3a1 1 0 010 1.4L7.4 15l-3 1 1-3 7.3-7.3a1 1 0 011.4 0z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M3 21h18\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Recovery kit','Full recovery kit present — straps, snatch block, shackles'],
   ['__SECTION__','📦 Loose Items','Table, chairs, gas stove, cooler box, braai grid'],
@@ -1447,9 +1447,9 @@ function coStep0(){
   const L_VEH=[];
   let inVeh=true;
   for(const item of L_PREP){
+    if(!item||!item[0]) continue; // skip null/undefined entries
     if(item[0]==='__SECTION__'&&item[1].startsWith('🏕')) inVeh=false;
     if(inVeh){
-      // Skip camping-only items if not a camping vehicle
       if(item[0]==='__CAMPING__'&&!co.v.camping) continue;
       L_VEH.push(item);
     }
@@ -1685,6 +1685,7 @@ function coStep1_equip(){
   const L_EQUIP=[];
   let inEquip=false;
   for(const item of L_PREP){
+    if(!item||!item[0]) continue;
     if(item[0]==='__SECTION__'&&item[1].startsWith('🏕')) inEquip=true;
     if(inEquip) L_EQUIP.push(item);
   }
@@ -2700,7 +2701,9 @@ function coStep5_client(){
   // Build equipment summary from prepItems
   const equipSummary=[];
   let inEquip=false;
-  for(const [ico,lbl,det] of L_PREP){
+  for(const item of L_PREP){
+    if(!item||!item[0]) continue;
+    const [ico,lbl,det]=item;
     if(ico==='__SECTION__'&&lbl.startsWith('🏕')) inEquip=true;
     if(!inEquip) continue;
     if(ico==='__SECTION__'||ico==='__OPTIONAL__') continue;
