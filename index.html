@@ -1197,7 +1197,23 @@ function renderOV(){
     +'</div>'
     +'</div>'
     +'</div>'
-    // 3 columns
+    // Staff activity panel (management only)
+    +(isManagement()?(function(){
+      var active=getActiveStaff();
+      if(!active.length) return '';
+      var chips=active.map(function(a){
+        var isOut=a.type==='checkout';
+        return '<div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e0e0e0;border-radius:20px;padding:4px 10px 4px 4px;white-space:nowrap;">'
+          +'<div style="width:26px;height:26px;border-radius:50%;background:'+(isOut?'#4a6fa5':'#2a9d5c')+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0;">'+a.staffName.slice(0,2)+'</div>'
+          +'<span style="font-size:11px;font-weight:800;color:#1a1a1a;">'+a.staffName+'</span>'
+          +'<span style="font-size:10px;color:#888;">'+(isOut?'CO':'CI')+' · '+a.fn+'</span>'
+          +'</div>';
+      }).join('');
+      return '<div style="background:#fffbf0;border-bottom:1px solid #f6ad55;padding:6px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;">'
+        +'<span style="font-size:10px;font-weight:900;color:#c07a00;letter-spacing:.3px;white-space:nowrap;">STAFF ACTIVE:</span>'
+        +chips+'</div>';
+    })():'')
+        // 3 columns
     +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;flex:1;overflow:hidden;background:#f5f5f7;">'
 
     // Column 1: Vehicle movements
