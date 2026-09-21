@@ -276,6 +276,10 @@ input[type=file]{display:none;}
 .pdot.filled{background:var(--se);border-color:var(--se);}
 .pin-btn{width:72px;height:72px;border-radius:50%;border:2px solid var(--g3);background:var(--g1);color:var(--tx);font-size:22px;font-weight:700;cursor:pointer;transition:background .1s,border-color .1s;}
 .pin-btn:active{background:var(--g3);}
+.name-btn{padding:16px 10px;border-radius:12px;border:2px solid var(--g3);background:var(--g1);color:var(--tx);font-size:17px;font-weight:800;cursor:pointer;transition:background .15s,border-color .15s;letter-spacing:.3px;}
+.name-btn:active,.name-btn:hover{background:var(--g2);border-color:var(--se);}
+.mgr-btn{background:var(--ag);border-color:var(--am);color:var(--al);}
+.mgr-btn:active,.mgr-btn:hover{background:var(--am);color:#000;}
 #nav-user{font-size:11px;font-weight:700;color:var(--se);padding:0 6px;white-space:nowrap;}
 #nav-logout{font-size:11px;font-weight:700;padding:5px 10px;border-radius:6px;border:1px solid var(--g3);background:transparent;color:var(--g5);cursor:pointer;}
 .rpt-card{background:var(--g1);border:2px solid var(--g2);border-radius:var(--r);padding:13px;margin-bottom:8px;cursor:pointer;}
@@ -331,33 +335,58 @@ input[type=file]{display:none;}
   <div id="upload-banner"></div>
   <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
     <div id="page-login">
-  <div style="text-align:center;margin-bottom:32px;">
+  <!-- HEADER -->
+  <div style="text-align:center;margin-bottom:28px;">
     <div style="font-size:30px;font-weight:900;color:#fff;letter-spacing:-1px;">Go&nbsp;Rent <span style="color:var(--se);">4×4</span></div>
     <div style="font-size:12px;color:var(--g5);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;">Fleet Management</div>
   </div>
-  <div style="background:var(--g1);border:2px solid var(--g2);border-radius:16px;padding:28px 24px;width:100%;max-width:300px;text-align:center;">
-    <div style="font-size:13px;font-weight:700;color:var(--g5);margin-bottom:20px;">Enter your 4-digit code</div>
-    <div id="pin-dots" style="margin-bottom:24px;">
-      <span class="pdot"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span>
+
+  <!-- NAME SELECTION VIEW -->
+  <div id="login-name-view" style="width:100%;max-width:360px;">
+    <div style="font-size:13px;font-weight:700;color:var(--g5);text-align:center;margin-bottom:16px;text-transform:uppercase;letter-spacing:.5px;">Who are you?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <button class="name-btn" onclick="selectLoginName('Bonga')">Bonga</button>
+      <button class="name-btn" onclick="selectLoginName('Dixon')">Dixon</button>
+      <button class="name-btn" onclick="selectLoginName('Vince')">Vince</button>
+      <button class="name-btn" onclick="selectLoginName('Joe')">Joe</button>
+      <button class="name-btn" onclick="selectLoginName('Nelson')">Nelson</button>
+      <button class="name-btn" onclick="selectLoginName('Robbie')">Robbie</button>
+      <button class="name-btn" onclick="selectLoginName('Peter')">Peter</button>
+      <button class="name-btn" onclick="selectLoginName('Simon')">Simon</button>
+      <button class="name-btn" onclick="selectLoginName('Christina')">Christina</button>
+      <button class="name-btn mgr-btn" onclick="selectLoginName('Manager')">👔 Manager</button>
     </div>
-    <input id="pin-input" type="text" style="display:none;" maxlength="4">
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;">
-      <button class="pin-btn" onclick="tapPin('1')">1</button>
-      <button class="pin-btn" onclick="tapPin('2')">2</button>
-      <button class="pin-btn" onclick="tapPin('3')">3</button>
-      <button class="pin-btn" onclick="tapPin('4')">4</button>
-      <button class="pin-btn" onclick="tapPin('5')">5</button>
-      <button class="pin-btn" onclick="tapPin('6')">6</button>
-      <button class="pin-btn" onclick="tapPin('7')">7</button>
-      <button class="pin-btn" onclick="tapPin('8')">8</button>
-      <button class="pin-btn" onclick="tapPin('9')">9</button>
-      <button class="pin-btn" onclick="clearPin()" style="font-size:16px;">⌫</button>
-      <button class="pin-btn" onclick="tapPin('0')">0</button>
-      <button class="pin-btn" style="opacity:0;pointer-events:none;"></button>
-    </div>
-    <div id="pin-error" style="font-size:12px;color:var(--rl);min-height:18px;margin-top:8px;font-weight:700;"></div>
   </div>
-  <div style="margin-top:20px;font-size:10px;color:var(--g4);text-align:center;">Contact management if you don't have a code</div>
+
+  <!-- PIN ENTRY VIEW -->
+  <div id="login-pin-view" style="display:none;flex-direction:column;align-items:center;width:100%;max-width:300px;">
+    <button onclick="backToNames()" style="align-self:flex-start;background:none;border:none;color:var(--g5);font-size:12px;font-weight:700;cursor:pointer;padding:0 0 16px 0;display:flex;align-items:center;gap:6px;">◀ Back</button>
+    <div style="background:var(--g1);border:2px solid var(--g2);border-radius:16px;padding:28px 24px;width:100%;text-align:center;">
+      <div style="font-size:22px;font-weight:900;color:var(--se);margin-bottom:4px;" id="login-who"></div>
+      <div style="font-size:12px;font-weight:700;color:var(--g5);margin-bottom:20px;">Enter your PIN</div>
+      <div id="pin-dots" style="margin-bottom:24px;">
+        <span class="pdot"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span>
+      </div>
+      <input id="pin-input" type="text" style="display:none;" maxlength="4">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px;">
+        <button class="pin-btn" onclick="tapPin('1')">1</button>
+        <button class="pin-btn" onclick="tapPin('2')">2</button>
+        <button class="pin-btn" onclick="tapPin('3')">3</button>
+        <button class="pin-btn" onclick="tapPin('4')">4</button>
+        <button class="pin-btn" onclick="tapPin('5')">5</button>
+        <button class="pin-btn" onclick="tapPin('6')">6</button>
+        <button class="pin-btn" onclick="tapPin('7')">7</button>
+        <button class="pin-btn" onclick="tapPin('8')">8</button>
+        <button class="pin-btn" onclick="tapPin('9')">9</button>
+        <button class="pin-btn" onclick="clearPin()" style="font-size:16px;">⌫</button>
+        <button class="pin-btn" onclick="tapPin('0')">0</button>
+        <button class="pin-btn" style="opacity:0;pointer-events:none;"></button>
+      </div>
+      <div id="pin-error" style="font-size:12px;color:var(--rl);min-height:18px;margin-top:8px;font-weight:700;"></div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;font-size:10px;color:var(--g4);text-align:center;">Contact management if you need your PIN reset</div>
 </div>
 <div class="page on" id="page-ov"><div class="scroll" id="ov-body"></div></div>
     <div class="page" id="page-co"><div class="scroll" id="co-body"><div style="padding:40px;text-align:center;color:var(--g5)">Select a vehicle from Overview</div></div></div>
@@ -555,12 +584,16 @@ const SB=supabase.createClient(SB_URL,SB_KEY);
 
 // ── STAFF ────────────────────────────────────────────────────────
 const STAFF_ROSTER=[
-  {name:'Simon',  code:'1001', role:'prep'},
-  {name:'Joe',    code:'2002', role:'prep'},
-  {name:'Nelson', code:'3003', role:'prep'},
-  {name:'Robert', code:'4004', role:'prep'},
-  {name:'Peter',  code:'5005', role:'prep'},
-  {name:'Manager',code:'9999', role:'manager'},
+  {name:'Bonga',    code:'1111', role:'prep'},
+  {name:'Dixon',    code:'2222', role:'prep'},
+  {name:'Vince',    code:'3333', role:'prep'},
+  {name:'Joe',      code:'4444', role:'prep'},
+  {name:'Nelson',   code:'5555', role:'prep'},
+  {name:'Robbie',   code:'6666', role:'prep'},
+  {name:'Peter',    code:'7777', role:'prep'},
+  {name:'Simon',    code:'8888', role:'prep'},
+  {name:'Christina',code:'9090', role:'prep'},
+  {name:'Manager',  code:'9999', role:'manager'},
 ];
 const STAFF_PREP=STAFF_ROSTER.map(s=>s.name);
 const STAFF_HO  =STAFF_ROSTER.map(s=>s.name);
@@ -590,9 +623,23 @@ function showLogin(){
   document.getElementById('page-login').classList.add('on');
   document.getElementById('nav-user').textContent='';
   document.getElementById('nav-logout').style.display='none';
+  // Reset to name selection view
+  _loginName = null;
+  const nv = document.getElementById('login-name-view');
+  const pv = document.getElementById('login-pin-view');
+  if(nv) nv.style.display='';
+  if(pv) pv.style.display='none';
+}
+let _loginName = null;
+function selectLoginName(name){
+  _loginName = name;
+  document.getElementById('login-name-view').style.display='none';
+  const pv = document.getElementById('login-pin-view');
+  pv.style.display='flex';
+  document.getElementById('login-who').textContent = name;
   document.getElementById('pin-input').value='';
   document.getElementById('pin-error').textContent='';
-  document.getElementById('pin-dots').innerHTML='<span class="pdot"></span><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span>';
+  _updateDots();
 }
 function showApp(){
   document.getElementById('page-login').classList.remove('on');
@@ -600,21 +647,28 @@ function showApp(){
   document.getElementById('nav-logout').style.display='';
   goPage('ov');
 }
+function _updateDots(){
+  const inp=document.getElementById('pin-input');
+  const dots=document.getElementById('pin-dots').querySelectorAll('.pdot');
+  dots.forEach((dot,i)=>dot.classList.toggle('filled',i<inp.value.length));
+}
 function tapPin(d){
   const inp=document.getElementById('pin-input');
   if(inp.value.length>=4) return;
   inp.value+=d;
-  // Update dots
-  const dots=document.getElementById('pin-dots').querySelectorAll('.pdot');
-  dots.forEach((dot,i)=>dot.classList.toggle('filled',i<inp.value.length));
+  _updateDots();
   if(inp.value.length===4){
     setTimeout(()=>{
-      if(loginUser(inp.value)){
+      // Must match selected name AND code
+      const staff=STAFF_ROSTER.find(s=>s.name===_loginName&&s.code===inp.value.trim());
+      if(staff){
+        APP_USER=staff;
+        try{localStorage.setItem('gorent_user',JSON.stringify(staff));}catch(e){}
         showApp();
       } else {
-        document.getElementById('pin-error').textContent='Incorrect code — try again';
+        document.getElementById('pin-error').textContent='Incorrect PIN — try again';
         inp.value='';
-        dots.forEach(dot=>dot.classList.remove('filled'));
+        _updateDots();
         setTimeout(()=>{document.getElementById('pin-error').textContent='';},2000);
       }
     },200);
@@ -623,8 +677,12 @@ function tapPin(d){
 function clearPin(){
   const inp=document.getElementById('pin-input');
   inp.value=inp.value.slice(0,-1);
-  const dots=document.getElementById('pin-dots').querySelectorAll('.pdot');
-  dots.forEach((dot,i)=>dot.classList.toggle('filled',i<inp.value.length));
+  _updateDots();
+}
+function backToNames(){
+  _loginName=null;
+  document.getElementById('login-pin-view').style.display='none';
+  document.getElementById('login-name-view').style.display='';
 }
 
 // ── APP STATE ────────────────────────────────────────────────────
