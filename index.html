@@ -842,11 +842,14 @@ async function loadProfile(){
   else{currentProfile={name:currentUser.email.split('@')[0],role:'staff'};document.getElementById('nav-user').textContent=currentProfile.name;}
 }
 async function showApp(){
+  // Switch screens immediately - don't wait for data
   document.getElementById('login-screen').style.display='none';
-  const app=document.getElementById('app');app.style.display='flex';
-  await loadFleetFromDB();
-  await loadClients();
-  renderOV();
+  const app=document.getElementById('app');
+  app.style.display='flex';
+  // Load data with error protection
+  try { await loadFleetFromDB(); } catch(e){ console.warn('loadFleetFromDB:',e); }
+  try { await loadClients(); } catch(e){ console.warn('loadClients:',e); }
+  try { renderOV(); } catch(e){ console.warn('renderOV:',e); }
 }
 async function restoreSession(){
   // Check for saved login
@@ -4490,8 +4493,10 @@ function lsPin(d) {
       var nbrp = document.getElementById('nb-rp');
       if (nbrp) nbrp.style.display = (typeof REPORTS_ALLOWED !== 'undefined' && REPORTS_ALLOWED.includes(match.name)) ? '' : 'none';
       LS_PIN = ''; LS_WHO = '';
-      // Call the existing showApp()
-      showApp();
+      // Switch screen immediately then load data
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      try { loadFleetFromDB().then(function(){ loadClients().then(function(){ renderOV(); }); }); } catch(e){ try{ renderOV(); }catch(e2){} }
     } else {
       var msg = document.getElementById('ls-msg');
       msg.style.color = '#f05050';
