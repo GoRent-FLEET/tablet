@@ -2769,8 +2769,9 @@ function rpTab(btn,id){
 function rpFleet(){
   return FLEET.map(v=>{
     const svcLeft=v.svc?(v.svc.lastKm+v.svc.intKm)-v.odo:null;
-    const licDays=v.lic?Math.round((new Date(v.lic.expiry)-new Date('2026-07-15'))/86400000):null;
+    const licDays=v._licExpiry||v.lic?.expiry ? Math.round((new Date(v._licExpiry||v.lic?.expiry)-new Date('2026-07-15'))/86400000) : null;
     const tyrLeft=v.tyres?(v.tyres.lastKm+v.tyres.intKm)-v.odo:null;
+    const tyrKmDone=v.tyres?v.odo-v.tyres.lastKm:null;
     const crit=(svcLeft!==null&&svcLeft<=0)||(licDays!==null&&licDays<=30)||(tyrLeft!==null&&tyrLeft<=0);
     const warn=(svcLeft!==null&&svcLeft<=1500)||(licDays!==null&&licDays<=90)||(tyrLeft!==null&&tyrLeft<=3000);
     return `<div class="rpt-card" style="border-color:${crit?'var(--re)':warn?'var(--am)':'var(--g2)'};${crit?'animation:pulse 1.5s infinite':''}">
@@ -2784,16 +2785,139 @@ function rpFleet(){
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
         ${[['🔧','Service',svcLeft!==null?svcLeft<=0?`OVERDUE ${Math.abs(svcLeft).toLocaleString()}km`:'+'+svcLeft.toLocaleString()+'km':'—',svcLeft<=0?'crit':svcLeft<=1500?'warn':'ok'],
-           ['📋','Licence',licDays!==null?licDays+'d':'—',licDays<=30?'crit':licDays<=90?'warn':'ok'],
+           ['📋','Licence',licDays!==null?licDays+'d':'—',licDays<=0?'crit':licDays<=90?'warn':'ok'],
            ['🛞','Tyres',tyrLeft!==null?tyrLeft<=0?'OVERDUE':'+'+tyrLeft.toLocaleString()+'km':'—',tyrLeft<=0?'crit':tyrLeft<=3000?'warn':'ok'],
         ].map(([i,l,val,st])=>`<div style="background:var(--g2);border-radius:7px;padding:7px;text-align:center">
           <div>${i}</div><div style="font-size:9px;color:var(--g5);margin:2px 0;text-transform:uppercase">${l}</div>
           <div style="font-size:11px;font-weight:700;color:${st==='crit'?'var(--rl)':st==='warn'?'var(--al)':'var(--se)'}">${val}</div>
         </div>`).join('')}
       </div>
+      <!-- Tyre history section -->
+      <div style="margin-top:8px;border-top:1px solid var(--g2);padding-top:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;">🛞 Tyre History</div>
+          <button onclick="showNewTyres('${v.fn}')"
+            style="font-size:10px;font-weight:700;padding:4px 10px;border-radius:6px;border:1px solid var(--gb);background:var(--sg);color:var(--se);cursor:pointer;">
+            + New tyres fitted
+          </button>
+        </div>
+        <div id="tyre-hist-${v.fn}" style="font-size:10px;color:var(--g5);">
+          ${v.tyres?
+            `<div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <span style="background:var(--g2);border-radius:6px;padding:4px 10px;">📍 Fitted at: <strong style="color:var(--tx)">${v.tyres.lastKm.toLocaleString()} km</strong></span>
+              <span style="background:var(--g2);border-radius:6px;padding:4px 10px;">📏 Done so far: <strong style="color:${tyrKmDone>25000?'var(--al)':'var(--tx)'}">${tyrKmDone.toLocaleString()} km</strong></span>
+              <span style="background:var(--g2);border-radius:6px;padding:4px 10px;">🎯 Interval: <strong style="color:var(--tx)">${v.tyres.intKm.toLocaleString()} km</strong></span>
+            </div>`
+            :'<span style="color:var(--g5);">No tyre record — tap above to log first set</span>'}
+        </div>
+        <div id="tyre-form-${v.fn}" style="display:none;margin-top:8px;background:var(--g0);border:2px solid var(--gb);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--se);margin-bottom:8px;">🛞 Log New Tyres Fitted — ${v.fn}</div>
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+            <div style="flex:1;min-width:130px;">
+              <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Odometer when fitted (km)</div>
+              <input type="number" id="tyre-km-${v.fn}" placeholder="e.g. ${v.odo}"
+                style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:14px;font-weight:700;">
+            </div>
+            <div style="flex:1;min-width:100px;">
+              <div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Interval (km)</div>
+              <input type="number" id="tyre-int-${v.fn}" value="30000"
+                style="color-scheme:dark;width:100%;padding:8px 10px;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--tx);font-size:14px;font-weight:700;">
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button onclick="saveNewTyres('${v.fn}')"
+                style="padding:8px 14px;background:var(--sg);border:2px solid var(--gb);border-radius:6px;color:var(--se);font-size:12px;font-weight:700;cursor:pointer;">💾 Save</button>
+              <button onclick="document.getElementById('tyre-form-${v.fn}').style.display='none'"
+                style="padding:8px 10px;background:var(--g2);border:1px solid var(--g3);border-radius:6px;color:var(--g5);font-size:12px;cursor:pointer;">✕</button>
+            </div>
+          </div>
+          <div style="font-size:9px;color:var(--g5);margin-top:6px;">Date: ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
+        </div>
+      </div>
       ${v.blocked?`<div class="al warn" style="margin-top:8px;font-size:10px">⚠ ${v.blocked}</div>`:''}
     </div>`;
   }).join('');
+}
+
+function showNewTyres(fn){
+  const form=document.getElementById('tyre-form-'+fn);
+  if(!form) return;
+  form.style.display=form.style.display==='none'?'':'none';
+  // Pre-fill with current odo
+  const v=FLEET.find(x=>x.fn===fn);
+  if(v) document.getElementById('tyre-km-'+fn).value=v.odo||'';
+}
+
+async function saveNewTyres(fn){
+  const kmEl=document.getElementById('tyre-km-'+fn);
+  const intEl=document.getElementById('tyre-int-'+fn);
+  const km=parseInt(kmEl?.value);
+  const intKm=parseInt(intEl?.value)||30000;
+  if(!km||km<0){toast('Enter odometer reading','err');return;}
+  const v=FLEET.find(x=>x.fn===fn);
+  if(!v){toast('Vehicle not found','err');return;}
+  const prev=v.tyres?{...v.tyres}:null;
+  // Update in-memory fleet
+  v.tyres={lastKm:km,intKm};
+  // Save to Supabase
+  try{
+    // Save new tyre event to tyre_history table
+    await SB.from('tyre_history').insert({
+      fleet_no:fn,
+      fitted_at_km:km,
+      interval_km:intKm,
+      prev_fitted_at_km:prev?.lastKm||null,
+      prev_km_done:prev?km-prev.lastKm:null,
+      fitted_date:new Date().toISOString().split('T')[0],
+      notes:'New tyres logged via Fleet report'
+    });
+    // Update vehicles table
+    await SB.from('vehicles').update({
+      tyre_last_km:km,
+      tyre_interval_km:intKm,
+      updated_at:new Date().toISOString()
+    }).eq('fleet_no',fn);
+    toast(`Tyres saved for ${fn} ✅`,'ok');
+    // Hide form and refresh fleet panel
+    document.getElementById('tyre-form-'+fn).style.display='none';
+    document.getElementById('rp-vehicles').innerHTML=rpFleet();
+    loadTyreHistory(fn);
+  }catch(e){
+    // If tyre_history table doesn't exist yet, still save locally
+    v.tyres={lastKm:km,intKm};
+    try{
+      await SB.from('vehicles').update({tyre_last_km:km,tyre_interval_km:intKm}).eq('fleet_no',fn);
+    }catch(e2){}
+    toast(`Tyres saved locally for ${fn}`,'ok');
+    document.getElementById('tyre-form-'+fn).style.display='none';
+    document.getElementById('rp-vehicles').innerHTML=rpFleet();
+  }
+}
+
+async function loadTyreHistory(fn){
+  const el=document.getElementById('tyre-hist-'+fn);
+  if(!el) return;
+  try{
+    const {data}=await SB.from('tyre_history').select('*').eq('fleet_no',fn).order('fitted_date',{ascending:false}).limit(10);
+    if(!data||!data.length) return;
+    const v=FLEET.find(x=>x.fn===fn);
+    el.innerHTML=`
+      <div style="margin-bottom:6px;display:flex;gap:8px;flex-wrap:wrap;">
+        <span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:10px;">📍 Fitted at: <strong style="color:var(--tx)">${data[0].fitted_at_km.toLocaleString()} km</strong></span>
+        <span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:10px;">📏 Done so far: <strong style="color:${v?(v.odo-data[0].fitted_at_km)>25000?'var(--al)':'var(--tx)':'var(--tx)'}">${v?(v.odo-data[0].fitted_at_km).toLocaleString():' — '} km</strong></span>
+        <span style="background:var(--g2);border-radius:6px;padding:4px 10px;font-size:10px;">🎯 Interval: <strong style="color:var(--tx)">${data[0].interval_km.toLocaleString()} km</strong></span>
+      </div>
+      ${data.length>1?`
+      <div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">History</div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        ${data.map((r,i)=>`
+          <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;background:var(--g${i===0?'1':'0'});border-radius:6px;border-left:3px solid ${i===0?'var(--se)':'var(--g3)'};">
+            <div style="font-size:10px;color:var(--g5);min-width:70px;">${r.fitted_date}</div>
+            <div style="font-size:10px;font-weight:700;color:var(--tx);">${r.fitted_at_km.toLocaleString()} km</div>
+            ${r.prev_km_done?`<div style="font-size:10px;color:var(--g5);">prev set: ${r.prev_km_done.toLocaleString()} km</div>`:''}
+            ${i===0?'<span style="font-size:9px;background:var(--sg);color:var(--se);padding:1px 6px;border-radius:8px;">current</span>':''}
+          </div>`).join('')}
+      </div>`:''}`;
+  }catch(e){/* table may not exist yet */}
 }
 async function loadHistory(){
   const el=document.getElementById('rp-history');
