@@ -792,7 +792,7 @@ function canViewReports(){ return APP_USER && (REPORTS_ALLOWED.includes(APP_USER
 const MANAGEMENT=['Manager','Robbie','Peter','Simon','Joe','Christina'];
 function isManagement(){ return !!(APP_USER && MANAGEMENT.includes(APP_USER.name)); }
 function isAdmin(){ return !!(APP_USER && (APP_USER.name==='Peter' || APP_USER.role==='admin')); }
-const PREP_ONLY=['Bonga','Dixon','Vince','Nelson']; // prep staff - no contracts or management
+const PREP_ONLY=['Bonga','Dixon','Vince']; // prep staff - no contracts or management
 function isPrepOnly(){ return !!(APP_USER && PREP_ONLY.includes(APP_USER.name)); }
 function canSeeContracts(){ return !!(APP_USER && !PREP_ONLY.includes(APP_USER.name)); }
 // Admin overrides: Peter sees everything management + reports + all client info
