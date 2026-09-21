@@ -644,10 +644,36 @@ function renderOV(){
   const body = document.getElementById('ov-body');
   if(!body) return;
 
-  const viewToggle = '<div style="display:flex;gap:8px;padding:12px 12px 0;">'
+  // Live clock update
+if(window._clockInterval) clearInterval(window._clockInterval);
+window._clockInterval = setInterval(()=>{
+  const el=document.getElementById('ov-clock');
+  if(!el){clearInterval(window._clockInterval);return;}
+  const now=new Date();
+  el.textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+},1000);
+
+const nowDT = new Date();
+const dateStr = nowDT.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+const timeStr = nowDT.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+const viewToggle = '<div style="background:linear-gradient(135deg,var(--g1),var(--g0));border-bottom:2px solid var(--gb);padding:14px 16px;">'
+  // Date + time bar
+  +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
+    +'<div>'
+      +'<div style="font-size:11px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Today</div>'
+      +'<div style="font-size:15px;font-weight:800;color:var(--se);letter-spacing:-.2px;">'+dateStr+'</div>'
+    +'</div>'
+    +'<div style="text-align:right;background:var(--g0);border:2px solid var(--gb);border-radius:10px;padding:8px 14px;">'
+      +'<div style="font-size:9px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;">Time</div>'
+      +'<div id="ov-clock" style="font-size:22px;font-weight:800;color:var(--se);font-variant-numeric:tabular-nums;letter-spacing:-.5px;">'+timeStr+'</div>'
+    +'</div>'
+  +'</div>'
+  // View toggle buttons
+  +'<div style="display:flex;gap:8px;">'
     +'<button onclick="window._ovView=\'schedule\';renderOV()" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid '+(view==='schedule'?'#4a6fa5':'var(--g3)')+';background:'+(view==='schedule'?'rgba(74,111,165,.15)':'var(--g1)')+';color:'+(view==='schedule'?'#7ba3d4':'var(--g5)')+';">📅 Schedule</button>'
     +'<button onclick="window._ovView=\'history\';renderOV()" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid '+(view==='history'?'#2a9d5c':'var(--g3)')+';background:'+(view==='history'?'rgba(42,157,92,.15)':'var(--g1)')+';color:'+(view==='history'?'var(--se)':'var(--g5)')+';">📋 Past 7 Days</button>'
-  +'</div>';
+  +'</div>'+'</div>';
 
   if(view==='schedule'){
     body.innerHTML = viewToggle
