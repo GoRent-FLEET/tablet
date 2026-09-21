@@ -958,13 +958,38 @@ function tapPrep(i){
   } else {
     co.prepItems[lbl]=cur===''?'ok':cur==='ok'?'prob':'';
   }
-  const s=document.getElementById('cos');if(s){s.innerHTML=coStep0();setTimeout(()=>initSig('co-p-sig'),60);}
+  const s=document.getElementById('cos');
+  if(s){
+    // Save existing signature before redraw
+    const existingSig = hasSig('co-p-sig') ? getSig('co-p-sig') : null;
+    s.innerHTML=coStep0();
+    setTimeout(()=>{
+      initSig('co-p-sig');
+      // Restore signature after redraw
+      if(existingSig && sigs['co-p-sig']){
+        const cv=document.getElementById('co-p-sig');
+        if(cv){
+          const img=new Image();
+          img.onload=()=>{sigs['co-p-sig'].ctx.drawImage(img,0,0,cv.offsetWidth,cv.offsetHeight);sigs['co-p-sig'].hasData=true;};
+          img.src=existingSig;
+        }
+      }
+    },60);
+  }
 }
 
 function signPrep(){
-  co.prepBy=document.getElementById('co-p-nm')?.value||co.prepBy;
+  // Get name from DOM if available, else from co state, else from localStorage
+  const domVal = document.getElementById('co-p-nm')?.value;
+  if(domVal) co.prepBy = domVal;
+  if(!co.prepBy){
+    try{
+      const raw=localStorage.getItem('inprogress_'+co.fn);
+      if(raw){const rec=JSON.parse(raw);co.prepBy=rec.staff||'';}
+    }catch(e){}
+  }
   if(!co.prepBy){toast('Select your name first','err');return;}
-  if(!hasSig('co-p-sig')){toast('You must sign','err');return;}
+  if(!hasSig('co-p-sig')){toast('Sign below to confirm','err');return;}
   co.prepSig=getSig('co-p-sig');co.prepAt=now();
   uploadPhotos(co.prepPhotos,co.fn,co.clientName||co.v.cl,'prep');
   toast('Stage 1 signed ✅','ok');drawCO();
