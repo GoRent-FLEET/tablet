@@ -2384,7 +2384,7 @@ async function renderReports(){
   body.innerHTML=`<input class="search-bar" placeholder="🔍 Search vehicle or client..." id="rp-q" oninput="searchReports(this.value)">
     <div class="tab-row">
       <button class="tab-btn on" onclick="rpTab(this,'rp-vehicles')">🚗 Fleet</button>
-      <button class="tab-btn" onclick="rpTab(this,'rp-history')">📋 History</button>
+      <button class="tab-btn" onclick="rpTab(this,'rp-history');loadHistory()">📋 Activity Log</button>
       <button class="tab-btn" onclick="rpTab(this,'rp-alerts')">⚠️ Alerts</button>
     </div>
     <div id="rp-vehicles">${rpFleet()}</div>
@@ -2395,8 +2395,6 @@ function rpTab(btn,id){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
   document.querySelectorAll('#rp-vehicles,#rp-history,#rp-alerts').forEach(e=>e.style.display='none');
   document.getElementById(id).style.display='';
-  if(id==='rp-history')loadHistory();
-  if(id==='rp-alerts')loadAlerts();
 }
 function rpFleet(){
   return FLEET.map(v=>{
@@ -2429,24 +2427,139 @@ function rpFleet(){
 }
 async function loadHistory(){
   const el=document.getElementById('rp-history');
-  el.innerHTML='<div style="color:var(--g5);padding:20px;text-align:center">Loading...</div>';
+  if(!el)return;
+  el.innerHTML='<div style="color:var(--g5);padding:20px;text-align:center">Loading activity log...</div>';
+
+  const q=(document.getElementById('rp-q')?.value||'').toLowerCase();
+  const filter=document.getElementById('rp-filter')?.value||'all';
+  const person=document.getElementById('rp-person')?.value||'all';
+
   const [{data:cos},{data:cis}]=await Promise.all([
-    SB.from('checkouts').select('*').order('created_at',{ascending:false}).limit(20),
-    SB.from('checkins').select('*').order('created_at',{ascending:false}).limit(20),
+    SB.from('checkouts').select('*').order('created_at',{ascending:false}).limit(100),
+    SB.from('checkins').select('*').order('created_at',{ascending:false}).limit(100),
   ]);
-  el.innerHTML=`<div class="timeline">${
-    [...(cos||[]).map(c=>({...c,_type:'out',_date:c.created_at})),
-     ...(cis||[]).map(c=>({...c,_type:'in',_date:c.created_at}))]
-    .sort((a,b)=>new Date(b._date)-new Date(a._date))
-    .map(c=>`<div class="tl-item">
-      <div class="tl-dot ${c._type==='out'?'ok':'info'}"></div>
-      <div class="tl-date">${new Date(c._date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
-      <div class="tl-title">${c.fleet_no} · ${c.client} · ${c._type==='out'?'Check-Out':'Check-In'}</div>
-      <div class="tl-body">${c._type==='out'?`Prep: ${c.prep_by||'—'} · Handover: ${c.handover_by||'—'} · Fuel: ${c.fuel_out||'—'}`:
-        `Received: ${c.received_by||'—'} · ${c.km_driven?.toLocaleString()||'—'} km${c.new_damage?' · 🔴 Damage':''}${c.fuel_short?' · ⛽ Fuel short':''}${c.missing_items?.length?' · ❌ Missing':''}`}
-      </div>
-    </div>`).join('')||'<div style="color:var(--g5);padding:20px;text-align:center">No records yet</div>'}
-  </div>`;
+
+  let records=[
+    ...(cos||[]).map(c=>({...c,_type:'out',_date:c.created_at,_staff:c.prep_by||'—',_staff2:c.handover_by||'',_manager:c.manager_name||''})),
+    ...(cis||[]).map(c=>({...c,_type:'in',_date:c.created_at,_staff:c.received_by||'—',_staff2:'',_manager:c.manager_name||''})),
+  ].sort((a,b)=>new Date(b._date)-new Date(a._date));
+
+  if(filter!=='all') records=records.filter(r=>r._type===filter);
+  if(person!=='all') records=records.filter(r=>r._staff===person||r._staff2===person||r._manager===person);
+  if(q) records=records.filter(r=>(r.fleet_no||'').toLowerCase().includes(q)||(r.client||'').toLowerCase().includes(q)||(r._staff||'').toLowerCase().includes(q)||(r._manager||'').toLowerCase().includes(q));
+
+  const allStaff=[...new Set([
+    ...(cos||[]).flatMap(c=>[c.prep_by,c.handover_by,c.manager_name].filter(Boolean)),
+    ...(cis||[]).flatMap(c=>[c.received_by,c.manager_name].filter(Boolean)),
+  ])].sort();
+
+  const fmtDate=d=>d?new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
+  const fmtTime=d=>d?new Date(d).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
+
+  function recordCard(c){
+    const isOut=c._type==='out';
+    const hasIssues=c.new_damage||c.fuel_short||(c.missing_items?.length>0)||(c.unchecked_prep?.length>0);
+    const accent=isOut?'#4a6fa5':'#2a9d5c';
+    const border=hasIssues?'var(--re)':isOut?'rgba(74,111,165,.35)':'rgba(42,157,92,.35)';
+
+    const staffRows=isOut?[
+      {role:'🧹 Prep & Pack',name:c.prep_by,signed:c.prep_signed_at},
+      {role:'🔍 Handover',name:c.handover_by||'—',signed:null},
+      {role:'👔 Manager',name:c.manager_name||'—',signed:c.manager_signed_at},
+    ]:[
+      {role:'📥 Received by',name:c.received_by,signed:c.customer_signed_at},
+      {role:'👔 Manager',name:c.manager_name||'—',signed:c.manager_signed_at},
+    ];
+
+    return '<div style="border:1px solid '+border+';border-radius:10px;margin-bottom:10px;overflow:hidden;background:var(--g1);">'
+      // Header
+      +'<div style="background:'+(isOut?'rgba(74,111,165,.1)':'rgba(42,157,92,.1)')+';padding:10px 14px;border-bottom:1px solid '+border+';display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">'
+        +'<div style="display:flex;align-items:center;gap:10px;">'
+          +'<span style="font-size:22px;">'+(isOut?'🔑':'🏠')+'</span>'
+          +'<div>'
+            +'<div style="font-size:14px;font-weight:800;color:var(--tx);">'+(c.fleet_no||'—')
+              +' <span style="font-size:11px;color:var(--g5);font-weight:400;">'+(c.client||'—')+'</span></div>'
+            +'<div style="font-size:10px;font-weight:700;color:'+accent+';text-transform:uppercase;letter-spacing:.4px;">'+(isOut?'▶ CHECK-OUT':'◀ CHECK-IN')+'</div>'
+          +'</div>'
+        +'</div>'
+        +'<div style="text-align:right;">'
+          +'<div style="font-size:13px;font-weight:700;color:var(--tx);">📅 '+fmtDate(c._date)+'</div>'
+          +'<div style="font-size:12px;color:var(--g5);">🕐 '+fmtTime(c._date)+'</div>'
+        +'</div>'
+      +'</div>'
+      // Staff accountability
+      +'<div style="padding:10px 14px;border-bottom:1px solid var(--g2);">'
+        +'<div style="font-size:10px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">👤 Staff Accountability</div>'
+        +'<div style="display:grid;grid-template-columns:'+(isOut?'1fr 1fr 1fr':'1fr 1fr')+';gap:6px;">'
+          +staffRows.map(s=>{
+            const hasName=s.name&&s.name!=='—';
+            return '<div style="background:var(--g0);border-radius:7px;padding:8px 10px;border:1px solid '+(hasName?'var(--g3)':'var(--re)')+';border-left:3px solid '+(hasName?accent:'var(--re)')+';">'
+              +'<div style="font-size:9px;color:var(--g5);font-weight:700;text-transform:uppercase;margin-bottom:3px;">'+s.role+'</div>'
+              +'<div style="font-size:13px;font-weight:800;color:'+(hasName?'var(--tx)':'var(--rl)')+';">'+(s.name||'⚠ Not recorded')+'</div>'
+              +(s.signed?'<div style="font-size:9px;color:var(--se);margin-top:2px;">✅ signed '+fmtTime(s.signed)+'</div>':'')
+            +'</div>';
+          }).join('')
+        +'</div>'
+      +'</div>'
+      // Vehicle data
+      +'<div style="padding:10px 14px;'+(hasIssues?'border-bottom:1px solid var(--g2);':'')+'display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">'
+        +(isOut?[
+          ['🛣 ODO out',(c.odo_out||'').toString()+(c.odo_out?' km':'—')],
+          ['⛽ Fuel out',c.fuel_out||'—'],
+          ['✅ Prep',(c.unchecked_prep?.length?'⚠ '+c.unchecked_prep.length+' skipped':'All checked')],
+          ['🔍 Damage out',(c.damage_panels?.length?'⚠ '+c.damage_panels.length+' panel(s)':'None')],
+        ]:[
+          ['🛣 KM driven',(c.km_driven?c.km_driven.toLocaleString()+' km':'—')],
+          ['⛽ Fuel in',c.fuel_in||'—'],
+          ['💰 Deposit',c.deposit_decision||'—'],
+          ['🔍 New damage',(c.new_damage_panels?.length?'⚠ '+c.new_damage_panels.length+' panel(s)':'None')],
+        ]).map(([l,v])=>'<div style="text-align:center;background:var(--g0);border-radius:6px;padding:6px 4px;">'
+          +'<div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-bottom:2px;">'+l+'</div>'
+          +'<div style="font-size:11px;font-weight:700;color:var(--tx);">'+v+'</div>'
+        +'</div>').join('')
+      +'</div>'
+      // Issues
+      +(hasIssues?'<div style="padding:8px 14px;background:rgba(240,80,80,.06);display:flex;flex-wrap:wrap;gap:6px;">'
+        +(c.new_damage?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--rg);color:var(--rl);border:1px solid var(--re);">🔴 New damage</span>':'')
+        +(c.fuel_short?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⛽ Fuel short</span>':'')
+        +((c.missing_items?.length)?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--rg);color:var(--rl);border:1px solid var(--re);">❌ '+c.missing_items.length+' missing</span>':'')
+        +((c.unchecked_prep?.length)?'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--ag);color:var(--al);border:1px solid var(--am);">⚠ '+c.unchecked_prep.length+' items unchecked</span>':'')
+      +'</div>':'')
+    +'</div>';
+  }
+
+  const totalDamage=[...(cos||[]),(cis||[])].filter(r=>r.new_damage).length;
+  const totalFuel=[...(cos||[]),(cis||[])].filter(r=>r.fuel_short).length;
+
+  el.innerHTML=
+    // Filter bar
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;background:var(--g1);border-radius:var(--rs);border:1px solid var(--g2);">'
+      +'<select id="rp-filter" onchange="loadHistory()" style="color-scheme:dark;flex:1;min-width:110px;padding:8px;border-radius:6px;border:1px solid var(--g3);background:var(--g0);color:var(--tx);font-size:12px;font-weight:700;">'
+        +'<option value="all">All movements</option>'
+        +'<option value="out"'+(filter==='out'?' selected':'')+'>▶ Check-outs</option>'
+        +'<option value="in"'+(filter==='in'?' selected':'')+'>◀ Check-ins</option>'
+      +'</select>'
+      +'<select id="rp-person" onchange="loadHistory()" style="color-scheme:dark;flex:1;min-width:120px;padding:8px;border-radius:6px;border:1px solid var(--g3);background:var(--g0);color:var(--tx);font-size:12px;font-weight:700;">'
+        +'<option value="all">All staff</option>'
+        +allStaff.map(n=>'<option value="'+n+'"'+(person===n?' selected':'')+'>'+n+'</option>').join('')
+      +'</select>'
+      +'<div style="font-size:11px;color:var(--g5);display:flex;align-items:center;padding:0 4px;">'+records.length+' record'+(records.length!==1?'s':'')+'</div>'
+    +'</div>'
+    // Stats
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">'
+      +[
+        ['📤','Check-outs',(cos||[]).length,'#4a6fa5'],
+        ['📥','Check-ins',(cis||[]).length,'#2a9d5c'],
+        ['🔴','Damage reports',totalDamage,'#e53e3e'],
+        ['⛽','Fuel short',totalFuel,'#e07b00'],
+      ].map(([ico,lbl,cnt,col])=>'<div style="background:var(--g1);border:1px solid var(--g2);border-radius:8px;padding:10px;text-align:center;">'
+        +'<div style="font-size:18px;">'+ico+'</div>'
+        +'<div style="font-size:20px;font-weight:800;color:'+col+';line-height:1;">'+cnt+'</div>'
+        +'<div style="font-size:9px;color:var(--g5);text-transform:uppercase;margin-top:2px;">'+lbl+'</div>'
+      +'</div>').join('')
+    +'</div>'
+    // Records
+    +(records.length?records.map(recordCard).join(''):'<div class="al info" style="text-align:center;">No records match the current filter</div>');
 }
 async function loadAlerts(){
   const el=document.getElementById('rp-alerts');
