@@ -57,6 +57,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
 /* STEP TABS — 5 */
 .stg-bar{display:grid;gap:3px;margin-bottom:14px;}
 .stg-bar.s5{grid-template-columns:repeat(5,1fr);}
+.stg-bar.s8{grid-template-columns:repeat(8,1fr);}
 .stg-bar.s7{grid-template-columns:repeat(7,1fr);}
 .stg-bar.s2{grid-template-columns:1fr 1fr;}
 .stg-bar.s3{grid-template-columns:1fr 1fr 1fr;}
@@ -1264,7 +1265,8 @@ function startCO(fn){
     licFront:null,licBack:null,
     contract:null,contractSigned:false,
     dmgDone:false,
-    mechBy:'',mechItems:{},
+    bonnetDone:false,bonnetBy:'',bonnetItems:{},bonnetNotes:'',
+    mechDone:false,mechBy:'',mechItems:{},
     dmgd:[],dmgPhotos:[],
     custSig:null,custAt:'',
     mgmtBy:'',mgmtSig:null,mgmtAt:'',
@@ -1278,13 +1280,14 @@ function startCO(fn){
 }
 
 const CO_STEPS=[
-  {n:0,ico:'🚗',lbl:'Vehicle',    sub:'Checks & fuel'},
-  {n:1,ico:'🏕',lbl:'Equipment',  sub:'Camping gear'},
-  {n:2,ico:'📷',lbl:'Client ID',  sub:'Passport & licence'},
-  {n:3,ico:'📋',lbl:'Contract',   sub:'Sign agreement'},
-  {n:4,ico:'🔍',lbl:'Damage',     sub:'Inspect body'},
-  {n:5,ico:'✍️',lbl:'Handover',   sub:'Client accepts'},
-  {n:6,ico:'👔',lbl:'Management', sub:'Clear to go'},
+  {n:0,ico:'🚿',lbl:'Prep',       sub:'Carwash & clean'},
+  {n:1,ico:'🔧',lbl:'Bonnet',     sub:'Under the bonnet'},
+  {n:2,ico:'🔩',lbl:'Mechanical', sub:'Mechanical check'},
+  {n:3,ico:'⛺',lbl:'Camping',    sub:'Camping equipment'},
+  {n:4,ico:'📋',lbl:'Contract',   sub:'Sign agreement'},
+  {n:5,ico:'🔍',lbl:'Inspection', sub:'Vehicle inspection'},
+  {n:6,ico:'🤝',lbl:'Handover',   sub:'Client handover'},
+  {n:7,ico:'👔',lbl:'Management', sub:'Clear to go'},
 ];
 
 function drawCO(){
@@ -1297,14 +1300,19 @@ function drawCO(){
   if(typeof coStep==='undefined') coStep=0;
   // Step progress bar
   const bar=CO_STEPS.map(s=>{
-    const done=(s.n===0&&!!co.prepSig)||(s.n===1&&!!co.equipSig)||
-               (s.n===2&&!!(co.clientPassport||co.licFront))||
-               (s.n===3&&co.contractSigned)||(s.n===4&&!!co.dmgDone)||
-               (s.n===5&&!!co.custSig)||(s.n===6&&!!co.mgmtSig);
+    const done=(s.n===0&&!!co.prepSig)||(s.n===1&&!!co.bonnetDone)||
+               (s.n===2&&!!co.mechDone)||(s.n===3&&!!co.equipSig)||
+               (s.n===4&&co.contractSigned)||(s.n===5&&!!co.dmgDone)||
+               (s.n===6&&!!co.custSig)||(s.n===7&&!!co.mgmtSig);
+    // Who completed this step
+    const stepBy=(s.n===0?co.prepBy:s.n===1?co.bonnetBy:s.n===2?co.mechBy:
+                  s.n===3?co.equipBy:s.n===4?'':s.n===5?co.dmgBy:
+                  s.n===6?co.custBy:co.mgmtBy)||'';
     const active=s.n===coStep;
-    return `<div class="stg ${active?'active':done?'done':''}" onclick="coGoStep(${s.n})">
-      <div style="font-size:16px">${done&&!active?'✅':s.ico}</div>
-      <div style="font-size:13px;margin-top:2px">${s.lbl}</div>
+    return `<div class="stg ${active?'active':done?'done':''}" onclick="coGoStep(${s.n})" style="position:relative;">
+      ${done&&!active&&stepBy?`<div style="position:absolute;top:-1px;left:0;right:0;font-size:8px;font-weight:900;color:var(--se);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px;background:var(--sg);border-radius:4px 4px 0 0;line-height:14px;">${stepBy}</div>`:''}
+      <div style="font-size:15px;margin-top:${done&&!active&&stepBy?'12px':'2px'}">${done&&!active?'✅':s.ico}</div>
+      <div style="font-size:9px;margin-top:2px;font-weight:800">${s.lbl}</div>
     </div>`;
   }).join('');
 
@@ -1312,13 +1320,14 @@ function drawCO(){
   var _stepLine=0;
   try{
     _stepLine=1;
-    if(coStep===0){_stepLine=2; body=coStep0();}
-    else if(coStep===1){_stepLine=3; body=coStep1_equip();}
-    else if(coStep===2){_stepLine=4; body=coStep1();}
-    else if(coStep===3){_stepLine=5; body=coStep2();}
-    else if(coStep===4){_stepLine=6; body=coStep4_dmg();}
-    else if(coStep===5){_stepLine=7; body=coStep5_client();}
-    else{_stepLine=8; body=coStep6_mgmt();}
+    if(coStep===0){_stepLine=2; body=coStep0();}         // Prep (carwash)
+    else if(coStep===1){_stepLine=3; body=coStepBonnet();}  // Under bonnet
+    else if(coStep===2){_stepLine=4; body=coStepMech();}    // Mechanical
+    else if(coStep===3){_stepLine=5; body=coStep1_equip();} // Camping equipment
+    else if(coStep===4){_stepLine=6; body=coStep1();}       // Client ID / contract
+    else if(coStep===5){_stepLine=7; body=coStep4_dmg();}   // Vehicle inspection
+    else if(coStep===6){_stepLine=8; body=coStep5_client();} // Handover
+    else{_stepLine=9; body=coStep6_mgmt();}                 // Management
     _stepLine=9;
     if(!body||body.length<10) body='<div style="padding:20px;color:orange;">Step '+coStep+' returned empty</div>';
   }catch(stepErr){
@@ -1358,7 +1367,7 @@ function drawCO(){
       '</div>'+
       _specialHtml+
     '</div>'+
-    '<div class="stg-bar s7">'+bar+'</div>'+
+    '<div class="stg-bar s8">'+bar+'</div>'+
     '<div id="cos">'+body+'</div>'+
     '<div class="btn-row">'+_backBtn+_nextBtn+'</div>';
   setTimeout(()=>['co-p-sig','co-equip-sig','co-c-sig','co-m-sig'].forEach(initSig),80);
@@ -1517,6 +1526,92 @@ function signPrep(){
 }
 
 // ── STEP 1: Equipment (camping gear, boxes, loose items) ─────────────────
+
+function coStepBonnet(){
+  if(!co||!co.v){return '<div style="padding:20px;color:red;">Error: no vehicle</div>';}
+  if(!co.bonnetItems) co.bonnetItems={};
+  var ITEMS=[
+    ['Engine oil level','Oil at correct level, no milky residue'],
+    ['Coolant level','Reservoir between min/max'],
+    ['Brake fluid','Full, no leaks'],
+    ['Power steering fluid','At correct level'],
+    ['Battery terminals','Clean and tight'],
+    ['Fan belts','No cracks or fraying'],
+    ['Air filter','Clean, no blockages'],
+    ['Windscreen washer fluid','Topped up'],
+  ];
+  var rows='';
+  ITEMS.forEach(function(item,i){
+    var key='bon'+i;
+    var val=co.bonnetItems[key]||'';
+    var okStyle='padding:8px 12px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;border:2px solid '+(val==='ok'?'var(--gb)':'var(--g3)')+';background:'+(val==='ok'?'var(--sg)':'var(--g1)')+';color:'+(val==='ok'?'var(--se)':'var(--g5)')+';';
+    var issueStyle='padding:8px 12px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;border:2px solid '+(val==='issue'?'var(--re)':'var(--g3)')+';background:'+(val==='issue'?'var(--rg)':'var(--g1)')+';color:'+(val==='issue'?'var(--rl)':'var(--g5)')+';';
+    rows+='<div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--g2);">'
+      +'<div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--tx);">'+item[0]+'</div>'
+      +'<div style="font-size:11px;color:var(--g5);">'+item[1]+'</div></div>'
+      +'<div style="display:flex;gap:6px;">'
+      +'<button style="'+okStyle+'" data-k="'+key+'" data-v="ok" onclick="setBonnetItem(this.dataset.k,this.dataset.v)" ontouchend="event.preventDefault();setBonnetItem(this.dataset.k,this.dataset.v)">✅ OK</button>'
+      +'<button style="'+issueStyle+'" data-k="'+key+'" data-v="issue" onclick="setBonnetItem(this.dataset.k,this.dataset.v)" ontouchend="event.preventDefault();setBonnetItem(this.dataset.k,this.dataset.v)">⚠</button>'
+      +'</div></div>';
+  });
+  var allDone=ITEMS.every(function(item,i){return co.bonnetItems['bon'+i];});
+  return '<div class="step-intro"><div class="step-ico">🔧</div>'
+    +'<div><div class="step-title">Under the Bonnet</div>'
+    +'<div class="step-sub">Check all fluid levels and engine components</div></div></div>'
+    +'<div style="padding:0 4px;">'+rows+'</div>'
+    +'<div style="margin-top:12px;">'
+    +'<div style="font-size:12px;font-weight:800;color:var(--g5);margin-bottom:5px;">📝 Notes</div>'
+    +'<textarea placeholder="Any observations..." style="width:100%;padding:10px;background:var(--g0);border:2px solid var(--g3);border-radius:var(--rs);color:var(--tx);font-size:13px;font-family:var(--font);resize:none;height:65px;box-sizing:border-box;" oninput="co.bonnetNotes=this.value">'+(co.bonnetNotes||'')+'</textarea>'
+    +'</div>'
+    +(allDone
+      ?'<button data-action="bonnet-done" onclick="co.bonnetDone=true;co.bonnetBy=APP_USER?APP_USER.name:\'\';saveCOProgress();coGoStep(2);" ontouchend="event.preventDefault();co.bonnetDone=true;co.bonnetBy=APP_USER?APP_USER.name:\'\';saveCOProgress();coGoStep(2);" style="width:100%;margin-top:12px;padding:14px;background:var(--se);border:none;border-radius:var(--rs);color:#0a1a10;font-size:15px;font-weight:900;cursor:pointer;touch-action:manipulation;">✅ Bonnet Check Complete — Next</button>'
+      :'<div style="margin-top:12px;padding:12px;background:var(--g1);border-radius:var(--rs);text-align:center;color:var(--g5);font-size:13px;">Check all items above to continue</div>');
+}
+function setBonnetItem(k,v){
+  if(!co.bonnetItems)co.bonnetItems={};
+  co.bonnetItems[k]=v; saveCOProgress(); drawCO();
+}
+
+function coStepMech(){
+  if(!co||!co.v){return '<div style="padding:20px;color:red;">Error: no vehicle</div>';}
+  if(!co.mechItems) co.mechItems={};
+  var rows='';
+  for(var i=0;i<L_MECH.length;i++){
+    var item=L_MECH[i];
+    if(!item||!item[0]) continue;
+    if(item[0]==='__SECTION__'){
+      rows+='<div style="font-size:11px;font-weight:900;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;padding:10px 0 5px;border-bottom:1px solid var(--g2);margin-bottom:6px;">'+item[1]+'</div>';
+      continue;
+    }
+    var key='m'+i; var lbl=item[1]||''; var desc=item[2]||'';
+    var val=co.mechItems[key]||'';
+    var okStyle='padding:7px 10px;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer;touch-action:manipulation;border:2px solid '+(val==='ok'?'var(--gb)':'var(--g3)')+';background:'+(val==='ok'?'var(--sg)':'var(--g1)')+';color:'+(val==='ok'?'var(--se)':'var(--g5)')+';';
+    var issueStyle='padding:7px 10px;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer;touch-action:manipulation;border:2px solid '+(val==='issue'?'var(--re)':'var(--g3)')+';background:'+(val==='issue'?'var(--rg)':'var(--g1)')+';color:'+(val==='issue'?'var(--rl)':'var(--g5)')+';';
+    rows+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--g2);">'
+      +'<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;color:var(--tx);">'+lbl+'</div>'
+      +(desc?'<div style="font-size:11px;color:var(--g5);">'+desc+'</div>':'')+'</div>'
+      +'<div style="display:flex;gap:5px;">'
+      +'<button style="'+okStyle+'" data-k="'+key+'" data-v="ok" onclick="setMechItem(this.dataset.k,this.dataset.v)" ontouchend="event.preventDefault();setMechItem(this.dataset.k,this.dataset.v)">✅</button>'
+      +'<button style="'+issueStyle+'" data-k="'+key+'" data-v="issue" onclick="setMechItem(this.dataset.k,this.dataset.v)" ontouchend="event.preventDefault();setMechItem(this.dataset.k,this.dataset.v)">⚠</button>'
+      +'</div></div>';
+  }
+  var mechCount=L_MECH.filter(function(x){return x&&x[0]!=='__SECTION__';}).length;
+  var doneCount=Object.keys(co.mechItems).filter(function(k){return k.startsWith('m');}).length;
+  var allDone=doneCount>=mechCount;
+  return '<div class="step-intro"><div class="step-ico">🔩</div>'
+    +'<div><div class="step-title">Mechanical Check</div>'
+    +'<div class="step-sub">Check all mechanical components ('+doneCount+'/'+mechCount+')</div></div></div>'
+    +'<div style="padding:0 4px;">'+rows+'</div>'
+    +(allDone
+      ?'<button onclick="co.mechDone=true;co.mechBy=APP_USER?APP_USER.name:\'\';saveCOProgress();coGoStep(3);" ontouchend="event.preventDefault();co.mechDone=true;co.mechBy=APP_USER?APP_USER.name:\'\';saveCOProgress();coGoStep(3);" style="width:100%;margin-top:14px;padding:14px;background:var(--se);border:none;border-radius:var(--rs);color:#0a1a10;font-size:15px;font-weight:900;cursor:pointer;touch-action:manipulation;">✅ Mechanical Complete — Next</button>'
+      :'<div style="margin-top:12px;padding:12px;background:var(--g1);border-radius:var(--rs);text-align:center;color:var(--g5);font-size:13px;">Check all items ('+doneCount+'/'+mechCount+' done)</div>');
+}
+function setMechItem(k,v){
+  if(!co.mechItems)co.mechItems={};
+  co.mechItems[k]=v; saveCOProgress(); drawCO();
+}
+
+
 function coStep1_equip(){
   if(!co||!co.v){return '<div style="padding:20px;color:red;">Error: co.v undefined in step1_equip</div>';}
   // Equipment section only — items FROM '🏕 Camping Equipment' onwards
