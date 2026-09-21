@@ -517,69 +517,171 @@ async function loadClients(){
 
 // ── OVERVIEW ─────────────────────────────────────────────────────
 function renderOV(){
-  const today='2026-07-15';
-  const fmt=d=>new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
-  const deps=FLEET.filter(v=>v.st==='available').sort((a,b)=>a.pu>b.pu?1:-1);
-  const rets=FLEET.filter(v=>v.st==='rented').sort((a,b)=>a.rt>b.rt?1:-1);
+  const today = '2026-07-15';
+  const todayD = new Date(today);
+  const fmtDate = d => new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}).toUpperCase();
+  const daysFrom = d => Math.round((new Date(d+'T00:00:00') - todayD) / 86400000);
 
-  function mFlag(v){
-    if(!v.svc)return'';
-    const left=(v.svc.lastKm+v.svc.intKm)-v.odo;
-    const licDays=v.lic?Math.round((new Date(v.lic.expiry)-new Date('2026-07-15'))/86400000):999;
-    if(left<=0)return`<div style="font-size:10px;font-weight:700;color:var(--rl);margin-top:5px;padding:3px 8px;background:var(--rg);border-radius:5px;animation:pulse 1.5s infinite">🔧 SERVICE OVERDUE</div>`;
-    if(left<=1500)return`<div style="font-size:10px;font-weight:700;color:var(--al);margin-top:5px;padding:3px 8px;background:var(--ag);border-radius:5px">🔧 Service in ${left.toLocaleString()}km</div>`;
-    if(licDays<=30)return`<div style="font-size:10px;font-weight:700;color:var(--rl);margin-top:5px;padding:3px 8px;background:var(--rg);border-radius:5px">📋 Licence expires in ${licDays}d</div>`;
-    if(licDays<=90)return`<div style="font-size:10px;font-weight:700;color:var(--al);margin-top:5px;padding:3px 8px;background:var(--ag);border-radius:5px">📋 Licence in ${licDays}d</div>`;
-    return'';
+  // Stats
+  const avail  = FLEET.filter(v=>v.st==='available'&&!v.blocked).length;
+  const rented = FLEET.filter(v=>v.st==='rented').length;
+  const blocked= FLEET.filter(v=>v.blocked).length;
+  const total  = FLEET.length;
+
+  // Movements = anything going out OR coming back today or next 7 days
+  const movements = FLEET
+    .flatMap(v=>[
+      {type:'out', fn:v.fn, cl:v.cl, date:v.pu, loc:'Windhoek', camping:v.camping, pax:v.pax, special:v.special||[], xb:v.xb, v},
+      {type:'in',  fn:v.fn, cl:v.cl, date:v.rt, loc:'Windhoek', camping:v.camping, pax:v.pax, special:v.special||[], xb:v.xb, v},
+    ])
+    .filter(m=>m.date && daysFrom(m.date) >= 0 && daysFrom(m.date) <= 7)
+    .sort((a,b)=>a.date>b.date?1:-1);
+
+  const arrivals   = movements.filter(m=>m.type==='in');
+  const departures = movements.filter(m=>m.type==='out');
+  const allMovs    = movements;
+
+  const todayMovs  = allMovs.filter(m=>daysFrom(m.date)===0).length;
+  const todayArr   = arrivals.filter(m=>daysFrom(m.date)===0).length;
+  const todayDep   = departures.filter(m=>daysFrom(m.date)===0).length;
+
+  function movCard(m){
+    const isToday = daysFrom(m.date)===0;
+    const isOut   = m.type==='out';
+    const tag     = m.camping ? `<span style="color:#2a9d5c;font-weight:700;font-size:11px;">Camping ${m.pax} PAX</span>`
+                               : `<span style="color:#888;font-size:11px;">${m.pax} PAX · No camping</span>`;
+    const specHTML = m.special.length
+      ? `<div style="color:#e07b00;font-size:10px;font-weight:700;margin-top:2px;">${m.special.join(' · ')}</div>`
+      : '';
+    const xbHTML = m.xb
+      ? `<div style="color:#e07b00;font-size:10px;font-weight:700;">🌍 ${m.xb}</div>` : '';
+    return `<div style="border:${isToday&&m.special.length?'1.5px solid #f5a623':'1px solid #e8e8e8'};border-radius:10px;padding:12px 14px;margin-bottom:8px;background:${isToday&&m.special.length?'#fffbf0':'#fff'};cursor:pointer;" onclick="startCO('${m.fn}')" >
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        <div style="width:32px;height:32px;border-radius:8px;background:${isOut?'#e8f0ff':'#e8f5ee'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="${isOut?'M5 12h14M13 6l6 6-6 6':'M19 12H5M11 18l-6-6 6-6'}" stroke="${isOut?'#4a6fa5':'#2a9d5c'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:#111;line-height:1.3;">${m.fn} — ${isOut?'OUT':'BACK'} · ${m.cl}</div>
+          <div style="font-size:11px;color:#888;margin-top:2px;">${isOut?'Pickup':'Drop-off'}: ${m.loc}${m.xb?' · 🌍 '+m.xb:''}</div>
+          ${tag}${specHTML}${xbHTML}
+        </div>
+        ${m.special.length?'<span style="color:#e07b00;font-size:16px;">⚠</span>':''}
+      </div>
+    </div>`;
   }
 
-  let h=`<div class="ov-grid">
-    <div class="ov-stat"><div class="ov-n" style="color:var(--se)">${deps.length}</div><div class="ov-l">Ready to go</div></div>
-    <div class="ov-stat"><div class="ov-n" style="color:var(--bl)">${rets.length}</div><div class="ov-l">On the road</div></div>
-    <div class="ov-stat"><div class="ov-n" style="color:var(--re)">${FLEET.filter(v=>v.blocked).length}</div><div class="ov-l">Blocked</div></div>
-    <div class="ov-stat"><div class="ov-n" style="color:var(--g5)">${FLEET.length}</div><div class="ov-l">Fleet total</div></div>
+  function groupByDate(arr){
+    const groups = {};
+    arr.forEach(m=>{
+      if(!groups[m.date]) groups[m.date]=[];
+      groups[m.date].push(m);
+    });
+    return groups;
+  }
+
+  function renderGroup(grouped, emptyMsg){
+    if(!Object.keys(grouped).length) return `<div style="padding:20px;text-align:center;color:#bbb;font-size:12px;">${emptyMsg}</div>`;
+    return Object.keys(grouped).sort().map(date=>{
+      const isToday = daysFrom(date)===0;
+      const items = grouped[date];
+      return `
+        <div style="margin-bottom:4px;">
+          <div style="font-size:10px;font-weight:800;color:${isToday?'#e07b00':'#888'};letter-spacing:.5px;padding:6px 0 4px;border-bottom:2px solid ${isToday?'#e07b00':'#eee'};margin-bottom:8px;">
+            ${isToday?'TODAY':''}${!isToday?fmtDate(date):''} · ${items.length} ${items.length===1?'MOVEMENT':'MOVEMENTS'}
+          </div>
+          ${items.map(movCard).join('')}
+        </div>`;
+    }).join('');
+  }
+
+  const el = document.getElementById('ov-body');
+  el.style.background = '#f5f5f5';
+  el.style.padding = '0';
+
+  el.innerHTML = `
+  <!-- STAT BAR -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px;background:#fff;border-bottom:1px solid #eee;">
+    <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:16px 18px;">
+      <div style="font-size:32px;font-weight:800;color:#2a9d5c;line-height:1;">${avail}</div>
+      <div style="font-size:12px;color:#888;margin-top:4px;">Available today</div>
+    </div>
+    <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:16px 18px;">
+      <div style="font-size:32px;font-weight:800;color:#4a6fa5;line-height:1;">${rented}</div>
+      <div style="font-size:12px;color:#888;margin-top:4px;">Confirmed bookings</div>
+    </div>
+    <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:16px 18px;">
+      <div style="font-size:32px;font-weight:800;color:#e07b00;line-height:1;">${blocked}</div>
+      <div style="font-size:12px;color:#888;margin-top:4px;">In buffer today</div>
+    </div>
+    <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:16px 18px;">
+      <div style="font-size:32px;font-weight:800;color:#555;line-height:1;">${total}</div>
+      <div style="font-size:12px;color:#888;margin-top:4px;">Total fleet · Toyota Hilux</div>
+    </div>
+  </div>
+
+  <!-- THREE COLUMNS -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;padding:14px;gap:12px;height:calc(100% - 110px);box-sizing:border-box;">
+
+    <!-- Vehicle Movements -->
+    <div style="background:#fff;border-radius:14px;border:1px solid #eee;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+        <div style="width:32px;height:32px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:#111;">Vehicle movements</div></div>
+        <div style="text-align:center;background:#e07b00;border-radius:50%;width:34px;height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">
+          <div style="font-size:13px;font-weight:800;color:#fff;line-height:1;">${todayMovs}</div>
+          <div style="font-size:8px;color:rgba(255,255,255,.8);line-height:1;">today</div>
+        </div>
+        <div style="font-size:11px;color:#aaa;">Next 7<br>days</div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:12px;">
+        ${renderGroup(groupByDate(allMovs), 'No movements in the next 7 days')}
+      </div>
+    </div>
+
+    <!-- Arrival Movements -->
+    <div style="background:#fff;border-radius:14px;border:1px solid #eee;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+        <div style="width:32px;height:32px;background:#e8f5ee;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 18l-6-6 6-6" stroke="#2a9d5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:#111;">Arrival movements</div></div>
+        <div style="text-align:center;background:#e07b00;border-radius:50%;width:34px;height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">
+          <div style="font-size:13px;font-weight:800;color:#fff;line-height:1;">${todayArr}</div>
+          <div style="font-size:8px;color:rgba(255,255,255,.8);line-height:1;">today</div>
+        </div>
+        <div style="font-size:11px;color:#aaa;">Next 7<br>days</div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:12px;">
+        ${renderGroup(groupByDate(arrivals), 'No arrivals in the next 7 days')}
+      </div>
+    </div>
+
+    <!-- Departure Movements -->
+    <div style="background:#fff;border-radius:14px;border:1px solid #eee;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+        <div style="width:32px;height:32px;background:#e8f0ff;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#4a6fa5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:700;color:#111;">Departure movements</div></div>
+        <div style="text-align:center;background:#e07b00;border-radius:50%;width:34px;height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">
+          <div style="font-size:13px;font-weight:800;color:#fff;line-height:1;">${todayDep}</div>
+          <div style="font-size:8px;color:rgba(255,255,255,.8);line-height:1;">today</div>
+        </div>
+        <div style="font-size:11px;color:#aaa;">Next 7<br>days</div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:12px;">
+        ${renderGroup(groupByDate(departures), 'No departures in the next 7 days')}
+      </div>
+    </div>
+
   </div>`;
 
-  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">`;
-
-  // Departures
-  h+=`<div><div style="font-size:11px;font-weight:700;color:var(--se);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding:6px 10px;background:var(--sg);border-radius:7px">🚗 Departures</div>`;
-  deps.forEach(v=>{
-    const blk=v.blocked;
-    h+=`<div class="vc${blk?' blk':''}" onclick="startCO('${v.fn}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div class="vc-fn">${v.fn} <span class="vc-reg">${v.reg}</span></div>
-          <div class="vc-cl">${v.cl||'No booking'}</div>
-          <div class="vc-meta">Pickup: ${v.pu||'TBD'}${v.xb?' · 🌍 '+v.xb:''}</div></div>
-        <span class="bdg ${blk?'r':'x'}">${blk?'Blocked':'Available'}</span>
-      </div>
-      ${blk?`<div class="al warn" style="margin-top:6px;font-size:10px">⚠ ${blk}</div>`:''}
-      ${mFlag(v)}
-      ${!blk?`<div style="font-size:10px;font-weight:700;color:var(--se);margin-top:6px">Tap to begin check-out →</div>`:''}
-    </div>`;
-  });
-  if(!deps.length)h+=`<div style="padding:20px;text-align:center;color:var(--g5);font-size:12px">No vehicles available</div>`;
-  h+=`</div>`;
-
-  // Returns
-  h+=`<div><div style="font-size:11px;font-weight:700;color:var(--be);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding:6px 10px;background:var(--bs);border-radius:7px">🏠 Returns</div>`;
-  rets.forEach(v=>{
-    h+=`<div class="vc ret" onclick="startCI('${v.fn}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div class="vc-fn">${v.fn} <span class="vc-reg">${v.reg}</span></div>
-          <div class="vc-cl">${v.cl}</div>
-          <div class="vc-meta">Return: ${v.rt} · ${v.odo.toLocaleString()} km${v.xb?' · 🌍 '+v.xb:''}</div></div>
-        <span class="bdg b">Out</span>
-      </div>
-      ${v.dmgd?.length?`<div style="font-size:10px;color:var(--am);margin-top:4px">⭐ Pre-existing damage on record</div>`:''}
-      <div style="font-size:10px;font-weight:700;color:var(--be);margin-top:6px">Tap to check in →</div>
-    </div>`;
-  });
-  if(!rets.length)h+=`<div style="padding:20px;text-align:center;color:var(--g5);font-size:12px">No vehicles on the road</div>`;
-  h+=`</div></div>`;
-
-  document.getElementById('ov-body').innerHTML=h;
+  // Make the page background light
+  document.getElementById('page-ov').style.background = '#f5f5f5';
 }
+
 
 // ═══════════════════════════════════════════════════════════════
 //  CHECK-OUT FLOW
