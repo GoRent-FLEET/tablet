@@ -3646,8 +3646,12 @@ function drawCI(){
           <div class="fhdr-cl">${v.cl} · Return: ${v.rt}</div>
           <div style="margin-top:5px;font-size:11px;font-weight:800;color:rgba(255,255,255,.5);">👤 ${ci.receivedBy||APP_USER&&APP_USER.name||"—"}</div>
         </div>
-        <span style="font-size:14px;font-weight:700;padding:3px 10px;border-radius:8px;background:rgba(240,80,80,.15);color:var(--rl);border:1px solid var(--re)">◀ ARRIVAL</span>
+        <div style="text-align:right">
+          <span style="display:inline-block;margin-bottom:6px;font-size:14px;font-weight:700;padding:3px 10px;border-radius:8px;background:rgba(240,80,80,.15);color:var(--rl);border:1px solid var(--re)">◀ ARRIVAL</span><br>
+          ${ciCampBadge(v)}
+        </div>
       </div>
+      ${ciTripInfo(v)}
     <div style="display:flex;flex-wrap:wrap;gap:5px;padding:6px 14px 8px;border-top:1px solid rgba(255,255,255,.1);">
       ${(function(){
         var licExp=(v.lic&&v.lic.expiry)||'';
@@ -3805,6 +3809,23 @@ var CI_SKIP=['Exterior washed','Canopy & roof','Mounting brackets & load bars','
   'Interior vacuumed','Tent roof rails','All packed & locked'];
 // Which items appear at check-in: skip listed ones, camping items without camping,
 // and anything the check-out marked as not issued (N/A) or optional extras that were not issued
+// Check-in header: camping choice, airport transfer and flights from the booking
+function ciCampBadge(v){
+  var st=v.camping?'background:rgba(61,220,132,.15);color:var(--se);border:1px solid var(--gb)':'background:var(--g2);color:var(--g5);border:1px solid var(--g3)';
+  return '<span style="font-size:14px;font-weight:700;padding:3px 10px;border-radius:8px;'+st+'">'+(v.camping?'🏕 Camping':'🏨 No camping')+'</span>'
+    +(v.camping&&v.pax?'<div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:3px;">👥 '+v.pax+' pax</div>':'');
+}
+function ciTripInfo(v){
+  var b=v.b||{};
+  var tr=b.airport_transfer||'';var trl=tr.toLowerCase();
+  var trCol=/on us|included/.test(trl)?'var(--se)':(/client|paid/.test(trl)?'var(--al)':'rgba(255,255,255,.6)');
+  function chip(ico,lbl,val,col){return '<div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:5px 9px;font-size:12px;"><span>'+ico+'</span><span style="color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;font-size:10px;">'+lbl+'</span><span style="font-weight:800;color:'+(col||'#fff')+';">'+val+'</span></div>';}
+  var h='';
+  h+=chip('🚐','Transfer',_bx(tr||'None arranged'),tr?trCol:'rgba(255,255,255,.6)');
+  if(b.arrival_flight)h+=chip('🛬','Arrived',_bx(b.arrival_flight));
+  h+=chip('🛫','Departs',b.departure_flight?_bx(b.departure_flight):'No flight on booking',b.departure_flight?'#7db8ff':'rgba(255,255,255,.6)');
+  return '<div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 2px;">'+h+'</div>';
+}
 function ciSection(i){for(var k=i;k>=0;k--){var x=L_CI[k];if(x&&(x[0]==='__SECTION__'||x[0]==='__OPTIONAL__'))return String(x[1]||'');}return '';}
 function ciShow(x,i){
   if(!x)return false;
