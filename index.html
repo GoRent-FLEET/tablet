@@ -2636,7 +2636,7 @@ function ctDetailsForm(){
     +((ws||eq)?'<div style="display:flex;justify-content:space-between;padding:8px 14px;margin:-2px 0 8px;border-top:1px dashed var(--g3);font-size:15px;font-weight:900;"><span style="color:var(--g5);">Cover total ('+days+' days)</span><span style="color:var(--se);">'+ctMoney((ws?wsT:0)+(eq?eqT:0))+'</span></div>':'')
     +'<div style="font-size:12px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin:12px 0 6px;">Deposits received</div>'
     +tick('ct-fdr',!!c.fuel_deposit_received,'⛽ Fuel &amp; Admin deposit — N$7,500.00','Required for every rental · refunded within 7 days after return',c.fuel_deposit_received?'✓ Received':'Required','req')
-    +tick('ct-xbd',c.cross_border_deposit===true,'🌍 Cross-border deposit — N$30,000.00',need?'Required: this booking goes cross-border ('+_bx(co.v.xb||c.cross_border)+')':'Only for travel outside Namibia',c.cross_border_deposit===true?'✓ Received':(need?'Required':'Not needed'),need?'req':'opt');
+    +tick('ct-xbd',c.cross_border_deposit===true,'🌍 Cross-border/Damage deposit — N$30,000.00',need?'Required: this booking goes cross-border ('+_bx(co.v.xb||c.cross_border)+')':'Only for travel outside Namibia',c.cross_border_deposit===true?'✓ Received':(need?'Required':'Not needed'),need?'req':'opt');
   // wire the tick boxes after the screen is drawn
   setTimeout(function(){
     [['ct-aws','addon_windscreen'],['ct-aeq','addon_equipment'],['ct-fdr','fuel_deposit_received'],['ct-xbd','cross_border_deposit']].forEach(function(p){var e=document.getElementById(p[0]);if(e)e.onchange=function(){ctSet(p[1],this.checked);};});
