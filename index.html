@@ -251,7 +251,16 @@ input[type=file]{display:none;}
 .ins-leg{display:flex;gap:8px;align-items:center;margin-left:6px;}
 .ins-li{display:flex;align-items:center;gap:3px;font-size:9px;color:var(--g5);}
 .ins-ld{width:8px;height:8px;border-radius:50%;}
-.ins-sc{overflow-y:auto;max-height:50vh;background:#0a1020;}
+.ins-sc{background:#0a1020;}
+/* bigger damage toolbar for fingers */
+.ins-tb{padding:10px 12px;gap:8px;flex-wrap:wrap;}.ins-tl{font-size:12px;}
+.ins-t{min-width:92px;padding:9px 14px;border-radius:10px;touch-action:manipulation;}
+.ins-t .ins-sw{width:30px;height:30px;}.ins-t .ins-tn{font-size:13px;}
+.ins-ab{font-size:13px;padding:9px 14px;touch-action:manipulation;}
+.ins-szr{padding:8px 12px;gap:8px;flex-wrap:wrap;}.ins-szl{font-size:12px;}
+.ins-szb{font-size:13px;padding:8px 18px;touch-action:manipulation;}
+.ins-li{font-size:12px;}.ins-ld{width:11px;height:11px;}
+.ins-vl{font-size:11px;padding:6px 10px;}.ins-vc{font-size:11px;padding:4px 8px;}
 .ins-vp{position:relative;width:100%;}
 .ins-vl{background:#071020;padding:4px 10px;font-size:8px;font-weight:700;color:var(--se);text-transform:uppercase;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--g2);}
 .ins-vc{font-size:8px;color:var(--g4);cursor:pointer;padding:2px 6px;border-radius:3px;}
@@ -4674,18 +4683,18 @@ function insHTML(){
   return`<div class="ins-wrap">
     <div class="ins-tb">
       <span class="ins-tl">Mark:</span>
-      <div class="ins-t on" id="itb-sc" onclick="setIT('sc',this)"><div class="ins-sw" style="background:#4a9eff"></div><div class="ins-tn">Scratch</div></div>
-      <div class="ins-t" id="itb-de" onclick="setIT('de',this)"><div class="ins-sw" style="background:#f05050"></div><div class="ins-tn">Dent</div></div>
-      <div class="ins-t" id="itb-pr" onclick="setIT('pr',this)"><div class="ins-sw" style="background:#f5a623"></div><div class="ins-tn">Pre-existing</div></div>
+      <div class="ins-t${itool==='sc'?' on':''}" id="itb-sc" onclick="setIT('sc',this)"><div class="ins-sw" style="background:#4a9eff"></div><div class="ins-tn">Scratch</div></div>
+      <div class="ins-t${itool==='de'?' on':''}" id="itb-de" onclick="setIT('de',this)"><div class="ins-sw" style="background:#f05050"></div><div class="ins-tn">Dent</div></div>
+      <div class="ins-t${itool==='pr'?' on':''}" id="itb-pr" onclick="setIT('pr',this)"><div class="ins-sw" style="background:#f5a623"></div><div class="ins-tn">Pre-existing</div></div>
       <div class="ins-sp"></div>
       <button class="ins-ab" id="ins-undo" onclick="insUndo()" disabled style="opacity:.4">↶ Undo</button>
       <button class="ins-ab" onclick="insClear()">Clear all</button>
     </div>
     <div class="ins-szr">
       <span class="ins-szl">Size:</span>
-      <button class="ins-szb" id="isz-S" onclick="setIS('S')">Small</button>
-      <button class="ins-szb on" id="isz-M" onclick="setIS('M')">Medium</button>
-      <button class="ins-szb" id="isz-L" onclick="setIS('L')">Large</button>
+      <button class="ins-szb${isize==='S'?' on':''}" id="isz-S" onclick="setIS('S')">Small</button>
+      <button class="ins-szb${isize==='M'?' on':''}" id="isz-M" onclick="setIS('M')">Medium</button>
+      <button class="ins-szb${isize==='L'?' on':''}" id="isz-L" onclick="setIS('L')">Large</button>
       <div class="ins-leg"><div class="ins-li"><div class="ins-ld" style="background:#4a9eff"></div>Scratch</div>
       <div class="ins-li"><div class="ins-ld" style="background:#f05050"></div>Dent</div>
       <div class="ins-li"><div class="ins-ld" style="background:#f5a623"></div>Pre-existing</div></div>
@@ -4711,8 +4720,10 @@ function buildIG(v){
     const cur=imarks[v][isize][r+','+c]||null;if(cur)cell.classList.add(cur);
     cell.addEventListener('mousedown',e=>{e.preventDefault();window._id=true;window._ip=imarks[v][isize][r+','+c]!==itool;iCT(cell,v,r,c);});
     cell.addEventListener('mouseover',()=>{if(window._id&&window._ip)iCP(cell,v,r,c);});
-    cell.addEventListener('touchstart',e=>{e.preventDefault();iCT(cell,v,r,c);},{passive:false});
-    cell.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];const e2=document.elementFromPoint(t.clientX,t.clientY);if((e2&&e2.classList).contains('ins-cell'))VIEWS.forEach(vv=>{if(document.getElementById('ins-g-'+vv)===e2.parentElement)iCP(e2,vv,+e2.dataset.r,+e2.dataset.c);});},{passive:false});
+    // Touch: a tap marks the block; a swipe scrolls the page (no longer locked while over the photos)
+    cell.addEventListener('touchstart',function(e){var t=e.touches[0];cell._tx=t.clientX;cell._ty=t.clientY;cell._moved=false;},{passive:true});
+    cell.addEventListener('touchmove',function(e){var t=e.touches[0];if(Math.abs(t.clientX-cell._tx)>8||Math.abs(t.clientY-cell._ty)>8)cell._moved=true;},{passive:true});
+    cell.addEventListener('touchend',function(e){if(cell._moved)return;e.preventDefault();iCT(cell,v,r,c);},{passive:false});
     el.appendChild(cell);
   }
 }
