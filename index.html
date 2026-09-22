@@ -552,6 +552,13 @@ const L_PREP=[
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M2 8h20M5 8l2 10h10l2-10\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Braai grid','Present and clean'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M12 2l9 5v10l-9 5-9-5V7l9-5z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','All packed & locked','All equipment loaded and canopy locked']
 ];
+// Check-in uses the same list plus checks that only apply when the vehicle comes back
+const L_CI=(function(){
+  var a=L_PREP.slice();
+  var k=a.findIndex(function(x){return x[1]==='Wheels & tyres';});
+  a.splice(k+1,0,[a[k][0],'Undercarriage','Look under the vehicle: no new damage, leaks, hanging parts or rock/branch strikes']);
+  return a;
+})();
 const L_MECH=[
   ['__SECTION__','🛢 Fluids & leaks'],
   ['•','Engine oil level','Between MIN and MAX, no milky residue'],
@@ -3658,11 +3665,11 @@ function ciStep0_CI(){
   const _rst=l=>{const x=ci.retItems[l];return (x&&x.st!==undefined?x.st:x)||'';};
   const _rby=l=>{const x=ci.retItems[l];return (x&&x.by)||'';};
   const _rat=l=>{const x=ci.retItems[l];return (x&&x.at)||'';};
-  // Use L_PREP as the return checklist — same items as check-out
-  const done=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&CI_SKIP.indexOf(l)<0&&(l.startsWith('__QTY__')?_rst(l.replace('__QTY__','')):_rst(l))&&(_rst(l)!=='na')).length;
-  const checkable=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&CI_SKIP.indexOf(l)<0).length;
+  // Use L_CI as the return checklist — same items as check-out
+  const done=L_CI.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&CI_SKIP.indexOf(l)<0&&(l.startsWith('__QTY__')?_rst(l.replace('__QTY__','')):_rst(l))&&(_rst(l)!=='na')).length;
+  const checkable=L_CI.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&CI_SKIP.indexOf(l)<0).length;
   const pct=Math.round(done/checkable*100);
-  const probs=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&CI_SKIP.indexOf(l)<0&&_rst(l)==='prob').map(([i,l])=>l);
+  const probs=L_CI.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&CI_SKIP.indexOf(l)<0&&_rst(l)==='prob').map(([i,l])=>l);
   const retStaff=Object.keys(ci.retCheckedBy||{});
   const km=r.odoIn-(ci.odometerOut||v.odo);
 
@@ -3713,7 +3720,7 @@ function ciStep0_CI(){
     ${pct===100?'<span style="color:var(--se);font-weight:700;margin-left:8px">✅ All done!</span>':''}</div>
   </div>
 
-  <div class="chk-list">${L_PREP.map(([ico,lbl,det],i)=>{
+  <div class="chk-list">${L_CI.map(([ico,lbl,det],i)=>{
     if(CI_SKIP.indexOf(lbl)>=0) return '';
     if(CI_DESC[lbl]) det=CI_DESC[lbl];
     if(ico==='__CAMPING__') ico=TENT_ICON;
@@ -3785,10 +3792,10 @@ var CI_DESC={
 function tapRetItem(i){
   const nm=(function(){var _e=document.getElementById('ci-rcv');return _e?_e.value:undefined;})();if(nm)ci.receivedBy=nm;
   if(!ci.receivedBy){toast('Select your name first','err');return;}
-  if(L_PREP[i][0]==='__SECTION__'||L_PREP[i][0]==='__OPTIONAL__')return;
-  if(L_PREP[i][1]&&L_PREP[i][1].startsWith('__QTY__'))return;
-  const lbl=L_PREP[i][1];
-  const isOpt=L_PREP[i][0]==='__OPT_ITEM__';
+  if(L_CI[i][0]==='__SECTION__'||L_CI[i][0]==='__OPTIONAL__')return;
+  if(L_CI[i][1]&&L_CI[i][1].startsWith('__QTY__'))return;
+  const lbl=L_CI[i][1];
+  const isOpt=L_CI[i][0]==='__OPT_ITEM__';
   const _ri=ci.retItems[lbl];const prevSt=(_ri&&typeof _ri==='object')?(_ri.st||''):(_ri||'');
   let newSt;
   if(isOpt) newSt=prevSt==='ok'?'prob':prevSt==='prob'?'na':'ok';
@@ -4877,7 +4884,7 @@ function logReceiver(val,pinChecked){
 // Full list of what was checked at return, incl. items left unchecked (receiver's liability)
 function ciItemChecks(){
   var out={};
-  L_PREP.forEach(function(x){
+  L_CI.forEach(function(x){
     var ico=x[0],lbl=x[1];
     if(ico==='__SECTION__'||ico==='__OPTIONAL__'||CI_SKIP.indexOf(lbl)>=0)return;
     var real=String(lbl).replace('__QTY__','');
