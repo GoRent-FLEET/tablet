@@ -5552,7 +5552,7 @@ function buildContractHTML(c,sigUrl){
       <div style="min-height:${h};border:1px solid #bbb;border-radius:3px;padding:5px 8px;font-size:14px;color:#111;background:#fff;font-weight:${val?'600':'400'};color:${val?'#111':'#999'};">${val||''}</div>
     </div>`;
 
-  const chkBox=(checked)=>`<span style="display:inline-block;width:13px;height:13px;border:1.5px solid #555;border-radius:2px;margin-right:6px;vertical-align:middle;background:${checked?'#111':'#fff'};position:relative;">${checked?'<span style="position:absolute;top:-2px;left:1px;color:#fff;font-size:14px;font-weight:900;">✓</span>':''}</span>`;
+  const chkBox=(checked)=>`<span style="display:inline-block;flex-shrink:0;min-width:13px;width:13px;height:13px;border:1.5px solid #555;border-radius:2px;margin-right:6px;vertical-align:middle;background:${checked?'#111':'#fff'};position:relative;">${checked?'<span style="position:absolute;top:-2px;left:1px;color:#fff;font-size:14px;font-weight:900;">✓</span>':''}</span>`;
 
   // Additional drivers — from co.drivers array (skip index 0 = primary) + manual entries
   const addlDrivers = (()=>{
@@ -5666,7 +5666,7 @@ function buildContractHTML(c,sigUrl){
     <span style="float:right;font-size:13px;font-weight:700;background:#111;color:#fff;padding:3px 10px;border-radius:3px;letter-spacing:.5px;">FOR OFFICE USE ONLY</span>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;background:#e3f4e8;border:2px solid #000;border-radius:6px;padding:10px;">
     <div>
       <!-- Option 1 -->
       <div style="display:flex;align-items:flex-start;gap:6px;padding:7px 8px;margin-bottom:5px;border:1px solid #ccc;border-radius:4px;background:${c.insurance_option==='1'?'#f0f9f4;border-color:#1e8449':'#fff'};">
