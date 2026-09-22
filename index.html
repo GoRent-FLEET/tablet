@@ -3695,6 +3695,7 @@ function ciStep0_CI(){
 
   <div class="chk-list">${L_PREP.map(([ico,lbl,det],i)=>{
     if(CI_SKIP.indexOf(lbl)>=0) return '';
+    if(CI_DESC[lbl]) det=CI_DESC[lbl];
     if(ico==='__CAMPING__') ico=TENT_ICON;
     if(ico==='__SECTION__'||ico==='__OPTIONAL__'){
       const isOpt=ico==='__OPTIONAL__';
@@ -3753,7 +3754,14 @@ function ciStep0_CI(){
 
 // Check-out items that are NOT re-checked when the vehicle comes back
 var CI_SKIP=['Exterior washed','Canopy & roof','Mounting brackets & load bars','Tent load bars','Canopy locks','Tailgate & lock','Hooter','Canopy bolts fastened',
-  'Tent canvas & flysheet','Tent straps','Tent hinges & locks','Tent ladder','Tent mattress','Fitted sheet'];
+  'Tent canvas & flysheet','Tent straps','Tent hinges & locks','Tent ladder','Tent mattress','Fitted sheet',
+  'Interior vacuumed','Tent roof rails'];
+// What staff check on these items when the vehicle comes back (check-out wording stays as it is)
+var CI_DESC={
+  'Wheels & tyres':'All rims present · 2 × spare wheels present (no need to check cleaning)',
+  'Lights & binoculars':'Returned — camping lights and binoculars handed back',
+  'Fridge':'Returned — fridge is inspected at the next check-out'
+};
 function tapRetItem(i){
   const nm=(function(){var _e=document.getElementById('ci-rcv');return _e?_e.value:undefined;})();if(nm)ci.receivedBy=nm;
   if(!ci.receivedBy){toast('Select your name first','err');return;}
