@@ -983,6 +983,7 @@ async function showApp(){
   setTimeout(function(){ try{ checkResume(); }catch(e){} }, 500);
 }
 async function restoreSession(){
+  var _rl=sharedReportLink(); if(_rl){showSharedReport(_rl);return;}
   try{var _ds=await SB.auth.getSession();if(!(_ds&&_ds.data&&_ds.data.session)){showDeviceLogin();return;}}catch(e){showDeviceLogin();return;}
   // Check for saved login
   try {
@@ -4132,7 +4133,7 @@ async function openRentalFile(key,fn,client){
       +(window._rfContractHTML?'<button class="btn g" style="margin-top:8px;width:auto;padding:10px 16px;" onclick="rfShowContract()">📄 Open full signed contract</button>':'')):'<div style="font-size:13px;color:var(--g5);">No signed contract saved for this booking yet.</div>');
     h+=sec('🪪 Passport, ID & licence scans',idDocs.length?idDocs.map(function(p){return signed[p]?thumb(signed[p],rfLabel(p)):'';}).join(''):'<div style="font-size:13px;color:var(--g5);">No scans saved for this booking yet.</div>');
     h+=sec('🚗 Check-out',cko?(line('Prepared by',_bx((cko.prep_by_all||[cko.prep_by]).filter(Boolean).join(', ')||'—'))+line('Handed over by',_bx(cko.handover_by||'—'))+line('Manager',_bx(cko.manager_name||'—'))+line('Km out · fuel out',Number(cko.odo_out||0).toLocaleString()+' km · '+_bx(cko.fuel_out||'—'))+line('Date',new Date(cko.created_at).toLocaleString('en-GB'))):'<div style="font-size:13px;color:var(--g5);">Not checked out on the tablet yet.</div>');
-    h+=sec('🏠 Check-in',cki?(line('Received by',_bx(cki.received_by||'—'))+line('Manager sign-off',_bx(cki.manager_name||'—'))+line('Km in · fuel in',Number(cki.odo_in||0).toLocaleString()+' km · '+_bx(cki.fuel_in||'—'))+line('Deposit decision',_bx(cki.deposit_decision||'—'))+line('Return report emailed',cki.report_sent_to?_bx(cki.report_sent_to)+' · '+new Date(cki.report_sent_at).toLocaleString('en-GB'):'Not sent')+line('Date',new Date(cki.created_at).toLocaleString('en-GB'))):'<div style="font-size:13px;color:var(--g5);">Not checked in on the tablet yet.</div>');
+    h+=sec('🏠 Check-in',cki?(line('Received by',_bx(cki.received_by||'—'))+line('Manager sign-off',_bx(cki.manager_name||'—'))+line('Km in · fuel in',Number(cki.odo_in||0).toLocaleString()+' km · '+_bx(cki.fuel_in||'—'))+line('Deposit decision',_bx(cki.deposit_decision||'—'))+line('Return report',cki.report_link?'<a href="'+cki.report_link+'" target="_blank" style="color:var(--se);">📄 Open report</a> · <a href="https://wa.me/?text='+encodeURIComponent('Your Go Rent 4×4 vehicle return report: '+cki.report_link)+'" target="_blank" style="color:#25d366;">📱 Share on WhatsApp</a>':'—')+(cki.report_whatsapp_at?line('Sent on WhatsApp',new Date(cki.report_whatsapp_at).toLocaleString('en-GB')):'')+line('Return report emailed',cki.report_sent_to?_bx(cki.report_sent_to)+' · '+new Date(cki.report_sent_at).toLocaleString('en-GB'):'Not sent')+line('Date',new Date(cki.created_at).toLocaleString('en-GB'))):'<div style="font-size:13px;color:var(--g5);">Not checked in on the tablet yet.</div>');
     h+=sec('📷 Photos & fuel receipts',picUrls.length?picUrls.map(function(x){return thumb(x.url,rfLabel(x.path));}).join(''):'<div style="font-size:13px;color:var(--g5);">No photos saved for this booking yet.</div>');
     h+=sec('✍️ Signatures',sigDocs.length?sigDocs.map(function(p){return signed[p]?thumb(signed[p],rfLabel(p)):'';}).join(''):'<div style="font-size:13px;color:var(--g5);">No signatures saved for this booking yet.</div>');
     h+='<div style="font-size:11px;color:var(--g5);margin-top:12px;">Tap any picture to open it full size. Scan and signature links are private and expire after 1 hour.</div>';
@@ -4156,6 +4157,70 @@ async function loadRentalFiles(q){
   el.innerHTML='<input class="search-bar" placeholder="🔍 Search client or vehicle…" value="'+_bx(q||'')+'" oninput="clearTimeout(window._rfT);var v=this.value;window._rfT=setTimeout(function(){loadRentalFiles(v)},300)">'
     +(list.length?list.map(function(r){return '<div onclick="openRentalFile(\''+r.key+'\',\''+_bx(r.fn)+'\',\''+_bx(String(r.cl||'').replace(/\'/g,''))+'\')" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;margin-bottom:8px;border-radius:10px;border:1px solid var(--g2);background:var(--g1);cursor:pointer;">'
       +'<div><div style="font-size:15px;font-weight:900;color:var(--tx);">'+_bx(r.fn)+' · '+_bx(r.cl||'')+'</div><div style="font-size:12px;color:var(--g5);">'+_dmy(r.when)+'</div></div><div style="font-size:20px;">📁</div></div>';}).join(''):'<div style="padding:16px;color:var(--g5);">No rentals found.</div>');
+}
+
+// ── RETURN REPORT BY WHATSAPP ─────────────────────────────────────
+// The report is saved privately with the booking; the client gets a long-lived private link
+// that opens this app in "report only" mode (#r=...). Staff send it with one tap in WhatsApp.
+var REPORT_LINK_DAYS=365;
+async function saveCIReportLink(){
+  try{
+    var html=ciReportHTML();
+    var path='bookings/'+bkKey(ci.v)+'/return-report_'+Date.now()+'.html';
+    var blob=new Blob([html],{type:'text/plain'});
+    var up=await SB.storage.from('client-docs').upload(path,blob,{contentType:'text/plain;charset=utf-8',upsert:true});
+    if(up&&up.error)return '';
+    var s=await SB.storage.from('client-docs').createSignedUrl(path,60*60*24*REPORT_LINK_DAYS);
+    var signed=s&&s.data&&s.data.signedUrl;if(!signed)return '';
+    return 'https://gorent-fleet.github.io/fleet/#r='+encodeURIComponent(signed);
+  }catch(e){return '';}
+}
+function waNumber(p){
+  var d=String(p||'').replace(/[^\d+]/g,'');
+  if(d.indexOf('+')===0)d=d.slice(1);
+  else if(d.indexOf('00')===0)d=d.slice(2);
+  else if(d.indexOf('0')===0)d='264'+d.slice(1); // local Namibian number
+  return d.replace(/\D/g,'');
+}
+function ciWaText(link){
+  var first=String(ci.v.cl||'').split(' ')[0]||'';
+  return 'Hi '+first+', thank you for renting with Go Rent 4×4. Here is your vehicle return report for '+ci.fn
+    +', with photos, who received the vehicle and the signatures:\n'+link;
+}
+function ciWaBox(phone,link){
+  if(!link)return '<div class="al warn" style="margin:10px 0;">⚠ The return report link could not be created (no connection?). Open the rental file later to share it.</div>';
+  return '<div id="ci-wa" style="background:#0b2a1a;border:2px solid #25d366;border-radius:var(--r);padding:12px 14px;margin:10px 0;">'
+    +'<div style="font-size:14px;font-weight:800;color:#25d366;margin-bottom:8px;">📱 Send the return report on WhatsApp</div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;"><input id="ci-wa-to" type="tel" inputmode="tel" value="'+_bx(phone||'')+'" placeholder="Client WhatsApp number, e.g. +49 170 1234567" style="flex:1;min-width:200px;padding:10px 12px;border-radius:8px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:15px;">'
+    +'<button onclick="sendCIWhatsApp()" style="padding:10px 18px;border-radius:8px;border:none;background:#25d366;color:#04240f;font-size:15px;font-weight:900;cursor:pointer;">Open WhatsApp</button></div>'
+    +'<div style="font-size:12px;color:var(--g5);margin-top:6px;">WhatsApp opens with the message ready — just press Send. <a href="'+link+'" target="_blank" style="color:#25d366;">Preview report</a></div>'
+    +'</div>';
+}
+function sendCIWhatsApp(){
+  var raw=(document.getElementById('ci-wa-to')||{}).value||'';
+  var num=waNumber(raw);
+  var url='https://wa.me/'+(num||'')+'?text='+encodeURIComponent(ciWaText(ci._reportLink));
+  window.open(url,'_blank');
+  try{SB.from('checkins').update({report_whatsapp_at:new Date().toISOString()}).eq('booking_id',bkKey(ci.v)).then(function(){},function(){});}catch(e){}
+}
+// "Report only" mode: opened from the WhatsApp link
+function sharedReportLink(){
+  var h=location.hash||'';
+  if(h.indexOf('#r=')!==0)return '';
+  var u='';try{u=decodeURIComponent(h.slice(3));}catch(e){return '';}
+  return u.indexOf(SB_URL+'/storage/v1/object/sign/client-docs/bookings/')===0?u:'';
+}
+async function showSharedReport(u){
+  document.documentElement.style.overflow='auto';
+  document.body.setAttribute('style','overflow:auto;background:#f3f3f3;height:auto;min-height:100vh;margin:0;');
+  document.body.innerHTML='<div id="shared-report" style="padding:16px;font-family:Arial,sans-serif;color:#333;">Loading your return report…</div>';
+  var el=document.getElementById('shared-report');
+  try{
+    var r=await fetch(u);
+    if(!r.ok){el.innerHTML='<p>This report link has expired or is not valid. Please contact Go Rent 4×4 at info@gorent4x4.com.</p>';return;}
+    el.innerHTML=await r.text();
+    document.title='Go Rent 4×4 — Vehicle Return Report';
+  }catch(e){el.innerHTML='<p>The report could not be loaded. Please check your internet connection and try again.</p>';}
 }
 
 // ── RETURN REPORT EMAIL (sent to the client when the check-in is completed) ──
@@ -4234,6 +4299,7 @@ async function sendCIReport(to){
   }catch(e){return {ok:false,err:String(e)};}
 }
 function ciMailBox(to,res){
+  if(res&&!res.ok&&/RESEND_API_KEY/.test(res.err||''))return '<div id="ci-mail" style="font-size:12px;color:var(--g5);margin:6px 0 10px;">📧 Email sending isn\'t set up yet — use WhatsApp above.</div>';
   var st=res?(res.ok?'<div style="color:var(--se);font-weight:800;">✅ Return report emailed to '+_bx(to)+' (office copied)</div>':'<div style="color:var(--rl);font-weight:800;">⚠ Report not sent'+(res.err?' — '+_bx(res.err):'')+'</div>'):'<div style="color:var(--al);font-weight:800;">⚠ No client email on the booking — enter it below</div>';
   return '<div id="ci-mail" style="background:var(--g1);border:2px solid var(--g2);border-radius:var(--r);padding:12px 14px;margin:10px 0;">'
     +'<div style="font-size:14px;margin-bottom:8px;">📧 '+st+'</div>'
@@ -4255,6 +4321,7 @@ async function completeCI(){
   // Email the client their return report (photos, summary, who received it, signatures)
   try{await uploadCISigs();}catch(e){}
   var _mailTo=(ci.v.email||'').trim(), _mail=null;
+  banner('Saving return report');ci._reportLink=await saveCIReportLink();hideBanner();
   if(_mailTo){banner('Emailing return report to '+_mailTo);_mail=await sendCIReport(_mailTo);hideBanner();}
   const newDmg=ci.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
   ci.v.st=newDmg.length?'maintenance':'available';
@@ -4273,7 +4340,7 @@ async function completeCI(){
     deposit_decision:ci.deposit,manager_notes:ci.mgmtNotes,client_notes:ci.notes,
     fuel_receipts:ci.fuelPhotos||[],
     item_checks:ciItemChecks(),equipment_checked_by:ciEqChecks(),receiver_log:ci.rcvLog||[],
-    signature_urls:ci._sigUrls||{},report_sent_to:(_mail&&_mail.ok)?_mailTo:null,report_sent_at:(_mail&&_mail.ok)?new Date().toISOString():null,
+    signature_urls:ci._sigUrls||{},report_link:ci._reportLink||null,report_sent_to:(_mail&&_mail.ok)?_mailTo:null,report_sent_at:(_mail&&_mail.ok)?new Date().toISOString():null,
     created_at:new Date().toISOString(),
   });
   // Read-only tablet: Fleet Manager data (vehicles/bookings) is never changed from here
@@ -4293,6 +4360,7 @@ async function completeCI(){
     <div class="al ${ci.v.st==='maintenance'?'warn':'ok'}">
       ${ci.v.st==='maintenance'?'⚠ Vehicle flagged for maintenance before next rental':'✓ Vehicle back in available fleet'}
     </div>
+    ${ciWaBox(ci.v.phone,ci._reportLink)}
     ${ciMailBox(_mailTo,_mail)}
     <button class="btn g" style="margin-top:10px" onclick="goPage('ov')">← Back to Overview</button>`;
   renderOV();
