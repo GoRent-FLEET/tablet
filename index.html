@@ -2609,6 +2609,10 @@ function coStep2(){
         Camping Equipment cover (+N$103.50/day)
       </label>
     </div>
+    ${(function(){var need=!!(co.v.xb||(co.contract&&co.contract.cross_border));var on=!!(co.contract&&co.contract.cross_border_deposit);
+      return '<label style="display:flex;align-items:center;gap:10px;font-size:15px;font-weight:800;cursor:pointer;margin:8px 0 10px;padding:10px 12px;border-radius:10px;border:2px solid '+(on?'var(--gb)':need?'var(--re)':'var(--g3)')+';background:'+(on?'var(--sg)':need?'var(--rg)':'transparent')+';">'
+        +'<input type="checkbox" id="ct-xbd" '+(on?'checked':'')+' onchange="(co.contract=co.contract||{}).cross_border_deposit=this.checked;drawCO()" style="width:22px;height:22px">'
+        +'<span>🌍 Cross-border damage deposit N$30,000 received'+(need?' <span style="color:'+(on?'var(--se)':'var(--rl)')+';">— REQUIRED: this booking goes cross-border ('+_bx(co.v.xb||co.contract.cross_border)+')</span>':' <span style="font-weight:600;color:var(--g5);">(only for cross-border travel)</span>')+'</span></label>';})()}
     <div class="fi"><label>Cross-border authorised</label><input id="ct-xb" value="${(co.contract&&co.contract.cross_border)||co.v.xb||''}" placeholder="e.g. Botswana" oninput="(co.contract=co.contract||{}).cross_border=this.value"></div>
     <div class="fi"><label>Additional drivers (one per line)</label><textarea id="ct-add" placeholder="Full name / DOB / Nationality / Licence # / Expiry" oninput="(co.contract=co.contract||{}).additional_drivers=this.value" style="min-height:60px">${(co.contract&&co.contract.additional_drivers)||''}</textarea></div>
   </div>
@@ -2650,6 +2654,7 @@ function gatherContract(){
   co.contract.insurance_option=(function(){var _e=document.getElementById('ct-ins');return _e?_e.value:undefined;})()||co.contract.insurance_option;
   co.contract.addon_windscreen=(function(){var _e=document.getElementById('ct-aws');return _e?_e.checked:false;})()||co.contract.addon_windscreen;
   co.contract.addon_equipment=(function(){var _e=document.getElementById('ct-aeq');return _e?_e.checked:false;})()||co.contract.addon_equipment;
+  co.contract.cross_border_deposit=(function(){var _e=document.getElementById('ct-xbd');return _e?_e.checked:false;})()||!!co.contract.cross_border_deposit;
   co.contract.cross_border=(function(){var _e=document.getElementById('ct-xb');return _e?_e.value:undefined;})()||co.contract.cross_border;
   co.contract.additional_drivers=(function(){var _e=document.getElementById('ct-add');return _e?_e.value:undefined;})()||co.contract.additional_drivers||(co.drivers||[]).slice(1).filter(function(d){return d&&d.name;}).map(function(d){return [d.name,d.dob,d.nationality,d.licNo,d.licExpiry].filter(Boolean).join(' / ');}).join('\n');
   const days=co.v.pu&&co.v.rt?Math.max(1,Math.round((new Date(co.v.rt)-new Date(co.v.pu))/86400000)):0;
@@ -2660,6 +2665,7 @@ function gatherContract(){
 function previewAndSignContract(){
   gatherContract();
   const c=co.contract;
+  if((co.v.xb||c.cross_border)&&!c.cross_border_deposit){toast('Cross-border booking: tick the N$30,000 cross-border deposit first','err');var _x=document.getElementById('ct-xbd');if(_x)_x.scrollIntoView({block:'center'});return;}
 
   // Full-screen signing modal — locks the page, iPad-friendly
   const modal=document.createElement('div');
@@ -5683,7 +5689,7 @@ function buildContractHTML(c,sigUrl){
       </div>
       <!-- Cross-border -->
       <div style="display:flex;align-items:flex-start;gap:6px;padding:7px 8px;border:1px solid #ccc;border-radius:4px;background:${c.cross_border?'#f0f9f4;border-color:#1e8449':'#fff'};">
-        ${chkBox(!!c.cross_border)}
+        ${chkBox(!!c.cross_border_deposit)}
         <div style="font-size:10.5px;line-height:1.5;"><strong>Remote Collection &amp; Cross-Border Damage Deposit (N$30,000.00) received</strong>
         ${c.cross_border?`<br><span style="color:#1e8449;font-weight:700;">✓ Authorised: ${c.cross_border}</span>`:''}
         <br><span style="font-size:9.5px;color:#555;">(if applicable — see Section 6.2.2 for travel into Botswana or other neighbouring countries)</span></div>
@@ -5786,7 +5792,7 @@ function buildContractHTML(c,sigUrl){
         ['Rental period', days?days+' days':'—'],
         ['Damage deposit', c.deposit_amount?'N$ '+Number(c.deposit_amount).toLocaleString('en-ZA',{minimumFractionDigits:2}):'—'],
         ['Fuel & admin deposit', 'N$ 7,500.00'],
-        ['Cross-border deposit', c.cross_border?'N$ 30,000.00':'N/A'],
+        ['Cross-border deposit', c.cross_border_deposit?'N$ 30,000.00 received':(c.cross_border?'Not received':'N/A')],
         ['Windscreen & Tyre add-on', c.addon_windscreen?'N$ '+(184*days).toLocaleString('en-ZA',{minimumFractionDigits:2}):'Not selected'],
         ['Camping Equipment cover', c.addon_equipment?'N$ '+(103.50*days).toLocaleString('en-ZA',{minimumFractionDigits:2}):'Not selected'],
         ['Deposit method', c.deposit_method||'—'],
