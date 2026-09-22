@@ -1587,8 +1587,8 @@ function startCO(fn){
 const CO_STEPS=[
   {n:0,ico:'🚿',lbl:'Cleaning',   sub:'Carwash & clean'},
   {n:1,ico:'🔧',lbl:'Engine',     sub:'Under the bonnet'},
-  {n:2,ico:'📦',lbl:'Equipment',  sub:'Equipment packing & checks'},
-  {n:3,ico:'🔩',lbl:'Mechanical', sub:'Mechanical check'},
+  {n:2,ico:'🔩',lbl:'Mechanical', sub:'Mechanical check'},
+  {n:3,ico:'📦',lbl:'Equipment',  sub:'Equipment packing & checks'},
   {n:4,ico:'🔍',lbl:'Inspection', sub:'Vehicle inspection'},
   {n:5,ico:'📋',lbl:'Contract',   sub:'Sign agreement'},
   {n:6,ico:'🤝',lbl:'Handover',   sub:'Client handover'},
@@ -1606,12 +1606,12 @@ function drawCO(){
   // Step progress bar
   const bar=CO_STEPS.filter(function(s){return s.n!==1;}).map(s=>{
     const done=(s.n===0&&coCleanDone())||(s.n===1&&!!co.bonnetDone)||
-               (s.n===2&&!!co.equipSig)||(s.n===3&&!!co.mechDone)||
+               (s.n===2&&!!co.mechDone)||(s.n===3&&!!co.equipSig)||
                (s.n===4&&coInspDone())||(s.n===5&&co.contractSigned)||
                (s.n===6&&!!co.custSig)||(s.n===7&&!!co.mgmtSig);
     // Who completed this step
-    const stepBy=(s.n===0?co.prepBy:s.n===1?co.bonnetBy:s.n===2?co.equipBy:
-                  s.n===3?co.mechCheckBy:s.n===4?co.inspBy:s.n===5?co.contractBy:
+    const stepBy=(s.n===0?co.prepBy:s.n===1?co.bonnetBy:s.n===2?co.mechCheckBy:
+                  s.n===3?co.equipBy:s.n===4?co.inspBy:s.n===5?co.contractBy:
                   s.n===6?co.custBy:co.mgmtBy)||'';
     const active=s.n===coStep;
     const restricted=!canDoStep(s.n);
@@ -1628,8 +1628,8 @@ function drawCO(){
     _stepLine=1;
     if(coStep===0){_stepLine=2; body=coStep0();}         // Prep (carwash)
     else if(coStep===1){_stepLine=3; body=coStepBonnet();}  // Under bonnet
-    else if(coStep===2){_stepLine=4; body=coStep1_equip();} // Equipment packing & checks
-    else if(coStep===3){_stepLine=5; body=coStepMech();}    // Mechanical
+    else if(coStep===2){_stepLine=4; body=coStepMech();}    // Mechanical
+    else if(coStep===3){_stepLine=5; body=coStep1_equip();} // Equipment packing & checks
     else if(coStep===4){_stepLine=6; body=coStep4_dmg();}   // Vehicle inspection
     else if(coStep===5){_stepLine=7; body=coStep1()+'<div style="height:14px"></div>'+coStep2();} // Client ID + the contract itself
     else if(coStep===6){_stepLine=8; body=coStep5_client();} // Handover
@@ -1940,7 +1940,7 @@ function coStepMech(){
   if(!co||!co.v){return '<div style="padding:20px;color:red;">Error: no vehicle</div>';}
   if(!co.mechItems) co.mechItems={};
   if(!co.mechWho) co.mechWho={};
-  var names=STAFF_ROSTER.map(function(x){return x.name;}).filter(function(n){return !STEP_ACCESS[n]||STEP_ACCESS[n].indexOf(3)>=0;});
+  var names=STAFF_ROSTER.map(function(x){return x.name;}).filter(function(n){return !STEP_ACCESS[n]||STEP_ACCESS[n].indexOf(2)>=0;});
   var who='<div class="who-box"><div class="who-lbl">👤 Who is checking the mechanics?</div>'
     +'<select id="co-mech-nm" onchange="co.mechCheckBy=this.value;saveCOProgress();drawCO()" style="color-scheme:dark;width:100%;padding:12px 14px;font-size:16px;font-weight:800;background:var(--g0);border:2px solid '+(co.mechCheckBy?'var(--gb)':'var(--am)')+';border-radius:var(--rs);color:var(--tx);">'
     +'<option value="">— Select your name —</option>'+names.map(function(n){return '<option'+(n===co.mechCheckBy?' selected':'')+'>'+n+'</option>';}).join('')+'</select></div>';
@@ -1973,12 +1973,12 @@ function coStepMech(){
   var doneCount=mechLbls.filter(function(l){return !!co.mechItems[l];}).length;
   var allDone=doneCount>=mechCount;
   return '<div class="step-intro"><div class="step-ico">🔩</div>'
-    +'<div><div class="step-title">Step 3 — Mechanical</div>'
+    +'<div><div class="step-title">Step 2 — Mechanical</div>'
     +'<div class="step-sub">Select your name, then mark each item OK or Issue ('+doneCount+'/'+mechCount+')</div></div></div>'
     +who
     +'<div style="padding:0 4px;">'+rows+'</div>'
     +(allDone
-      ?'<div class="al ok" style="margin-top:12px;">✅ Mechanical check complete — checked by '+_bx(co.mechCheckBy||'—')+'</div><button class="btn g" style="margin-top:8px;" onclick="co.mechDone=true;saveCOProgress();coGoStep(4);">Continue to Inspection →</button>'
+      ?'<div class="al ok" style="margin-top:12px;">✅ Mechanical check complete — checked by '+_bx(co.mechCheckBy||'—')+'</div><button class="btn g" style="margin-top:8px;" onclick="co.mechDone=true;saveCOProgress();coGoStep(3);">Continue to Equipment →</button>'
       :'<div style="margin-top:12px;padding:12px;background:var(--g1);border-radius:var(--rs);text-align:center;color:var(--g5);font-size:13px;">Check all items ('+doneCount+'/'+mechCount+' done)</div>');
 }
 function setMechItem(k,v){
@@ -2013,7 +2013,7 @@ function coStep1_equip(){
   return `
   <div class="step-intro">
     <div class="step-ico">🏕</div>
-    <div><div class="step-title">Step 2 — Equipment Packing &amp; Checks</div>
+    <div><div class="step-title">Step 3 — Equipment Packing &amp; Checks</div>
     <div class="step-sub">Check all equipment is present, clean and packed · once = ✅ OK · twice = ⚠ Problem · optional items tap to N/A</div></div>
   </div>
   <div class="prog-wrap">
@@ -2115,7 +2115,7 @@ function signEquip(){
   if(!allStaff.includes(co.prepBy)) allStaff.push(co.prepBy);
   co.equipByAll=allStaff;
   // Camping signed: go on to Inspection, or stay here if this person may not do it
-  if(canDoStep(3)){toast('Equipment signed ✅','ok');coStep=3;}else{toast('Equipment signed ✅','ok');}
+  if(canDoStep(4)){toast('Equipment signed ✅','ok');coStep=4;}else{toast('Equipment signed ✅ — inspection next','ok');}
   drawCO();
 }
 
@@ -2940,7 +2940,7 @@ function coInspIssues(){
     if(item[0]==='__CAMPING__'&&!co.v.camping)return;
     var real=String(item[1]).replace('__QTY__',''),qty=item[1]!==real;
     var v=co.prepItems&&co.prepItems[real];var st=qty?(v?'ok':''):coPst(real);
-    var step=coCleanItems().indexOf(real)>=0?'Step 1 — Cleaning':'Step 2 — Equipment';
+    var step=coCleanItems().indexOf(real)>=0?'Step 1 — Cleaning':'Step 3 — Equipment';
     if(item[0]==='__OPT_ITEM__'&&!st)return; // optional extras: only if issued
     if(!st)out.push({kind:'prep',step:step,label:real,qty:qty,status:'unchecked'});
     else if(st==='prob')out.push({kind:'prep',step:step,label:real,status:'problem'});
@@ -2949,8 +2949,8 @@ function coInspIssues(){
     if(!item||item[0]==='__SECTION__')return;
     if(item[0]==='__CAMPING__'&&!co.v.camping)return;
     var val=(co.mechItems&&co.mechItems[item[1]])||'';
-    if(!val)out.push({kind:'mech',step:'Step 3 — Mechanical',label:item[1],status:'unchecked'});
-    else if(val==='issue'||val==='prob')out.push({kind:'mech',step:'Step 3 — Mechanical',label:item[1],status:'problem'});
+    if(!val)out.push({kind:'mech',step:'Step 2 — Mechanical',label:item[1],status:'unchecked'});
+    else if(val==='issue'||val==='prob')out.push({kind:'mech',step:'Step 2 — Mechanical',label:item[1],status:'problem'});
   });
   return out;
 }
@@ -2990,7 +2990,7 @@ function coStep4_dmg(){
   var rows=unchecked.map(function(i,n){
     return '<div class="insp-flash" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;margin-bottom:6px;border:2px solid var(--re);">'
       +'<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:800;opacity:.8;">'+i.step+'</div><div style="font-size:14px;font-weight:900;">'+_bx(i.label)+'</div></div>'
-      +(i.qty?'<button style="'+base+'border:2px solid var(--g3);background:var(--g0);color:var(--tx);" onclick="coGoStep(2)">Set qty in Step 2</button>'
+      +(i.qty?'<button style="'+base+'border:2px solid var(--g3);background:var(--g0);color:var(--tx);" onclick="coGoStep(3)">Set qty in Step 3</button>'
         :btns(false,false,"inspSetIdx("+n+",'ok')","inspSetIdx("+n+",'issue')"))
       +'</div>';
   }).join('');
