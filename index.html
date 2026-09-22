@@ -3552,7 +3552,7 @@ function startCI(fn){
     if(prev.staff){ci.receivedBy=prev.staff;}
   }catch(e){}
   RET_GROUPS.forEach(g=>g.items.forEach(i=>{retSt[i]='ok';}));
-  ci={v,fn,receivedBy:'',odoIn:v.odo+1200,odometerOut:(co&&co.odometerOut)||v.odo,fuelIn:'',fuelNote:'',notes:'',
+  ci={v,fn,receivedBy:(APP_USER&&APP_USER.name)||'',odoIn:v.odo+1200,odometerOut:(co&&co.odometerOut)||v.odo,fuelIn:'',fuelNote:'',notes:'',
       dmgd:[],dmgPhotos:[],custSig:null,custAt:'',
       mgmtName:'',mgmtSig:null,mgmtAt:'',deposit:'Full deposit returned',mgmtNotes:'',
       retItems:{},retSig:null,retAt:''};
@@ -4058,6 +4058,7 @@ async function completeCI(){
     customer_signed_at:ci.custSig?new Date().toISOString():null,
     manager_name:ci.mgmtName,manager_signed_at:ci.mgmtSig?new Date().toISOString():null,
     deposit_decision:ci.deposit,manager_notes:ci.mgmtNotes,client_notes:ci.notes,
+    item_checks:ciItemChecks(),equipment_checked_by:ci.retEqBy||{},receiver_log:ci.rcvLog||[],
     created_at:new Date().toISOString(),
   });
   // Read-only tablet: Fleet Manager data (vehicles/bookings) is never changed from here
@@ -4089,14 +4090,16 @@ async function renderReports(){
       <button class="tab-btn on" onclick="rpTab(this,'rp-vehicles')">🚗 Fleet</button>
       <button class="tab-btn" onclick="rpTab(this,'rp-history');loadHistory()">📋 Activity Log</button>
       <button class="tab-btn" onclick="rpTab(this,'rp-alerts')">⚠️ Alerts</button>
+      <button class="tab-btn" onclick="rpTab(this,'rp-who');loadAccountability()">👤 Who did what</button>
     </div>
     <div id="rp-vehicles">${rpFleet()}</div>
     <div id="rp-history" style="display:none"></div>
-    <div id="rp-alerts" style="display:none"></div>`;
+    <div id="rp-alerts" style="display:none"></div>
+    <div id="rp-who" style="display:none"></div>`;
 }
 function rpTab(btn,id){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
-  document.querySelectorAll('#rp-vehicles,#rp-history,#rp-alerts').forEach(e=>e.style.display='none');
+  document.querySelectorAll('#rp-vehicles,#rp-history,#rp-alerts,#rp-who').forEach(e=>e.style.display='none');
   document.getElementById(id).style.display='';
 }
 function rpFleet(){
@@ -4521,6 +4524,14 @@ function selStaff(id, list, val) {
 }
 
 function staffSelected(id, val) {
+  // Changing who receives the vehicle to someone other than the logged-in user needs that person's PIN
+  if (id === 'ci-rcv' && val && !(APP_USER && val === APP_USER.name) && val !== ci.receivedBy && !ci._pinOk) {
+    var _prev = ci.receivedBy || '';
+    askStaffPin(val, function(){ ci._pinOk = true; staffSelected(id, val); ci._pinOk = false; },
+      function(){ var s = document.getElementById('ci-rcv'); if (s) s.value = _prev; });
+    return;
+  }
+  if (id === 'ci-rcv') logReceiver(val, !(APP_USER && val === APP_USER.name));
   if (id === 'co-p-nm') co.prepBy = val;
   else if (id === 'co-h-nm') co.mechBy = val;
   else if (id === 'ci-rcv') ci.receivedBy = val;
@@ -4538,6 +4549,91 @@ function staffSelected(id, val) {
   else { try { drawCI(); } catch(e) {} }
 }
 
+
+// ── WHO RECEIVED / WHO CHECKED WHAT (check-in accountability) ────
+function askStaffPin(name,onOk,onCancel){
+  var old=document.getElementById('pin-modal');if(old)old.parentNode.removeChild(old);
+  var m=document.createElement('div');m.id='pin-modal';
+  m.setAttribute('style','position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px;');
+  m.innerHTML='<div style="background:var(--g1);border:2px solid var(--am);border-radius:16px;padding:22px;width:100%;max-width:340px;text-align:center;">'
+    +'<div style="font-size:30px;">🔒</div>'
+    +'<div style="font-size:18px;font-weight:900;color:var(--tx);margin:6px 0 2px;">'+name+', enter your PIN</div>'
+    +'<div style="font-size:13px;color:var(--g5);margin-bottom:14px;">Confirms that you are receiving this vehicle</div>'
+    +'<input id="pin-in" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" style="width:100%;text-align:center;font-size:26px;letter-spacing:10px;padding:12px;border-radius:10px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);">'
+    +'<div id="pin-msg" style="color:var(--rl);font-size:13px;font-weight:700;min-height:18px;margin:8px 0;"></div>'
+    +'<div style="display:flex;gap:10px;"><button id="pin-cancel" class="btn s" style="flex:1;">Cancel</button><button id="pin-ok" class="btn g" style="flex:1;">Confirm</button></div>'
+    +'</div>';
+  document.body.appendChild(m);
+  var inp=document.getElementById('pin-in');setTimeout(function(){inp.focus();},50);
+  function close(){if(m.parentNode)m.parentNode.removeChild(m);}
+  function ok(){
+    var st=STAFF_ROSTER.filter(function(s){return s.name===name;})[0];
+    if(st&&String(st.code)===String(inp.value).trim()){close();onOk();}
+    else{document.getElementById('pin-msg').textContent='Wrong PIN — try again';inp.value='';inp.focus();}
+  }
+  document.getElementById('pin-ok').onclick=ok;
+  document.getElementById('pin-cancel').onclick=function(){close();if(onCancel)onCancel();};
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter')ok();});
+}
+function logReceiver(val,pinChecked){
+  if(!ci)return;
+  if((ci.receivedBy||'')===val)return;
+  if(!ci.rcvLog)ci.rcvLog=[];
+  ci.rcvLog.push({from:ci.receivedBy||'',to:val,at:new Date().toISOString(),pin_verified:!!pinChecked,tablet_user:APP_USER?APP_USER.name:''});
+}
+// Full list of what was checked at return, incl. items left unchecked (receiver's liability)
+function ciItemChecks(){
+  var out={};
+  L_PREP.forEach(function(x){
+    var ico=x[0],lbl=x[1];
+    if(ico==='__SECTION__'||ico==='__OPTIONAL__'||CI_SKIP.indexOf(lbl)>=0)return;
+    var real=String(lbl).replace('__QTY__','');
+    var v=(ci.retItems||{})[real];
+    if(v&&typeof v==='object'&&v.st) out[real]=v;
+    else if(v&&typeof v!=='object') out[real]={st:'qty '+v,by:ci.receivedBy||'',at:''};
+    else out[real]={st:'unchecked',by:ci.receivedBy||'',at:''};
+  });
+  return out;
+}
+async function loadAccountability(){
+  var el=document.getElementById('rp-who');if(!el)return;
+  el.innerHTML='<div style="padding:20px;color:var(--g5);">Loading…</div>';
+  var r=await SB.from('checkins').select('fleet_no,client,received_by,manager_name,created_at,item_checks,equipment_checked_by,missing_items,damaged_items,receiver_log,new_damage').order('created_at',{ascending:false}).limit(100);
+  if(r.error){el.innerHTML='<div class="al err">Could not load: '+r.error.message+'</div>';return;}
+  var rows=r.data||[];
+  if(!rows.length){el.innerHTML='<div style="padding:20px;color:var(--g5);">No check-ins recorded yet.</div>';return;}
+  var ppl={};
+  function P(n){n=n||'—';if(!ppl[n])ppl[n]={received:0,ticked:0,problems:0,unchecked:0,missing:0};return ppl[n];}
+  rows.forEach(function(c){
+    P(c.received_by).received++;
+    var ic=c.item_checks||{};
+    Object.keys(ic).forEach(function(k){var x=ic[k]||{};var p=P(x.by||c.received_by);
+      if(x.st==='unchecked')p.unchecked++;else{p.ticked++;if(x.st==='prob')p.problems++;}});
+    var eq=c.equipment_checked_by||{};
+    (c.missing_items||[]).forEach(function(i){P((eq[i]&&eq[i].by)||c.received_by).missing++;});
+  });
+  var th='style="text-align:left;padding:6px 8px;font-size:11px;color:var(--g5);text-transform:uppercase;border-bottom:1px solid var(--g2);"';
+  var td='style="padding:7px 8px;font-size:14px;border-bottom:1px solid var(--g2);color:var(--tx);"';
+  var sum='<div class="rpt-card" style="margin-bottom:14px;"><div style="font-size:15px;font-weight:900;color:var(--tx);margin-bottom:8px;">👤 Per person (last '+rows.length+' check-ins)</div><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;"><tr><th '+th+'>Staff</th><th '+th+'>Vehicles received</th><th '+th+'>Items checked</th><th '+th+'>Problems flagged</th><th '+th+'>Left unchecked</th><th '+th+'>Missing equipment</th></tr>'
+    +Object.keys(ppl).sort().map(function(n){var p=ppl[n];return '<tr><td '+td+'><b>'+n+'</b></td><td '+td+'>'+p.received+'</td><td '+td+'>'+p.ticked+'</td><td '+td+'>'+p.problems+'</td><td '+td+' '+(p.unchecked?'':'')+'><span style="color:'+(p.unchecked?'var(--al)':'var(--tx)')+';">'+p.unchecked+'</span></td><td '+td+'><span style="color:'+(p.missing?'var(--rl)':'var(--tx)')+';">'+p.missing+'</span></td></tr>';}).join('')
+    +'</table></div></div>';
+  var cards=rows.map(function(c){
+    var ic=c.item_checks||{},eq=c.equipment_checked_by||{};
+    var lines=[];
+    (c.missing_items||[]).forEach(function(i){var w=(eq[i]&&eq[i].by)||c.received_by||'—';lines.push('<div style="color:var(--rl);">❌ Missing: <b>'+i+'</b> — marked by '+w+'</div>');});
+    (c.damaged_items||[]).forEach(function(i){var w=(eq[i]&&eq[i].by)||c.received_by||'—';lines.push('<div style="color:var(--al);">⚠ Damaged equipment: <b>'+i+'</b> — marked by '+w+'</div>');});
+    Object.keys(ic).forEach(function(k){var x=ic[k]||{};
+      if(x.st==='prob')lines.push('<div style="color:var(--al);">⚠ Problem: <b>'+k+'</b> — ticked by '+(x.by||'—')+(x.at?' at '+x.at:'')+'</div>');
+      if(x.st==='unchecked')lines.push('<div style="color:var(--g5);">⬜ Not checked: <b>'+k+'</b> — '+(x.by||c.received_by||'—')+' responsible</div>');});
+    var log=(c.receiver_log||[]).filter(function(x){return x.from;}).map(function(x){return (x.from||'—')+' → '+x.to+(x.pin_verified?' (PIN ✓)':'')+' '+new Date(x.at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}).join(' · ');
+    return '<div class="rpt-card" style="margin-bottom:10px;border-color:'+(lines.length?'var(--am)':'var(--g2)')+';">'
+      +'<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><div style="font-size:15px;font-weight:900;color:var(--tx);">'+c.fleet_no+' · '+(c.client||'')+'</div><div style="font-size:12px;color:var(--g5);">'+new Date(c.created_at).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+'</div></div>'
+      +'<div style="font-size:13px;color:var(--g6);margin:4px 0 6px;">📥 Received by <b>'+(c.received_by||'—')+'</b> · 👔 Signed off by <b>'+(c.manager_name||'—')+'</b>'+(log?'<br>🔁 Receiver changed: '+log:'')+'</div>'
+      +(lines.length?'<div style="font-size:13px;line-height:1.7;">'+lines.join('')+'</div>':'<div style="font-size:13px;color:var(--se);">✅ Everything checked, nothing missing</div>')
+      +'</div>';
+  }).join('');
+  el.innerHTML=sum+cards;
+}
 
 function unlockStaff(id, fn){
   // Clear the lock so they can re-select
@@ -4768,7 +4864,7 @@ function renderRetGroups(){
     </div>`;
   }).join('');
 }
-function setRetGrp(gi,status){RET_GROUPS[gi].items.forEach(i=>{retSt[i]=status;});document.getElementById('ret-grps').innerHTML=renderRetGroups();}
+function setRetGrp(gi,status){var _who=(ci&&ci.receivedBy)||(APP_USER&&APP_USER.name)||'';var _at=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});if(ci&&!ci.retEqBy)ci.retEqBy={};RET_GROUPS[gi].items.forEach(i=>{retSt[i]=status;if(ci)ci.retEqBy[i]={st:status,by:_who,at:_at};});document.getElementById('ret-grps').innerHTML=renderRetGroups();}
 
 // ── SIGNATURES ────────────────────────────────────────────────────
 function initSig(id){const cv=document.getElementById(id);if(!cv)return;if(sigs[id]&&sigs[id].cv===cv)return; /* redrawn screens get a new canvas: bind it again */cv.width=cv.offsetWidth||540;cv.height=cv.offsetHeight||150;const ctx=cv.getContext('2d');ctx.strokeStyle='#3ddc84';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';sigs[id]={ctx,cv:cv,drawing:false,hasData:false};const pos=(e,t)=>{const r=cv.getBoundingClientRect();return t?{x:(t.clientX-r.left)*(cv.width/r.width),y:(t.clientY-r.top)*(cv.height/r.height)}:{x:e.offsetX*(cv.width/cv.offsetWidth),y:e.offsetY*(cv.height/cv.offsetHeight)};};const start=(e,p)=>{e.preventDefault();sigs[id].drawing=true;sigs[id].hasData=true;ctx.beginPath();ctx.moveTo(p.x,p.y);};const move=(e,p)=>{if(!sigs[id].drawing)return;ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);};const stop=()=>{if(sigs[id])sigs[id].drawing=false;};cv.addEventListener('mousedown',e=>start(e,pos(e)));cv.addEventListener('mousemove',e=>{if(sigs[id]?.drawing)move(e,pos(e));});cv.addEventListener('mouseup',stop);cv.addEventListener('mouseleave',stop);cv.addEventListener('touchstart',e=>start(e,pos(e,e.touches[0])),{passive:false});cv.addEventListener('touchmove',e=>move(e,pos(e,e.touches[0])),{passive:false});cv.addEventListener('touchend',stop,{passive:false});}
