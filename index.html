@@ -3713,6 +3713,7 @@ async function completeCO(){
             </button>
           </div>
           <div style="font-size:13px;color:var(--g5);margin-top:4px;">Opens WhatsApp with a pre-filled message and download link</div>
+          ${mgmtBtn('btn-mgmt-co','sendHandoverMgmt()',false)}
         </div>
 
         <div id="send-status" style="margin-top:10px;"></div>
@@ -3823,6 +3824,7 @@ function sendHandoverWA(){
   var first=String(co.clientName||co.v.cl||'').split(' ')[0]||'';
   const msg=encodeURIComponent('Hi '+first+',\n\nThank you for renting with Go Rent 4x4 Namibia!\n\nVehicle: '+co.fn+' ('+(co.v.reg||'')+')\nPickup: '+(co.v.pu||'today')+' | Return: '+(co.v.rt||'-')+'\nFuel at departure: '+(co.fuelOut||'Full')+' - please return at the same level. DIESEL ONLY.\n\nYour handover document - handover checklist, vehicle condition and damage, photos, equipment issued and your full signed rental contract:\n'+co._handoverLink+'\n\nSafe travels! WhatsApp us anytime: +264 81 861 8085\n- Go Rent 4x4 Team');
   window.open('https://wa.me/'+waNumber(phone)+'?text='+msg,'_blank');
+  if(!co._mgmtSent)toast('Now send the copy to Management (green button)','ok');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -4534,8 +4536,14 @@ async function openRentalFile(key,fn,client){
     function thumb(url,label){return '<a href="'+url+'" target="_blank" style="display:inline-block;width:150px;margin:0 8px 8px 0;text-decoration:none;vertical-align:top;"><img src="'+url+'" style="width:150px;height:110px;object-fit:cover;border-radius:8px;border:1px solid var(--g3);background:#fff;"><div style="font-size:11px;color:var(--g5);margin-top:3px;">'+_bx(label)+'</div></a>';}
     function line(l,v){return '<div style="display:flex;gap:8px;font-size:14px;padding:5px 0;border-bottom:1px solid var(--g2);"><div style="width:44%;color:var(--g5);">'+l+'</div><div style="color:var(--tx);font-weight:700;">'+v+'</div></div>';}
     var idDocs=docs.filter(function(p){return p.indexOf('/id-docs/')>0;});
-    var sigDocs=docs.filter(function(p){return p.indexOf('/id-docs/')<0;});
+    var repDocs=docs.filter(function(p){return /\.html$/.test(p);}).sort();
+    var sigDocs=docs.filter(function(p){return p.indexOf('/id-docs/')<0&&!/\.html$/.test(p);});
+    window._rfData={key:key,fn:fn,client:client,contract:contract,cko:cko,cki:cki,ids:idDocs.map(function(p){return {url:signed[p],label:rfLabel(p)};}).filter(function(x){return x.url;}),pics:picUrls,sigs:sigDocs.map(function(p){return {url:signed[p],label:rfLabel(p)};}).filter(function(x){return x.url;}),handover:repDocs.filter(function(p){return p.indexOf('handover-report_')>=0;}).map(function(p){return signed[p];}).filter(Boolean).pop()||'',ret:repDocs.filter(function(p){return p.indexOf('return-report_')>=0;}).map(function(p){return signed[p];}).filter(Boolean).pop()||''};
     var h='';
+    var RD=window._rfData;
+    h+='<button class="btn g" style="width:100%;margin-bottom:6px;" onclick="rfPrintAll()">🖨 Print / save complete rental file (PDF)</button>'
+      +'<div style="font-size:12px;color:var(--g5);margin-bottom:6px;">Signed contract, passports &amp; licences, check-out checks &amp; handover document, damage, photos, notes, return report and signatures — in one document for accidents, insurance or disputes.</div>'
+      +((RD.handover||RD.ret)?'<div style="display:flex;gap:8px;flex-wrap:wrap;">'+(RD.handover?'<a class="btn s" style="flex:1;text-align:center;text-decoration:none;" href="https://gorent-fleet.github.io/fleet/#r='+encodeURIComponent(RD.handover)+'" target="_blank">🤝 Open handover document</a>':'')+(RD.ret?'<a class="btn s" style="flex:1;text-align:center;text-decoration:none;" href="https://gorent-fleet.github.io/fleet/#r='+encodeURIComponent(RD.ret)+'" target="_blank">🏠 Open return report</a>':'')+'</div>':'');
     h+=sec('📝 Signed contract',contract?(line('Signed by client',_bx(contract.client_name||'')+(contract.client_signed_at?' · '+new Date(contract.client_signed_at).toLocaleString('en-GB'):''))+line('Staff',_bx(contract.staff_signed_by||contract.created_by||'—'))+line('Deposit',contract.deposit_amount?('N$ '+Number(contract.deposit_amount).toLocaleString()):'—')
       +(window._rfContractHTML?'<button class="btn g" style="margin-top:8px;width:auto;padding:10px 16px;" onclick="rfShowContract()">📄 Open full signed contract</button>':'')):'<div style="font-size:13px;color:var(--g5);">No signed contract saved for this booking yet.</div>');
     h+=sec('🪪 Passport, ID & licence scans',idDocs.length?idDocs.map(function(p){return signed[p]?thumb(signed[p],rfLabel(p)):'';}).join(''):'<div style="font-size:13px;color:var(--g5);">No scans saved for this booking yet.</div>');
@@ -4547,6 +4555,44 @@ async function openRentalFile(key,fn,client){
     h+='<div style="font-size:11px;color:var(--g5);margin-top:12px;">Tap any picture to open it full size. Scan and signature links are private and expire after 1 hour.</div>';
     body.innerHTML=h;
   }catch(e){body.innerHTML='<div class="al err">Could not load the rental file: '+_bx(e.message||e)+'</div>';}
+}
+// One printable document with everything for a booking (accident, insurance claim, contract dispute)
+async function rfPrintAll(){
+  var R=window._rfData;if(!R){toast('Open the rental file first','err');return;}
+  var w=window.open('','_blank');if(!w){toast('Allow pop-ups to print','err');return;}
+  w.document.write('<p style="font-family:Arial;padding:30px;">Preparing the complete rental file…</p>');
+  function body(html){var m=/<body[^>]*>([\s\S]*)<\/body>/i.exec(html||'');return m?m[1]:(html||'');}
+  async function getText(u){try{var r=await fetch(u);return r.ok?await r.text():'';}catch(e){return '';}}
+  var ho=R.handover?body(await getText(R.handover)):'',rt=R.ret?body(await getText(R.ret)):'';
+  var cut=ho.indexOf('<h2>📋 Signed Rental Contract</h2>');if(cut>0)ho=ho.slice(0,cut); // contract is printed once, at the start
+  var c=R.contract||{},k=R.cko||{},i=R.cki||{};
+  var esc=_bx;
+  var line=function(l,v){return '<tr><td style="width:40%;color:#555;">'+l+'</td><td><b>'+(v||'—')+'</b></td></tr>';};
+  var imgs=function(list){return list.map(function(x){return '<div style="display:inline-block;width:48%;margin:0 1% 10px;vertical-align:top;page-break-inside:avoid;"><img src="'+x.url+'" style="width:100%;border:1px solid #ccc;border-radius:4px;"><div style="font-size:11px;color:#555;">'+esc(x.label||'')+'</div></div>';}).join('');};
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rental file '+esc(R.fn)+' '+esc(R.client||'')+'</title><style>'
+    +'body{font-family:Arial,sans-serif;color:#111;max-width:800px;margin:0 auto;padding:18px;font-size:13px;}h1{font-size:20px;margin:0;}h2{font-size:15px;color:#145c30;border-bottom:2px solid #145c30;padding-bottom:4px;margin-top:22px;}'
+    +'table{width:100%;border-collapse:collapse;margin:6px 0;}td,th{border:1px solid #ddd;padding:5px 8px;text-align:left;font-size:12px;}.pb{page-break-before:always;}'
+    +'@media print{.noprint{display:none;}}</style></head><body>'
+    +'<div class="noprint" style="text-align:right;margin-bottom:8px;"><button onclick="window.print()" style="padding:10px 18px;font-size:15px;font-weight:bold;">🖨 Print / Save as PDF</button></div>'
+    +'<div style="display:flex;align-items:center;gap:14px;border-bottom:2px solid #000;padding-bottom:10px;"><img src="'+GR_LOGO+'" style="width:120px;"><div><h1>COMPLETE RENTAL FILE</h1><div>Go Rent 4x4 Rentals and Tours CC · CC/2021/04371 · +264 81 861 8085</div></div></div>'
+    +'<h2>Summary</h2><table>'+line('Vehicle',esc(R.fn)+(c.vehicle_reg?' · '+esc(c.vehicle_reg):''))+line('Client',esc(c.client_name||R.client||''))+line('Passport',esc(c.client_passport||''))+line('Licence',esc((c.client_licence||'')+(c.client_licence_expiry?' · exp '+c.client_licence_expiry:'')))
+    +line('Rental period',esc((c.pickup_date||'')+' → '+(k.return_date_new||c.return_date||'')))+line('Contract signed',c.client_signed_at?new Date(c.client_signed_at).toLocaleString('en-GB')+' · staff '+esc(c.staff_signed_by||''):'NOT on file')
+    +line('Checked out',k.created_at?new Date(k.created_at).toLocaleString('en-GB')+' · handed over by '+esc(k.handover_by||'—'):'not on file')
+    +line('Km / fuel out',k.odo_out?Number(k.odo_out).toLocaleString()+' km · '+esc(k.fuel_out||''):'')
+    +line('Checked in',i.created_at?new Date(i.created_at).toLocaleString('en-GB')+' · received by '+esc(i.received_by||'—'):'still out')
+    +line('Km / fuel in',i.odo_in?Number(i.odo_in).toLocaleString()+' km · '+esc(i.fuel_in||''):'')
+    +line('Printed',new Date().toLocaleString('en-GB'))+'</table>'
+    +'<h2 class="pb">1. Signed Rental Contract</h2>'+(c.contract_html||'<p>No signed contract on file for this booking.</p>')
+    +'<h2 class="pb">2. Passports, ID &amp; Driver\'s Licences</h2>'+(R.ids.length?imgs(R.ids):'<p>No scans on file.</p>')
+    +'<h2 class="pb">3. Check-out — Vehicle Checks &amp; Handover</h2>'
+    +(ho||('<p>No handover document on file.</p>'))
+    +((k.out_notes||[]).length?'<h2>4. Notes While Out</h2><table>'+k.out_notes.map(function(n){return '<tr><td style="width:30%;">'+esc(new Date(n.at).toLocaleString('en-GB'))+' · '+esc(n.by||'')+'</td><td>'+esc(n.text)+'</td></tr>';}).join('')+'</table>':'')
+    +'<h2 class="pb">5. Return (Check-in) Report</h2>'+(rt||'<p>'+(i.created_at?'Return report not on file.':'Vehicle not returned yet.')+'</p>')
+    +'<h2 class="pb">6. All Photos</h2>'+(R.pics.length?imgs(R.pics):'<p>No photos on file.</p>')
+    +'<h2>7. Signatures</h2>'+(R.sigs.length?imgs(R.sigs):'<p>No separate signature files.</p>')
+    +'</body></html>';
+  w.document.open();w.document.write(html);w.document.close();
+  setTimeout(function(){try{w.focus();w.print();}catch(e){}},1500);
 }
 async function loadRentalFiles(q){
   var el=document.getElementById('rp-files');if(!el)return;
@@ -4602,7 +4648,39 @@ function ciWaBox(phone,link){
     +'<div style="display:flex;gap:8px;flex-wrap:wrap;"><input id="ci-wa-to" type="tel" inputmode="tel" value="'+_bx(phone||'')+'" placeholder="Client WhatsApp number, e.g. +49 170 1234567" style="flex:1;min-width:200px;padding:10px 12px;border-radius:8px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:15px;">'
     +'<button onclick="sendCIWhatsApp()" style="padding:10px 18px;border-radius:8px;border:none;background:#25d366;color:#04240f;font-size:15px;font-weight:900;cursor:pointer;">Open WhatsApp</button></div>'
     +'<div style="font-size:12px;color:var(--g5);margin-top:6px;">WhatsApp opens with the message ready — just press Send. <a href="'+link+'" target="_blank" style="color:#25d366;">Preview report</a></div>'
+    +mgmtBtn('btn-mgmt-ci','sendCIMgmt()',!!(ci&&ci._mgmtSent))
     +'</div>';
+}
+// Management always gets a copy of every client document on WhatsApp (for their records)
+var MGMT_WA='264818618085';
+function mgmtWA(text){window.open('https://wa.me/'+MGMT_WA+'?text='+encodeURIComponent(text),'_blank');}
+function mgmtBtn(id,fn,sent){return '<button id="'+id+'" onclick="'+fn+'" class="'+(sent?'':'insp-flash')+'" style="width:100%;margin-top:10px;padding:12px 14px;border-radius:10px;border:2px solid '+(sent?'var(--gb)':'#25d366')+';background:'+(sent?'var(--sg)':'#0b2a1a')+';color:#fff;font-size:15px;font-weight:900;cursor:pointer;">'+(sent?'✅ Copy sent to Management':'📋 Send copy to Management (+264 81 861 8085)')+'</button>';}
+function sendHandoverMgmt(){
+  if(!co._handoverLink){toast('The handover report is still being saved — try again in a moment','err');return;}
+  var d=co.docItems||{};
+  mgmtWA('GO RENT RECORD - CHECK-OUT\n'
+    +'Vehicle: '+co.fn+' ('+(co.v.reg||'')+')\nClient: '+(co.clientName||co.v.cl||'')+(co.clientPhone?' ('+co.clientPhone+')':'')
+    +'\nPickup: '+(co.v.pu||'-')+' | Return: '+(co.v.rt||'-')+(co.returnTime?' at '+co.returnTime:'')
+    +'\nKm out: '+(co.odometerOut||co.v.odo||'-')+' | Fuel out: '+(co.fuelOut||'Full')
+    +'\nWiFi device: '+(d.wifi==='ok'?'handed over':'NOT handed over')+(co.v.xb?' | Cross-border ('+co.v.xb+') docs: '+(d.xb==='ok'?'handed over':'MISSING'):'')
+    +'\nHanded over by: '+(co.mechBy||co.inspBy||'-')+' | Contract by: '+(co.contractBy||'-')
+    +'\n\nHandover document (checklist, damage, photos, signed contract):\n'+co._handoverLink);
+  co._mgmtSent=true;var b=document.getElementById('btn-mgmt-co');if(b)b.outerHTML=mgmtBtn('btn-mgmt-co','sendHandoverMgmt()',true);
+}
+function sendCIMgmt(){
+  if(!ci._reportLink){toast('The return report is still being saved — try again in a moment','err');return;}
+  var all=RET_GROUPS.reduce(function(a,g){return a.concat(g.items);},[]);
+  var miss=all.filter(function(i){return retSt[i]==='missing';});
+  var newDmg=(ci.dmgd||[]).filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
+  var fuelShort=!!ci.fuelIn&&ci.fuelIn!==ci.v.fuelOut;
+  mgmtWA('GO RENT RECORD - RETURN'+(ci.early?' (EARLY)':'')
+    +'\nVehicle: '+ci.fn+' ('+(ci.v.reg||'')+')\nClient: '+(ci.v.cl||'')
+    +'\nReceived by: '+(ci.receivedBy||'-')+(ci.mgmtName?' | Manager: '+ci.mgmtName:'')
+    +'\nKm in: '+(ci.odoIn||'-')+' | Fuel: '+(ci.v.fuelOut||'Full')+' -> '+(ci.fuelIn||'-')+(fuelShort?' (SHORT)':'')
+    +'\nNew damage: '+(newDmg.length?newDmg.map(function(d){return d.view_name;}).join(', '):'none')
+    +'\nNot returned: '+(miss.length?miss.join(', '):'nothing')
+    +'\n\nReturn report (photos, signatures):\n'+ci._reportLink);
+  ci._mgmtSent=true;var b=document.getElementById('btn-mgmt-ci');if(b)b.outerHTML=mgmtBtn('btn-mgmt-ci','sendCIMgmt()',true);
 }
 function sendCIWhatsApp(){
   var raw=(document.getElementById('ci-wa-to')||{}).value||'';
@@ -4610,6 +4688,7 @@ function sendCIWhatsApp(){
   var url='https://wa.me/'+(num||'')+'?text='+encodeURIComponent(ciWaText(ci._reportLink));
   window.open(url,'_blank');
   try{SB.from('checkins').update({report_whatsapp_at:new Date().toISOString()}).eq('booking_id',bkKey(ci.v)).then(function(){},function(){});}catch(e){}
+  if(!ci._mgmtSent)toast('Now send the copy to Management (green button)','ok');
 }
 // "Report only" mode: opened from the WhatsApp link
 function sharedReportLink(){
