@@ -3628,7 +3628,7 @@ function drawCI(){
   ];
 
   const bar=CI_STEPS.map(s=>{
-    const done=(s.n===0&&!!r.retSig)||(s.n===1&&!!(r.dmgPhotos&&r.dmgPhotos.length))||(s.n===2&&allItems.every(i=>retSt[i]&&retSt[i]!==''))||(s.n===3&&(!!r.custSig||!(r.dmgd||[]).some(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});})))||(s.n===4&&!!r.mgmtSig);
+    const done=(s.n===0&&!!r.retSig)||(s.n===1&&!!(r.dmgPhotos&&r.dmgPhotos.length))||(s.n===2&&allItems.every(i=>retSt[i]&&retSt[i]!==''))||(s.n===3&&!!r.custSig)||(s.n===4&&!!r.mgmtSig);
     const active=s.n===ciStep;
     return `<div class="stg ${active?'active':done?'done':''}" onclick="ciStep=${s.n};drawCI()">
       <div style="font-size:16px">${done&&!active?'✅':s.ico}</div>
@@ -3826,6 +3826,35 @@ function ciTripInfo(v){
   h+=chip('🛫','Departs',b.departure_flight?_bx(b.departure_flight):'No flight on booking',b.departure_flight?'#7db8ff':'rgba(255,255,255,.6)');
   return '<div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 2px;">'+h+'</div>';
 }
+// Summary of the vehicle check + equipment for the customer to sign
+function ciChecklistSummary(){
+  var probs=L_CI.filter(function(x,i){return x[0]!=='__SECTION__'&&x[0]!=='__OPTIONAL__'&&ciShow(x,i)&&ciStep1Item(i)&&ci.retItems[x[1]]&&ci.retItems[x[1]].st==='prob';}).map(function(x){return x[1];});
+  var all=RET_GROUPS.reduce(function(a,g){return a.concat(g.items);},[]);
+  var back=all.filter(function(i){return retSt[i]==='ok';}).length;
+  var row=function(t,c){return '<div style="font-size:14px;color:'+c+';padding:3px 0;">'+t+'</div>';};
+  return '<div style="padding:10px 16px;border-bottom:1px solid var(--g2);">'
+    +'<div style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">Checklist</div>'
+    +row(probs.length?'⚠ Vehicle check — problem: '+probs.join(', '):'✅ Vehicle check — glass, wheels, undercarriage'+(ci.v.camping?', tent':'')+' OK',probs.length?'var(--al)':'var(--se)')
+    +row('📦 Equipment returned: '+back+' of '+all.length,back===all.length?'var(--se)':'var(--al)')
+    +'</div>';
+}
+// What must be done before the manager can close the return
+function ciCompletion(){
+  var all=RET_GROUPS.reduce(function(a,g){return a.concat(g.items);},[]);
+  var unmarked=all.filter(function(i){return !retSt[i];}).length;
+  return [
+    {lbl:'Vehicle check signed (Step 1)',ok:!!ci.retSig},
+    {lbl:'Equipment all marked returned / not returned (Step 3)'+(unmarked?' — '+unmarked+' left':''),ok:!unmarked},
+    {lbl:'Customer signed (Step 4)',ok:!!ci.custSig}
+  ];
+}
+function ciCompletionBox(){
+  var c=ciCompletion(),done=c.every(function(x){return x.ok;});
+  return '<div style="background:var(--g1);border:2px solid '+(done?'var(--gb)':'var(--am)')+';border-radius:var(--r);padding:10px 14px;margin-bottom:10px;">'
+    +'<div style="font-size:14px;font-weight:800;color:'+(done?'var(--se)':'var(--al)')+';margin-bottom:6px;">'+(done?'✅ Return complete — ready to close':'⚠ Not complete yet — finish these before closing')+'</div>'
+    +c.map(function(x){return '<div style="font-size:14px;padding:2px 0;color:'+(x.ok?'var(--se)':'var(--al)')+';">'+(x.ok?'✅ ':'⬜ ')+x.lbl+'</div>';}).join('')
+    +'</div>';
+}
 function ciSection(i){for(var k=i;k>=0;k--){var x=L_CI[k];if(x&&(x[0]==='__SECTION__'||x[0]==='__OPTIONAL__'))return String(x[1]||'');}return '';}
 function ciShow(x,i){
   if(!x)return false;
@@ -3961,7 +3990,7 @@ function ciStep3_CI(){
   <div class="step-intro">
     <div class="step-ico">✍️</div>
     <div><div class="step-title">Step 4 — Client Sign-Off</div>
-    <div class="step-sub">${newDmg.length?'New damage recorded — client reviews and signs':'No new damage — client signature not needed'}</div></div>
+    <div class="step-sub">Client checks the return summary and signs · the signed checklist is then sent to the client on WhatsApp</div></div>
   </div>
 
   <div style="background:#0a1520;border:3px solid ${hasIssues?'var(--re)':'var(--gb)'};border-radius:var(--r);overflow:hidden;margin-bottom:14px">
@@ -3984,16 +4013,19 @@ function ciStep3_CI(){
       ${fuelShort?`<div style="font-size:14px;color:var(--al);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">⛽ Fuel short — ${v.fuelOut||'Full'} out → ${r.fuelIn} returned — refill cost charged</div>`:''}
       ${missing.map(i=>`<div style="font-size:14px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">❌ NOT RETURNED: ${i}</div>`).join('')}
     </div>`:''}
-    <div style="padding:12px 16px;border-bottom:1px solid var(--g2);background:rgba(0,0,0,.2);${newDmg.length?'':'display:none;'}">
+    ${ciChecklistSummary()}
+    <div style="padding:12px 16px;border-bottom:1px solid var(--g2);background:rgba(0,0,0,.2);">
       <div style="font-size:14px;font-weight:700;color:var(--tx);margin-bottom:8px">By signing below, I confirm that:</div>
-      ${['I have checked this return summary with staff and agree that it is correct.',
+      ${(hasIssues?['I have checked this return summary with staff and agree that it is correct.',
          'I accept responsibility for the new damage and for any missing or damaged items listed above.',
-         'I understand that the cost of repairs, replacement of missing items and any fuel shortfall may be deducted from my security deposit.',
-      ].map(t=>`<div style="display:flex;gap:8px;padding:4px 0;font-size:14px;color:var(--g6)"><span style="color:var(--se)">✓</span>${t}</div>`).join('')}
+         'I understand that the cost of repairs, replacement of missing items and any fuel shortfall may be deducted from my security deposit.']
+        :['I have checked this return summary with staff and agree that it is correct.',
+         'No new damage or missing items were found at this return.']
+      ).map(t=>`<div style="display:flex;gap:8px;padding:4px 0;font-size:14px;color:var(--g6)"><span style="color:var(--se)">✓</span>${t}</div>`).join('')}
     </div>
     <div style="padding:14px 16px">
-      ${!newDmg.length?'<div class="al ok" style="text-align:center;font-size:15px;">✅ No new damage recorded — the client does not need to sign. Tap <strong>Next →</strong> for management sign-off.</div>':r.custSig?
-        `<div class="signed">✅<div class="signed-name">${v.cl} — return confirmed</div><div class="signed-time">${r.custAt}</div></div>`:
+      ${r.custSig?
+        `<div class="signed">✅<div class="signed-name">${v.cl} — return confirmed</div><div class="signed-time">${r.custAt}</div></div>${ciWaBox(v.phone,r._reportLink)}`:
         `<div class="sig-area" style="border-color:${hasIssues?'var(--re)':'var(--gb)'}">
           <div class="sig-hdr" style="background:${hasIssues?'#200505':'#071a0f'};border-bottom-color:${hasIssues?'var(--re)':'var(--gb)'}">
             <span class="sig-lbl" style="color:${hasIssues?'var(--rl)':'var(--se)'}">${v.cl} — sign to confirm return</span>
@@ -4022,8 +4054,9 @@ function ciStep4_CI(){
   <div class="step-intro">
     <div class="step-ico">👔</div>
     <div><div class="step-title">Step 5 — Management Sign-Off</div>
-    <div class="step-sub">Review return, decide on deposit, close rental</div></div>
+    <div class="step-sub">Check everything is complete, decide on the deposit, sign to close the return</div></div>
   </div>
+  ${ciCompletionBox()}
 
   <div class="sum-box" style="margin-bottom:10px">
     <div class="sum-title">${r.fn} · ${v.cl} · Return Summary</div>
@@ -4033,7 +4066,7 @@ function ciStep4_CI(){
     <div class="sum-row"><span class="sum-lbl">New damage</span><span class="sum-val ${newDmg.length?'warn':'ok'}">${newDmg.length?`⚠ ${newDmg.map(d=>d.view_name).join(', ')}`:'✓ None'}</span></div>
     <div class="sum-row"><span class="sum-lbl">Missing items</span><span class="sum-val ${missing.length?'warn':'ok'}">${missing.length?'⚠ '+missing.slice(0,3).join(', '):'✓ All returned'}</span></div>
     <div class="sum-row"><span class="sum-lbl">Vehicle check</span><span class="sum-val ${r.retSig?'ok':'warn'}">${r.retSig?'✅ Signed by '+r.receivedBy:'⚠ Not signed'}</span></div>
-    <div class="sum-row"><span class="sum-lbl">Client signed</span><span class="sum-val ${r.custSig||!newDmg.length?'ok':'warn'}">${r.custSig?'✅ '+r.custAt:(newDmg.length?'⚠ Not yet':'Not required — no new damage')}</span></div>
+    <div class="sum-row"><span class="sum-lbl">Client signed</span><span class="sum-val ${r.custSig?'ok':'warn'}">${r.custSig?'✅ '+r.custAt:'⚠ Not yet'}</span></div>
     <div class="sum-row"><span class="sum-lbl">Received by</span><span class="sum-val ok">${r.receivedBy||'—'}</span></div>
   </div>
 
@@ -4119,6 +4152,9 @@ async function signCustCI(){
   if(!hasSig('ci-c-sig')){toast('Customer must sign','err');return;}
   ci.notes=(function(){var _e=document.getElementById('ci-notes');return _e?_e.value:undefined;})()||ci.notes;
   ci.custSig=getSig('ci-c-sig');ci.custAt=now();
+  banner('Saving the signed return summary');
+  try{await uploadCISigs();ci._reportLink=await saveCIReportLink();}catch(e){}
+  hideBanner();
   uploadPhotos(ci.dmgPhotos,ci.fn,ci.v.cl,'damage-in');
   toast('Customer signed ✅','ok');
   drawCI();
@@ -4135,6 +4171,8 @@ function ciMgrSelect(val){
     +'</select>';
 }
 async function signMgmtCI(){
+  var _open=ciCompletion().filter(function(x){return !x.ok;});
+  if(_open.length){toast('Not complete yet: '+_open[0].lbl,'err');return;}
   ci.mgmtName=(function(){var _e=document.getElementById('ci-mgmt');return _e?_e.value:undefined;})().trim()||ci.mgmtName;
   ci.deposit=(function(){var _e=document.getElementById('ci-dep');return _e?_e.value:undefined;})()||ci.deposit;
   ci.mgmtNotes=(function(){var _e=document.getElementById('ci-mnotes');return _e?_e.value:undefined;})()||ci.mgmtNotes;
@@ -5273,7 +5311,7 @@ function ciEqChecks(){
   });});
   return out;
 }
-function setRetGrp(gi,status){var _who=(ci&&ci.receivedBy)||(APP_USER&&APP_USER.name)||'';var _at=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});if(ci&&!ci.retEqBy)ci.retEqBy={};RET_GROUPS[gi].items.forEach(i=>{retSt[i]=status;if(ci)ci.retEqBy[i]={st:status,by:_who,at:_at};});document.getElementById('ret-grps').innerHTML=renderRetGroups();}
+function setRetGrp(gi,status){var _who=(ci&&ci.receivedBy)||(APP_USER&&APP_USER.name)||'';var _at=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});if(ci&&!ci.retEqBy)ci.retEqBy={};RET_GROUPS[gi].items.forEach(i=>{retSt[i]=status;if(ci)ci.retEqBy[i]={st:status,by:_who,at:_at};});var _rg=document.getElementById('ret-grps');if(_rg)_rg.innerHTML=renderRetGroups();}
 
 // ── SIGNATURES ────────────────────────────────────────────────────
 function initSig(id){const cv=document.getElementById(id);if(!cv)return;if(sigs[id]&&sigs[id].cv===cv)return; /* redrawn screens get a new canvas: bind it again */cv.width=cv.offsetWidth||540;cv.height=cv.offsetHeight||150;const ctx=cv.getContext('2d');ctx.strokeStyle='#3ddc84';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';sigs[id]={ctx,cv:cv,drawing:false,hasData:false};const pos=(e,t)=>{const r=cv.getBoundingClientRect();return t?{x:(t.clientX-r.left)*(cv.width/r.width),y:(t.clientY-r.top)*(cv.height/r.height)}:{x:e.offsetX*(cv.width/cv.offsetWidth),y:e.offsetY*(cv.height/cv.offsetHeight)};};const start=(e,p)=>{e.preventDefault();sigs[id].drawing=true;sigs[id].hasData=true;ctx.beginPath();ctx.moveTo(p.x,p.y);};const move=(e,p)=>{if(!sigs[id].drawing)return;ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);};const stop=()=>{if(sigs[id])sigs[id].drawing=false;};cv.addEventListener('mousedown',e=>start(e,pos(e)));cv.addEventListener('mousemove',e=>{if(sigs[id]&&sigs[id].drawing)move(e,pos(e));});cv.addEventListener('mouseup',stop);cv.addEventListener('mouseleave',stop);cv.addEventListener('touchstart',e=>start(e,pos(e,e.touches[0])),{passive:false});cv.addEventListener('touchmove',e=>move(e,pos(e,e.touches[0])),{passive:false});cv.addEventListener('touchend',stop,{passive:false});}
