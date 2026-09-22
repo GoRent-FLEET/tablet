@@ -3540,7 +3540,7 @@ function startCI(fn){
     if(prev.staff){ci.receivedBy=prev.staff;}
   }catch(e){}
   RET_GROUPS.forEach(g=>g.items.forEach(i=>{retSt[i]='ok';}));
-  ci={v,fn,receivedBy:'',odoIn:v.odo+1200,odometerOut:(co&&co.odometerOut)||v.odo,fuelIn:'Full',fuelNote:'',notes:'',
+  ci={v,fn,receivedBy:'',odoIn:v.odo+1200,odometerOut:(co&&co.odometerOut)||v.odo,fuelIn:'',fuelNote:'',notes:'',
       dmgd:[],dmgPhotos:[],custSig:null,custAt:'',
       mgmtName:'',mgmtSig:null,mgmtAt:'',deposit:'Full deposit returned',mgmtNotes:'',
       retItems:{},retSig:null,retAt:''};
@@ -3558,7 +3558,7 @@ function drawCI(){
   const damaged=allItems.filter(i=>retSt[i]==='dmg');
   ci.dmgd=getDmgData();
   const newDmg=ci.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
-  const fuelShort=r.fuelIn!==v.fuelOut;
+  const fuelShort=(!!r.fuelIn&&r.fuelIn!==v.fuelOut);
   const hasIssues=newDmg.length||fuelShort||missing.length||damaged.length;
   const km=r.odoIn-(ci.odometerOut||v.odo);
 
@@ -3658,11 +3658,12 @@ function ciStep0_CI(){
     <div>
       <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">⛽ Fuel IN *</div>
       <select id="ci-fuel" onchange="ci.fuelIn=this.value;drawCI()"
-        style="color-scheme:dark;padding:12px 14px;font-size:15px;font-weight:700;width:100%;background:var(--g0);border:2px solid ${r.fuelIn===v.fuelOut?'var(--gb)':'var(--re)'};border-radius:var(--rs);color:${r.fuelIn===v.fuelOut?'var(--se)':'var(--rl)'};">
+        style="color-scheme:dark;padding:12px 14px;font-size:15px;font-weight:700;width:100%;background:var(--g0);border:2px solid ${!r.fuelIn?'var(--am)':r.fuelIn===v.fuelOut?'var(--gb)':'var(--re)'};border-radius:var(--rs);color:${!r.fuelIn?'var(--al)':r.fuelIn===v.fuelOut?'var(--se)':'var(--rl)'};">
+        ${'<option value=""'+(!r.fuelIn?' selected':'')+'>— Not checked —</option>'}
         ${['Full','3/4','1/2','1/4','Empty'].map(f=>`<option${r.fuelIn===f?' selected':''}>${f}</option>`).join('')}
       </select>
-      <div style="font-size:14px;margin-top:4px;font-weight:700;color:${r.fuelIn===v.fuelOut?'var(--se)':'var(--rl)'};">
-        ${r.fuelIn===v.fuelOut?'✅ Matches departure':'⚠ Out: '+(v.fuelOut||'Full')+' → In: '+r.fuelIn+' — fuel charge applies'}
+      <div style="font-size:14px;margin-top:4px;font-weight:700;color:${!r.fuelIn?'var(--al)':r.fuelIn===v.fuelOut?'var(--se)':'var(--rl)'};">
+        ${!r.fuelIn?'⚠ Fuel not checked yet — select the level on the gauge':r.fuelIn===v.fuelOut?'✅ Matches departure':'⚠ Out: '+(v.fuelOut||'Full')+' → In: '+r.fuelIn+' — fuel charge applies'}
       </div>
       ${r.fuelIn&&r.fuelIn!=='Full'?`
       <div style="margin-top:10px;">
@@ -3773,6 +3774,7 @@ function signRetCheck(){
   if(!hasSig('ci-ret-sig')){toast('Sign below to confirm','err');return;}
   ci.odoIn=+(function(){var _e=document.getElementById('ci-odo');return _e?_e.value:undefined;})()||ci.odoIn;
   ci.fuelIn=(function(){var _e=document.getElementById('ci-fuel');return _e?_e.value:undefined;})()||ci.fuelIn;
+  if(!ci.fuelIn){toast('Check the fuel gauge and select the fuel level','err');return;}
   ci.retSig=getSig('ci-ret-sig');ci.retAt=now();
   try{
     const raw=localStorage.getItem(ipKey(ci.fn));
@@ -3816,7 +3818,7 @@ function ciStep3_CI(){
   const missing=allItems.filter(i=>retSt[i]==='missing');
   const damaged=allItems.filter(i=>retSt[i]==='dmg');
   const newDmg=r.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
-  const fuelShort=r.fuelIn!==v.fuelOut;
+  const fuelShort=(!!r.fuelIn&&r.fuelIn!==v.fuelOut);
   const hasIssues=newDmg.length||fuelShort||missing.length||damaged.length;
   const km=r.odoIn-(ci.odometerOut||v.odo);
 
@@ -3877,7 +3879,7 @@ function ciStep4_CI(){
   const missing=allItems.filter(i=>retSt[i]==='missing');
   const damaged=allItems.filter(i=>retSt[i]==='dmg');
   const newDmg=r.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
-  const fuelShort=r.fuelIn!==v.fuelOut;
+  const fuelShort=(!!r.fuelIn&&r.fuelIn!==v.fuelOut);
   const hasIssues=newDmg.length||fuelShort||missing.length||damaged.length;
   const km=r.odoIn-(ci.odometerOut||v.odo);
 
@@ -3986,7 +3988,7 @@ async function signCustCI(){
   const missing=allItems.filter(i=>retSt[i]==='missing');
   const damaged=allItems.filter(i=>retSt[i]==='dmg');
   const newDmg=ci.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
-  const fuelShort=ci.fuelIn!==ci.v.fuelOut;
+  const fuelShort=(!!ci.fuelIn&&ci.fuelIn!==ci.v.fuelOut);
   if(newDmg.length||fuelShort||missing.length||damaged.length){
     SB.from('management_alerts').insert({
       fleet_no:ci.fn,client:ci.v.cl,received_by:ci.receivedBy,
@@ -4023,7 +4025,7 @@ async function completeCI(){
     booking_id:ci.fn+'_'+ci.v.pu,fleet_no:ci.fn,client:ci.v.cl,
     received_by:ci.receivedBy,odo_in:ci.odoIn,odo_out:ci.v.odo,
     km_driven:ci.odoIn-ci.v.odo,fuel_in:ci.fuelIn,fuel_out:ci.v.fuelOut,
-    fuel_short:ci.fuelIn!==ci.v.fuelOut,new_damage:newDmg.length>0,
+    fuel_short:(!!ci.fuelIn&&ci.fuelIn!==ci.v.fuelOut),new_damage:newDmg.length>0,
     new_damage_panels:newDmg,equipment_status:retSt,
     missing_items:missing,damaged_items:damaged,
     customer_signed_at:ci.custSig?new Date().toISOString():null,
@@ -4032,7 +4034,7 @@ async function completeCI(){
     created_at:new Date().toISOString(),
   });
   // Read-only tablet: Fleet Manager data (vehicles/bookings) is never changed from here
-  const hasIssues=newDmg.length||(ci.fuelIn!==ci.v.fuelOut)||missing.length||damaged.length;
+  const hasIssues=newDmg.length||((!!ci.fuelIn&&ci.fuelIn!==ci.v.fuelOut))||missing.length||damaged.length;
   document.getElementById('ci-body').innerHTML=`
     <div class="done"><div class="done-ico">${hasIssues?'⚠️':'✅'}</div>
       <div class="done-title">Return Complete</div>
@@ -4041,7 +4043,7 @@ async function completeCI(){
     ${hasIssues?`<div style="background:var(--rg);border:2px solid var(--re);border-radius:var(--r);padding:14px;margin-bottom:12px">
       <div style="font-size:14px;font-weight:800;color:var(--rl);margin-bottom:8px">💰 Recover from ${ci.v.cl}</div>
       ${newDmg.length?`<div style="font-size:14px;color:var(--rl);padding:4px 0">🔴 Damage repair: ${newDmg.map(d=>d.view_name).join(', ')}</div>`:''}
-      ${ci.fuelIn!==ci.v.fuelOut?`<div style="font-size:14px;color:var(--al);padding:4px 0">⛽ Fuel: ${ci.v.fuelOut||'Full'} out → ${ci.fuelIn} in</div>`:''}
+      ${(!!ci.fuelIn&&ci.fuelIn!==ci.v.fuelOut)?`<div style="font-size:14px;color:var(--al);padding:4px 0">⛽ Fuel: ${ci.v.fuelOut||'Full'} out → ${ci.fuelIn} in</div>`:''}
       ${missing.length?`<div style="font-size:14px;color:var(--rl);padding:4px 0">❌ Replace: ${missing.join(', ')}</div>`:''}
       <div style="font-size:13px;color:var(--am);margin-top:8px">📷 ${(ci.dmgPhotos&&ci.dmgPhotos.length)||0} damage photos · Signed contract on file · Management alerted</div>
     </div>`:'<div class="al ok" style="margin-bottom:12px">✅ Clean return — full deposit released</div>'}
