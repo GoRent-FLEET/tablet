@@ -1611,7 +1611,7 @@ function drawCO(){
                (s.n===6&&!!co.custSig)||(s.n===7&&!!co.mgmtSig);
     // Who completed this step
     const stepBy=(s.n===0?co.prepBy:s.n===1?co.bonnetBy:s.n===2?co.equipBy:
-                  s.n===3?co.mechCheckBy:s.n===4?co.inspBy:s.n===5?'':
+                  s.n===3?co.mechCheckBy:s.n===4?co.inspBy:s.n===5?co.contractBy:
                   s.n===6?co.custBy:co.mgmtBy)||'';
     const active=s.n===coStep;
     const restricted=!canDoStep(s.n);
@@ -2123,6 +2123,14 @@ function signEquip(){
 
 // ── STEP 1: Client ID Documents ──────────────────────────────────
 
+// Contract step: who is doing it (mainly Christina; Simon, Nelson, Joe and Robbie can also do it)
+var CONTRACT_STAFF=['Christina','Simon','Nelson','Joe','Robbie'];
+function coContractWho(){
+  if(!co.contractBy&&APP_USER&&CONTRACT_STAFF.indexOf(APP_USER.name)>=0)co.contractBy=APP_USER.name;
+  return '<div class="who-box"><div class="who-lbl">👤 Who is doing the contract?</div>'
+    +'<select id="co-ct-nm" onchange="co.contractBy=this.value;this.style.borderColor=this.value?\'var(--gb)\':\'var(--am)\';saveCOProgress()" style="color-scheme:dark;width:100%;padding:12px 14px;font-size:16px;font-weight:800;background:var(--g0);border:2px solid '+(co.contractBy?'var(--gb)':'var(--am)')+';border-radius:var(--rs);color:var(--tx);">'
+    +'<option value="">— Select your name —</option>'+CONTRACT_STAFF.map(function(n){return '<option'+(n===co.contractBy?' selected':'')+'>'+n+'</option>';}).join('')+'</select></div>';
+}
 function coStep1(){
   if(!co||!co.v){return '<div style="padding:20px;color:red;">Error: co.v undefined in coStep1</div>';}
   // Office staff fill this in during prep — all client + driver details
@@ -2265,6 +2273,7 @@ function coStep1(){
       <div class="step-sub">Office staff: verify full legal names against passports, fill in all details and photograph documents for ALL drivers before handover</div>
     </div>
   </div>
+  ${coContractWho()}
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
     <div style="font-size:14px;color:var(--g5);">
@@ -2724,9 +2733,10 @@ async function submitContractSig(){
 
 async function signContract(sigData){
   if(!sigData){toast('No signature','err');return;}
+  if(!co.contractBy){toast('Select who is doing the contract first','err');var _s=document.getElementById('co-ct-nm');if(_s)_s.scrollIntoView({block:'center'});return;}
   co.contract.client_signed_at=new Date().toISOString();
   co.contract.client_sig_url=sigData;
-  co.contract.staff_signed_by=(currentProfile&&currentProfile.name)||'staff';
+  co.contract.staff_signed_by=co.contractBy||(currentProfile&&currentProfile.name)||'staff';
   co.contract.staff_signed_at=new Date().toISOString();
   co.contract.status='signed';
   co.contractSigned=true;
@@ -2747,7 +2757,7 @@ async function signContract(sigData){
   // Save to DB
   const{error}=await SB.from('rental_contracts').insert({
     ...co.contract,contract_html:finalHTML,
-    booking_id:co.fn+'_'+co.v.pu,created_by:(currentProfile&&currentProfile.name)||'staff',
+    booking_id:co.fn+'_'+co.v.pu,created_by:co.contractBy||(currentProfile&&currentProfile.name)||'staff',
     created_at:new Date().toISOString(),updated_at:new Date().toISOString(),
   });
   hideBanner();
