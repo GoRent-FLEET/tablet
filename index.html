@@ -596,6 +596,8 @@ const L_MECH=[
   ['•','Bumpers','Front and rear secure, no cracks, loose brackets or missing bolts'],
   ['__SECTION__','🛻 Canopy'],
   ['•','Canopy bolts fastened','All canopy mounting bolts checked and tightened'],
+  ['•','Load bars fastened','Load bars secure, all bolts checked and tightened'],
+  ['__CAMPING__','Tent bolts fastened','Rooftop tent mounting bolts checked and tightened'],
   ['•','Canopy locks','All canopy locks working and secured'],
   ['•','Tailgate & lock','Opens, closes and locks correctly'],
   ['__SECTION__','🔑 Keys'],
@@ -1944,6 +1946,7 @@ function coStepMech(){
   for(var i=0;i<L_MECH.length;i++){
     var item=L_MECH[i];
     if(!item||!item[0]) continue;
+    if(item[0]==='__CAMPING__'&&!co.v.camping) continue;
     if(item[0]==='__SECTION__'){
       rows+='<div style="font-size:11px;font-weight:900;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;padding:10px 0 5px;border-bottom:1px solid var(--g2);margin-bottom:6px;">'+item[1]+'</div>';
       continue;
@@ -1963,7 +1966,7 @@ function coStepMech(){
       +'<button style="'+issueStyle+'" data-k="'+_bx(lbl)+'" data-v="issue" onclick="setMechItem(this.dataset.k,this.dataset.v)">'+(bad?'⚠ Issue':'Issue')+'</button>'
       +'</div></div>';
   }
-  var mechLbls=L_MECH.filter(function(x){return x&&x[0]!=='__SECTION__';}).map(function(x){return x[1];});
+  var mechLbls=L_MECH.filter(function(x){return x&&x[0]!=='__SECTION__'&&!(x[0]==='__CAMPING__'&&!co.v.camping);}).map(function(x){return x[1];});
   var mechCount=mechLbls.length;
   var doneCount=mechLbls.filter(function(l){return !!co.mechItems[l];}).length;
   var allDone=doneCount>=mechCount;
@@ -2938,6 +2941,7 @@ function coStep4_dmg(){
   // Mech items unchecked
   L_MECH.forEach(function(item,i){
     if(!item||item[0]==='__SECTION__') return;
+    if(item[0]==='__CAMPING__'&&!co.v.camping) return;
     var val=(co.mechItems&&co.mechItems[item[1]])||'';
     if(!val) issues.push({step:'Mechanical',label:item[1],status:'unchecked'});
     else if(val==='issue'||val==='prob') issues.push({step:'Mechanical',label:item[1],status:'problem'});
@@ -3242,7 +3246,7 @@ function coStep6_mgmt(){
   if(!co||!co.v){return '<div style="padding:20px;color:red;">Error: co.v undefined in coStep6</div>';}
   const _pst=l=>{const v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';};
   const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&i!=='__OPT_ITEM__'&&!l.startsWith('__QTY__')&&!_pst(l)).map(([i,l])=>l);
-  const uncMech=L_MECH.filter(function(it){return it&&it[0]!=='__SECTION__'&&!co.mechItems[it[1]];}).map(function(it){return it[1];});
+  const uncMech=L_MECH.filter(function(it){return it&&it[0]!=='__SECTION__'&&!(it[0]==='__CAMPING__'&&!co.v.camping)&&!co.mechItems[it[1]];}).map(function(it){return it[1];});
   const probPrep=L_PREP.filter(function(it){return it&&_pst(it[1])==='prob';}).map(function(it){return it[1];});
   const probMech=L_MECH.filter(function(it){return it&&(co.mechItems[it[1]]==='prob'||co.mechItems[it[1]]==='issue');}).map(function(it){return it[1];});
 
@@ -3365,7 +3369,7 @@ async function completeCO(){
 
   const _pst=l=>{const v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';};
   const uncPrep=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&i!=='__OPT_ITEM__'&&!l.startsWith('__QTY__')&&!_pst(l)).map(([i,l])=>l);
-  const uncMech=L_MECH.filter(function(it){return it&&it[0]!=='__SECTION__'&&!co.mechItems[it[1]];}).map(function(it){return it[1];});
+  const uncMech=L_MECH.filter(function(it){return it&&it[0]!=='__SECTION__'&&!(it[0]==='__CAMPING__'&&!co.v.camping)&&!co.mechItems[it[1]];}).map(function(it){return it[1];});
 
   // Build equipment list for handover doc
   const equipLines=[];
