@@ -2059,7 +2059,9 @@ function signEquip(){
   const allStaff=Object.keys(co.prepCheckedBy||{});
   if(!allStaff.includes(co.prepBy)) allStaff.push(co.prepBy);
   co.equipByAll=allStaff;
-  toast('Step 2 signed ✅','ok');coStep=2;drawCO();
+  // Camping signed: go on to Inspection, or stay here if this person may not do it
+  if(canDoStep(4)){toast('Camping signed ✅','ok');coStep=4;}else{toast('Camping signed ✅ — hand over to a manager for inspection','ok');}
+  drawCO();
 }
 
 
@@ -2972,7 +2974,9 @@ function signHandover(){
   co.dmgd=getDmgData();
   co.mechBy=(function(){var _e=document.getElementById('co-h-nm');return _e?_e.value:undefined;})()||co.mechBy;
   uploadPhotos(co.dmgPhotos,co.fn,co.clientName||co.v.cl,'damage-out');
-  toast('Step 4 signed ✅','ok');coStep=5;drawCO();
+  // Handover signed: go on to Management sign-off
+  if(canDoStep(7)){toast('Handover signed ✅','ok');coStep=7;}else{toast('Handover signed ✅ — management sign-off next','ok');}
+  drawCO();
 }
 
 // ── STEP 4: Management clearance ─────────────────────────────────
@@ -3490,7 +3494,7 @@ async function completeCO(){
 }
 
 async function sendHandoverEmail(){
-  const email=(function(){var _e=document.getElementById('send-email');return _e?_e.value:undefined;})()?.trim();
+  const email=((function(){var _e=document.getElementById('send-email');return _e?_e.value:undefined;})()||'').trim();
   if(!email){toast('Enter email address','err');return;}
   const btn=document.getElementById('btn-email');
   if(btn){btn.textContent='Sending...';btn.disabled=true;}
@@ -3524,11 +3528,11 @@ async function sendHandoverEmail(){
 }
 
 function sendHandoverWA(){
-  const phone=(function(){var _e=document.getElementById('send-wa');return _e?_e.value:undefined;})()?.trim().replace(/\s+/g,'');
+  const phone=((function(){var _e=document.getElementById('send-wa');return _e?_e.value:undefined;})()||'').trim().replace(/\s+/g,'');
   if(!phone){toast('Enter WhatsApp number','err');return;}
   const intlPhone=phone.startsWith('+')?phone.replace('+',''):'264'+phone.replace(/^0/,'');
   const msg=encodeURIComponent(
-    `Hi ${co.clientName||''},\n\nThank you for renting with Go Rent 4×4 Namibia!\n\nVehicle: ${co.fn} (${co.v.reg})\nPickup: ${co.v.pu||'today'} | Return: ${co.v.rt||'—'}\nFuel at departure: ${co.fuelOut} — please return at the same level\n\nEquipment issued:\n${(window._handoverHTML||'').match(/✓ [^<]+/g)?.slice(0,12).join('\n') || 'See attached document'}\n\n⛽ DIESEL ONLY\n\nSafe travels! Call us anytime: +264 81 XXX XXXX\n— Go Rent 4×4 Team`
+    `Hi ${co.clientName||''},\n\nThank you for renting with Go Rent 4×4 Namibia!\n\nVehicle: ${co.fn} (${co.v.reg})\nPickup: ${co.v.pu||'today'} | Return: ${co.v.rt||'—'}\nFuel at departure: ${co.fuelOut} — please return at the same level\n\nEquipment issued:\n${(((window._handoverHTML||'').match(/✓ [^<]+/g))||[]).slice(0,12).join('\n') || 'See attached document'}\n\n⛽ DIESEL ONLY\n\nSafe travels! Call us anytime: +264 81 XXX XXXX\n— Go Rent 4×4 Team`
   );
   window.open('https://wa.me/'+intlPhone+'?text='+msg,'_blank');
 }
@@ -3566,7 +3570,7 @@ function startCI(fn){
       retItems:{},retSig:null,retAt:''};
   ciStep=0;
   initIM();
-  (v.dmgd||[]).forEach(d=>{(d.cells||[]).forEach(c=>{imarks[d.view]?.['M']&&(imarks[d.view]['M'][c.r+','+c.c]='pr');});});
+  (v.dmgd||[]).forEach(d=>{(d.cells||[]).forEach(c=>{imarks[d.view]&&imarks[d.view]['M']&&(imarks[d.view]['M'][c.r+','+c.c]='pr');});});
   goPage('ci');drawCI();
 }
 
@@ -5130,7 +5134,7 @@ function iCT(cell,v,r,c){const key=r+','+c;const cur=imarks[v][isize][key]||null
 function iCP(cell,v,r,c){const key=r+','+c;const cur=imarks[v][isize][key]||null;if(cur===itool)return;iundo={v,sz:isize,key,prev:cur};eU();if(cur)cell.classList.remove(cur);cell.classList.add(itool);imarks[v][isize][key]=itool;renderIS();}
 function eU(){const b=document.getElementById('ins-undo');if(b){b.disabled=false;b.style.opacity='1';}}
 function setIT(t,btn){itool=t;document.querySelectorAll('.ins-t').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
-function setIS(s){isize=s;document.querySelectorAll('.ins-szb').forEach(b=>b.classList.remove('on'));document.getElementById('isz-'+s)?.classList.add('on');VIEWS.forEach(v=>buildIG(v));}
+function setIS(s){isize=s;document.querySelectorAll('.ins-szb').forEach(b=>b.classList.remove('on'));var _sz=document.getElementById('isz-'+s);if(_sz)_sz.classList.add('on');VIEWS.forEach(v=>buildIG(v));}
 function insUndo(){if(!iundo)return;const la=iundo;iundo=null;const b=document.getElementById('ins-undo');if(b){b.disabled=true;b.style.opacity='.4';}if(la.prev===null)delete imarks[la.v][la.sz][la.key];else imarks[la.v][la.sz][la.key]=la.prev;if(la.sz===isize){const p=la.key.split(',');const g=document.getElementById('ins-g-'+la.v);if(g){const[c]=IGR[la.v][isize];const cell=g.children[+p[0]*c+ +p[1]];if(cell){cell.classList.remove('sc','de','pr');if(la.prev)cell.classList.add(la.prev);}}}renderIS();}
 function insClearV(v){imarks[v][isize]={};buildIG(v);renderIS();}
 function insClear(){VIEWS.forEach(v=>{imarks[v]={S:{},M:{},L:{}};buildIG(v);});renderIS();}
@@ -5182,10 +5186,10 @@ function ciEqChecks(){
 function setRetGrp(gi,status){var _who=(ci&&ci.receivedBy)||(APP_USER&&APP_USER.name)||'';var _at=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});if(ci&&!ci.retEqBy)ci.retEqBy={};RET_GROUPS[gi].items.forEach(i=>{retSt[i]=status;if(ci)ci.retEqBy[i]={st:status,by:_who,at:_at};});document.getElementById('ret-grps').innerHTML=renderRetGroups();}
 
 // ── SIGNATURES ────────────────────────────────────────────────────
-function initSig(id){const cv=document.getElementById(id);if(!cv)return;if(sigs[id]&&sigs[id].cv===cv)return; /* redrawn screens get a new canvas: bind it again */cv.width=cv.offsetWidth||540;cv.height=cv.offsetHeight||150;const ctx=cv.getContext('2d');ctx.strokeStyle='#3ddc84';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';sigs[id]={ctx,cv:cv,drawing:false,hasData:false};const pos=(e,t)=>{const r=cv.getBoundingClientRect();return t?{x:(t.clientX-r.left)*(cv.width/r.width),y:(t.clientY-r.top)*(cv.height/r.height)}:{x:e.offsetX*(cv.width/cv.offsetWidth),y:e.offsetY*(cv.height/cv.offsetHeight)};};const start=(e,p)=>{e.preventDefault();sigs[id].drawing=true;sigs[id].hasData=true;ctx.beginPath();ctx.moveTo(p.x,p.y);};const move=(e,p)=>{if(!sigs[id].drawing)return;ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);};const stop=()=>{if(sigs[id])sigs[id].drawing=false;};cv.addEventListener('mousedown',e=>start(e,pos(e)));cv.addEventListener('mousemove',e=>{if(sigs[id]?.drawing)move(e,pos(e));});cv.addEventListener('mouseup',stop);cv.addEventListener('mouseleave',stop);cv.addEventListener('touchstart',e=>start(e,pos(e,e.touches[0])),{passive:false});cv.addEventListener('touchmove',e=>move(e,pos(e,e.touches[0])),{passive:false});cv.addEventListener('touchend',stop,{passive:false});}
+function initSig(id){const cv=document.getElementById(id);if(!cv)return;if(sigs[id]&&sigs[id].cv===cv)return; /* redrawn screens get a new canvas: bind it again */cv.width=cv.offsetWidth||540;cv.height=cv.offsetHeight||150;const ctx=cv.getContext('2d');ctx.strokeStyle='#3ddc84';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';sigs[id]={ctx,cv:cv,drawing:false,hasData:false};const pos=(e,t)=>{const r=cv.getBoundingClientRect();return t?{x:(t.clientX-r.left)*(cv.width/r.width),y:(t.clientY-r.top)*(cv.height/r.height)}:{x:e.offsetX*(cv.width/cv.offsetWidth),y:e.offsetY*(cv.height/cv.offsetHeight)};};const start=(e,p)=>{e.preventDefault();sigs[id].drawing=true;sigs[id].hasData=true;ctx.beginPath();ctx.moveTo(p.x,p.y);};const move=(e,p)=>{if(!sigs[id].drawing)return;ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);};const stop=()=>{if(sigs[id])sigs[id].drawing=false;};cv.addEventListener('mousedown',e=>start(e,pos(e)));cv.addEventListener('mousemove',e=>{if(sigs[id]&&sigs[id].drawing)move(e,pos(e));});cv.addEventListener('mouseup',stop);cv.addEventListener('mouseleave',stop);cv.addEventListener('touchstart',e=>start(e,pos(e,e.touches[0])),{passive:false});cv.addEventListener('touchmove',e=>move(e,pos(e,e.touches[0])),{passive:false});cv.addEventListener('touchend',stop,{passive:false});}
 function clrSig(id){const cv=document.getElementById(id);if(!cv)return;const s=sigs[id];if(s){s.ctx.clearRect(0,0,cv.width,cv.height);s.hasData=false;}delete sigs[id];}
-function hasSig(id){return!!(sigs[id]?.hasData);}
-function getSig(id){return document.getElementById(id)?.toDataURL('image/png')||'';}
+function hasSig(id){return!!(sigs[id]&&sigs[id].hasData);}
+function getSig(id){var _c=document.getElementById(id);return (_c&&_c.toDataURL('image/png'))||'';}
 
 // ── INSURANCE PACK ────────────────────────────────────────────────
 async function openInsurancePack(contractId,clientName,fleetNo){
@@ -5194,7 +5198,7 @@ async function openInsurancePack(contractId,clientName,fleetNo){
   document.body.appendChild(modal);
   const cl=clientList.find(c=>c.full_name===clientName);
   let contract=null;
-  if(clientName){const{data}=await SB.from('rental_contracts').select('*').ilike('client_name',clientName).order('created_at',{ascending:false}).limit(1);contract=data?.[0];}
+  if(clientName){const{data}=await SB.from('rental_contracts').select('*').ilike('client_name',clientName).order('created_at',{ascending:false}).limit(1);contract=data&&data[0];}
   let dmgPhotos=[],prepPhotos=[];
   if(clientName&&fleetNo){
     const cln=clientName.replace(/[^a-zA-Z0-9]/g,'_');
