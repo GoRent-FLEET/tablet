@@ -1169,7 +1169,9 @@ function showBookingDetail(v){
     +'<div style="display:flex;align-items:center;justify-content:space-between;padding:0 6px 12px;">'
     +'<div style="font-size:18px;font-weight:900;color:#111827;">'+_bx(v.fn)+' · '+_bx(v.cl)+'</div>'
     +'<button onclick="closeBookingDetail()" style="width:40px;height:40px;border-radius:20px;border:1px solid #e5e7eb;background:#f9fafb;font-size:18px;cursor:pointer;">✕</button>'
-    +'</div>'+h+'</div>';
+    +'</div>'+h
+    +'<button class="btn g" style="margin-top:14px;" onclick="openRentalFile(\''+bkKey(v)+'\',\''+_bx(v.fn)+'\',\''+_bx(String(v.cl||'').replace(/\'/g,''))+'\')">📁 Open rental file — contract, ID scans, photos, signatures</button>'
+    +'</div>';
   document.body.appendChild(m);
 }
 function ovExpandTo(m,key){
@@ -2414,7 +2416,8 @@ async function captureDriverDoc(event,driverIdx,field){
     }
     // Upload to Supabase storage
     const driverName=(co.drivers[driverIdx].name||`driver_${driverIdx}`).replace(/[^a-zA-Z0-9]/g,'_');
-    const path=`clients/${driverName}/${field}_${Date.now()}.jpg`;
+    const _bk=co&&co.v?bkKey(co.v):'';
+    const path=_bk?`bookings/${_bk}/id-docs/${driverName}_${field}_${Date.now()}.jpg`:`clients/${driverName}/${field}_${Date.now()}.jpg`;
     const blob=await(await fetch(b64)).blob();
     const{error}=await SB.storage.from('client-docs').upload(path,blob,{contentType:'image/jpeg',upsert:true});
     hideBanner();
@@ -2677,9 +2680,12 @@ async function signContract(sigData){
   // Upload sig
   const sigBlob=await(await fetch(sigData)).blob();
   const cln=(co.clientName||'unknown').replace(/[^a-zA-Z0-9]/g,'_');
-  const sigPath=`clients/${cln}/contracts/sig_${co.fn}_${Date.now()}.png`;
-  const{data:sigUrl}=await SB.storage.from('client-docs').upload(sigPath,sigBlob,{contentType:'image/png',upsert:true}).then(()=>SB.storage.from('client-docs').getPublicUrl(sigPath));
-  if(sigUrl)co.contract.client_sig_url=sigUrl.publicUrl;
+  const sigPath=`bookings/${bkKey(co.v)}/contract/sig_${co.fn}_${Date.now()}.png`;
+  try{
+    await SB.storage.from('client-docs').upload(sigPath,sigBlob,{contentType:'image/png',upsert:true});
+    const _su=await SB.storage.from('client-docs').createSignedUrl(sigPath,60*60*24*365);
+    if(_su&&_su.data&&_su.data.signedUrl)co.contract.client_sig_url=_su.data.signedUrl;
+  }catch(e){}
   // Save to DB
   const{error}=await SB.from('rental_contracts').insert({
     ...co.contract,contract_html:finalHTML,
@@ -2703,7 +2709,7 @@ async function sendContractEmail(toEmail, c, contractHtml){
   try{
     const resp = await fetch('https://rfzcemsyrcntsunbdvdh.supabase.co/functions/v1/send-contract-email',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${SB_KEY}`},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await sbToken())},
       body:JSON.stringify({
         to: toEmail,
         bcc: OFFICE_EMAIL,
@@ -3326,8 +3332,9 @@ async function completeCO(){
     customer_signed_at:co.custSig?new Date().toISOString():null,
     manager_name:co.mgmtBy, manager_signed_at:co.mgmtSig?new Date().toISOString():null,
     odo_out:co.odometerOut||co.v.odo, unchecked_prep:uncPrep, unchecked_mech:uncMech,
-    damage_panels:co.dmgd, created_at:new Date().toISOString(),
-  }).catch(()=>{});
+    damage_panels:co.dmgd, prep_checklist:co.prepItems||{}, mech_checklist:co.mechItems||{}, doc_checks:co.docItems||{},
+    created_at:new Date().toISOString(),
+  }).then(function(r){if(r&&r.error)toast('Check-out not saved: '+r.error.message,'err');},function(){});
   // Read-only tablet: Fleet Manager data (vehicles/bookings) is never changed from here
 
   // Build handover HTML document for client
@@ -3491,7 +3498,7 @@ async function sendHandoverEmail(){
   try{
     const resp=await fetch('https://rfzcemsyrcntsunbdvdh.supabase.co/functions/v1/send-contract-email',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${SB_KEY}`},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await sbToken())},
       body:JSON.stringify({
         to:email,
         bcc:OFFICE_EMAIL,
@@ -4054,8 +4061,201 @@ async function signMgmtCI(){
   toast('Rental closed ✅','ok');drawCI();
 }
 
+// ── RENTAL FILE: everything for one booking in one place ───────────
+// Files are stored per booking (key = fleet no + pickup date, same key as the check-out/check-in records):
+//   client-docs (private):  bookings/<key>/id-docs, /contract, /signatures
+//   vehicle-photos:         bookings/<key>/<stage>
+function bkKey(v){return v?(v.fn+'_'+v.pu):'';}
+function curBkKey(fn){
+  if(typeof co!=='undefined'&&co&&co.v&&co.v.fn===fn)return bkKey(co.v);
+  if(typeof ci!=='undefined'&&ci&&ci.v&&ci.v.fn===fn)return bkKey(ci.v);
+  return '';
+}
+async function rfList(bucket,prefix){
+  var out=[];
+  var r=await SB.storage.from(bucket).list(prefix,{limit:200});
+  var items=(r&&r.data)||[];
+  for(var i=0;i<items.length;i++){
+    var it=items[i];
+    if(!it.id){var sub=await rfList(bucket,prefix+'/'+it.name);out=out.concat(sub);}
+    else out.push(prefix+'/'+it.name);
+  }
+  return out;
+}
+function rfLabel(path){
+  var p=path.split('/'),folder=p[p.length-2]||'',raw=(p[p.length-1]||''),f=raw.toLowerCase();
+  if(folder==='id-docs'){
+    var who=raw.split('_').slice(0,-2).join(' ');
+    var kind=f.indexOf('passport')>=0?'Passport':f.indexOf('licfront')>=0?'Licence (front)':f.indexOf('licback')>=0?'Licence (back)':f.indexOf('id')>=0?'ID':'Document';
+    return kind+(who?' · '+who:'');
+  }
+  var map={'contract':'Contract signature','signatures':'Signature','damage-out':'Check-out damage','damage-in':'Check-in photo','prep':'Prep photo','fuel-receipt':'Fuel receipt'};
+  return map[folder]||folder;
+}
+function closeRentalFile(){var m=document.getElementById('rf-modal');if(m)m.parentNode.removeChild(m);}
+function rfShowContract(){
+  var h=window._rfContractHTML||'';if(!h)return;
+  var w=window.open('','_blank');
+  if(w){w.document.open();w.document.write(h);w.document.close();}
+  else{var m=document.getElementById('rf-body');if(m)m.innerHTML='<iframe srcdoc="'+_bx(h)+'" style="width:100%;height:70vh;border:0;background:#fff;border-radius:10px;"></iframe>';}
+}
+async function openRentalFile(key,fn,client){
+  closeRentalFile();closeBookingDetail();
+  var m=document.createElement('div');m.id='rf-modal';
+  m.setAttribute('style','position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;-webkit-overflow-scrolling:touch;');
+  m.onclick=function(e){if(e.target===m)closeRentalFile();};
+  m.innerHTML='<div style="background:var(--g1);border:2px solid var(--g2);border-radius:16px;width:100%;max-width:760px;padding:16px;">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-size:18px;font-weight:900;color:var(--tx);">📁 Rental file · '+_bx(fn||'')+' · '+_bx(client||'')+'</div>'
+    +'<button onclick="closeRentalFile()" style="width:40px;height:40px;border-radius:20px;border:1px solid var(--g3);background:var(--g0);color:var(--tx);font-size:18px;">✕</button></div>'
+    +'<div id="rf-body" style="color:var(--g5);padding:10px;">Loading documents…</div></div>';
+  document.body.appendChild(m);
+  var body=document.getElementById('rf-body');
+  try{
+    var rc=await SB.from('rental_contracts').select('*').eq('booking_id',key).order('created_at',{ascending:false}).limit(1);
+    var co_=await SB.from('checkouts').select('*').eq('booking_id',key).order('created_at',{ascending:false}).limit(1);
+    var ci_=await SB.from('checkins').select('*').eq('booking_id',key).order('created_at',{ascending:false}).limit(1);
+    var contract=rc&&rc.data&&rc.data[0], cko=co_&&co_.data&&co_.data[0], cki=ci_&&ci_.data&&ci_.data[0];
+    var docs=await rfList('client-docs','bookings/'+key);
+    var signed={};
+    if(docs.length){var s=await SB.storage.from('client-docs').createSignedUrls(docs,3600);((s&&s.data)||[]).forEach(function(x){if(x&&x.signedUrl)signed[x.path]=x.signedUrl;});}
+    var pics=await rfList('vehicle-photos','bookings/'+key);
+    var picUrls=pics.map(function(p){return {path:p,url:SB.storage.from('vehicle-photos').getPublicUrl(p).data.publicUrl};});
+    (cki&&cki.fuel_receipts||[]).forEach(function(u){if(String(u).indexOf('http')===0&&!picUrls.some(function(x){return x.url===u;}))picUrls.push({path:'x/fuel-receipt/x',url:u});});
+    window._rfContractHTML=contract&&contract.contract_html||'';
+    function sec(t,inner){return '<div style="margin:14px 0 6px;font-size:13px;font-weight:900;letter-spacing:.5px;color:var(--al);text-transform:uppercase;">'+t+'</div>'+inner;}
+    function thumb(url,label){return '<a href="'+url+'" target="_blank" style="display:inline-block;width:150px;margin:0 8px 8px 0;text-decoration:none;vertical-align:top;"><img src="'+url+'" style="width:150px;height:110px;object-fit:cover;border-radius:8px;border:1px solid var(--g3);background:#fff;"><div style="font-size:11px;color:var(--g5);margin-top:3px;">'+_bx(label)+'</div></a>';}
+    function line(l,v){return '<div style="display:flex;gap:8px;font-size:14px;padding:5px 0;border-bottom:1px solid var(--g2);"><div style="width:44%;color:var(--g5);">'+l+'</div><div style="color:var(--tx);font-weight:700;">'+v+'</div></div>';}
+    var idDocs=docs.filter(function(p){return p.indexOf('/id-docs/')>0;});
+    var sigDocs=docs.filter(function(p){return p.indexOf('/id-docs/')<0;});
+    var h='';
+    h+=sec('📝 Signed contract',contract?(line('Signed by client',_bx(contract.client_name||'')+(contract.client_signed_at?' · '+new Date(contract.client_signed_at).toLocaleString('en-GB'):''))+line('Staff',_bx(contract.staff_signed_by||contract.created_by||'—'))+line('Deposit',contract.deposit_amount?('N$ '+Number(contract.deposit_amount).toLocaleString()):'—')
+      +(window._rfContractHTML?'<button class="btn g" style="margin-top:8px;width:auto;padding:10px 16px;" onclick="rfShowContract()">📄 Open full signed contract</button>':'')):'<div style="font-size:13px;color:var(--g5);">No signed contract saved for this booking yet.</div>');
+    h+=sec('🪪 Passport, ID & licence scans',idDocs.length?idDocs.map(function(p){return signed[p]?thumb(signed[p],rfLabel(p)):'';}).join(''):'<div style="font-size:13px;color:var(--g5);">No scans saved for this booking yet.</div>');
+    h+=sec('🚗 Check-out',cko?(line('Prepared by',_bx((cko.prep_by_all||[cko.prep_by]).filter(Boolean).join(', ')||'—'))+line('Handed over by',_bx(cko.handover_by||'—'))+line('Manager',_bx(cko.manager_name||'—'))+line('Km out · fuel out',Number(cko.odo_out||0).toLocaleString()+' km · '+_bx(cko.fuel_out||'—'))+line('Date',new Date(cko.created_at).toLocaleString('en-GB'))):'<div style="font-size:13px;color:var(--g5);">Not checked out on the tablet yet.</div>');
+    h+=sec('🏠 Check-in',cki?(line('Received by',_bx(cki.received_by||'—'))+line('Manager sign-off',_bx(cki.manager_name||'—'))+line('Km in · fuel in',Number(cki.odo_in||0).toLocaleString()+' km · '+_bx(cki.fuel_in||'—'))+line('Deposit decision',_bx(cki.deposit_decision||'—'))+line('Return report emailed',cki.report_sent_to?_bx(cki.report_sent_to)+' · '+new Date(cki.report_sent_at).toLocaleString('en-GB'):'Not sent')+line('Date',new Date(cki.created_at).toLocaleString('en-GB'))):'<div style="font-size:13px;color:var(--g5);">Not checked in on the tablet yet.</div>');
+    h+=sec('📷 Photos & fuel receipts',picUrls.length?picUrls.map(function(x){return thumb(x.url,rfLabel(x.path));}).join(''):'<div style="font-size:13px;color:var(--g5);">No photos saved for this booking yet.</div>');
+    h+=sec('✍️ Signatures',sigDocs.length?sigDocs.map(function(p){return signed[p]?thumb(signed[p],rfLabel(p)):'';}).join(''):'<div style="font-size:13px;color:var(--g5);">No signatures saved for this booking yet.</div>');
+    h+='<div style="font-size:11px;color:var(--g5);margin-top:12px;">Tap any picture to open it full size. Scan and signature links are private and expire after 1 hour.</div>';
+    body.innerHTML=h;
+  }catch(e){body.innerHTML='<div class="al err">Could not load the rental file: '+_bx(e.message||e)+'</div>';}
+}
+async function loadRentalFiles(q){
+  var el=document.getElementById('rp-files');if(!el)return;
+  if(!q&&!el._loaded){el.innerHTML='<div style="padding:16px;color:var(--g5);">Loading…</div>';}
+  var seen={},rows=[];
+  function add(key,fn,cl,when,src){if(!key||seen[key])return;seen[key]=1;rows.push({key:key,fn:fn,cl:cl,when:when,src:src});}
+  FLEET.forEach(function(v){add(bkKey(v),v.fn,v.cl,v.pu,'booking');});
+  try{
+    var a=await SB.from('checkins').select('booking_id,fleet_no,client,created_at').order('created_at',{ascending:false}).limit(200);
+    var b=await SB.from('checkouts').select('booking_id,fleet_no,client,created_at').order('created_at',{ascending:false}).limit(200);
+    (a.data||[]).concat(b.data||[]).forEach(function(r){add(r.booking_id,r.fleet_no,r.client,(r.created_at||'').slice(0,10),'history');});
+  }catch(e){}
+  el._loaded=true;
+  var ql=(q||'').toLowerCase();
+  var list=rows.filter(function(r){return !ql||(r.fn+' '+r.cl).toLowerCase().indexOf(ql)>=0;}).sort(function(x,y){return String(y.when).localeCompare(String(x.when));});
+  el.innerHTML='<input class="search-bar" placeholder="🔍 Search client or vehicle…" value="'+_bx(q||'')+'" oninput="clearTimeout(window._rfT);var v=this.value;window._rfT=setTimeout(function(){loadRentalFiles(v)},300)">'
+    +(list.length?list.map(function(r){return '<div onclick="openRentalFile(\''+r.key+'\',\''+_bx(r.fn)+'\',\''+_bx(String(r.cl||'').replace(/\'/g,''))+'\')" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;margin-bottom:8px;border-radius:10px;border:1px solid var(--g2);background:var(--g1);cursor:pointer;">'
+      +'<div><div style="font-size:15px;font-weight:900;color:var(--tx);">'+_bx(r.fn)+' · '+_bx(r.cl||'')+'</div><div style="font-size:12px;color:var(--g5);">'+_dmy(r.when)+'</div></div><div style="font-size:20px;">📁</div></div>';}).join(''):'<div style="padding:16px;color:var(--g5);">No rentals found.</div>');
+}
+
+// ── RETURN REPORT EMAIL (sent to the client when the check-in is completed) ──
+async function sbToken(){try{var s=await SB.auth.getSession();return (s&&s.data&&s.data.session&&s.data.session.access_token)||SB_KEY;}catch(e){return SB_KEY;}}
+async function uploadCISigs(){
+  ci._sigUrls=ci._sigUrls||{};
+  var list=[['received',ci.retSig],['customer',ci.custSig],['manager',ci.mgmtSig]];
+  for(var k=0;k<list.length;k++){
+    var key=list[k][0],src=list[k][1];
+    if(!src||ci._sigUrls[key])continue;
+    try{
+      var _p='bookings/'+bkKey(ci.v)+'/signatures/'+key+'_'+Date.now()+'.png';
+      var _b=await(await fetch(src)).blob();
+      await SB.storage.from('client-docs').upload(_p,_b,{contentType:'image/png',upsert:true});
+      var _u=await SB.storage.from('client-docs').createSignedUrl(_p,60*60*24*365);
+      if(_u&&_u.data&&_u.data.signedUrl)ci._sigUrls[key]=_u.data.signedUrl;
+    }catch(e){}
+  }
+  return ci._sigUrls;
+}
+function ciReportHTML(){
+  var v=ci.v,S=ci._sigUrls||{};
+  var newDmg=(ci.dmgd||[]).filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
+  var missing=RET_GROUPS.reduce(function(a,g){return a.concat(g.items.filter(function(i){return retSt[i]==='missing';}));},[]);
+  var fuelShort=!!ci.fuelIn&&ci.fuelIn!==v.fuelOut;
+  var odoOut=ci.odometerOut||v.odo||0, odoIn=ci.odoIn||0;
+  var when=new Date().toLocaleString('en-GB',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  function row(l,val){return '<tr><td style="padding:7px 10px;border-bottom:1px solid #eee;color:#666;font-size:13px;width:42%;">'+l+'</td><td style="padding:7px 10px;border-bottom:1px solid #eee;font-size:14px;font-weight:bold;">'+val+'</td></tr>';}
+  function h(t){return '<h3 style="font-size:15px;margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid #0f3d26;color:#0f3d26;">'+t+'</h3>';}
+  function img(u,w){return '<img src="'+u+'" alt="" style="width:'+(w||180)+'px;max-width:100%;border:1px solid #ddd;border-radius:6px;margin:0 6px 6px 0;">';}
+  var issues=[];
+  newDmg.forEach(function(d){issues.push('<li style="color:#b91c1c;">New damage — '+_bx(d.view_name)+': '+d.types.filter(function(t){return t!=='pr';}).map(function(t){return t==='sc'?'scratch':'dent';}).join(', ')+'</li>');});
+  missing.forEach(function(i){issues.push('<li style="color:#b91c1c;">Not returned — '+_bx(i)+'</li>');});
+  if(fuelShort)issues.push('<li style="color:#b45309;">Fuel returned lower than at pickup — '+_bx(v.fuelOut||'Full')+' out, '+_bx(ci.fuelIn)+' in</li>');
+  var photos=(ci.dmgPhotos||[]).filter(function(u){return String(u).indexOf('http')===0;});
+  var receipts=(ci.fuelPhotos||[]).filter(function(u){return String(u).indexOf('http')===0;});
+  function sigCell(title,name,url,note){
+    return '<td style="vertical-align:top;padding:8px;border:1px solid #eee;width:33%;"><div style="font-size:12px;color:#666;">'+title+'</div><div style="font-size:14px;font-weight:bold;margin:2px 0 6px;">'+_bx(name||'—')+'</div>'
+      +(url?'<img src="'+url+'" alt="signature" style="width:100%;max-width:190px;background:#0a1020;border-radius:4px;">':'<div style="font-size:12px;color:#888;font-style:italic;">'+(note||'No signature')+'</div>')+'</td>';
+  }
+  return '<div style="font-family:Arial,Helvetica,sans-serif;max-width:660px;margin:0 auto;color:#111;">'
+    +'<div style="background:#0f3d26;color:#fff;padding:18px 20px;border-radius:8px 8px 0 0;"><div style="font-size:20px;font-weight:bold;">Go Rent 4×4 — Vehicle Return Report</div>'
+    +'<div style="font-size:13px;opacity:.85;margin-top:4px;">'+_bx(ci.fn)+' · '+_bx(v.cl)+' · returned '+when+'</div></div>'
+    +'<div style="border:1px solid #ddd;border-top:none;padding:18px 20px;border-radius:0 0 8px 8px;">'
+    +'<p style="font-size:14px;">Dear '+_bx(v.cl)+',</p><p style="font-size:14px;">Thank you for renting with Go Rent 4×4. Below is the record of your vehicle return, including who received the vehicle and the signatures.</p>'
+    +h('Summary')+'<table style="width:100%;border-collapse:collapse;">'
+    +row('Vehicle',_bx(ci.fn)+(/^H-/i.test(ci.fn)?' · Toyota Hilux':''))
+    +row('Rental period',_dmy(v.pu)+' → '+_dmy(v.rt))
+    +row('Returned on',when)
+    +row('Kilometres',Number(odoOut).toLocaleString()+' km out → '+Number(odoIn).toLocaleString()+' km in ('+Math.max(0,odoIn-odoOut).toLocaleString()+' km driven)')
+    +row('Fuel',_bx(v.fuelOut||'Full')+' out → '+_bx(ci.fuelIn||'—')+' in')
+    +row('Vehicle received by',_bx(ci.receivedBy||'—'))
+    +row('Checked and signed off by',_bx(ci.mgmtName||'—'))
+    +row('Deposit decision',_bx(ci.deposit||'Full deposit returned'))
+    +'</table>'
+    +h('Return result')
+    +(issues.length?'<ul style="font-size:14px;line-height:1.7;padding-left:20px;margin:0;">'+issues.join('')+'</ul>':'<p style="font-size:14px;color:#15803d;font-weight:bold;">✔ No new damage, all equipment returned and fuel level matched.</p>')
+    +(receipts.length?h('Fuel receipt')+receipts.map(function(u){return img(u,200);}).join(''):'')
+    +(photos.length?h('Photos taken at return')+photos.map(function(u){return img(u,190);}).join(''):'')
+    +h('Signatures')+'<table style="width:100%;border-collapse:collapse;"><tr>'
+    +sigCell('Vehicle received by',ci.receivedBy,S.received,'')
+    +sigCell('Customer',v.cl,S.customer,newDmg.length?'Not signed':'Not required — no new damage was found')
+    +sigCell('Manager sign-off',ci.mgmtName,S.manager,'')
+    +'</tr></table>'
+    +(ci.custAt?'<p style="font-size:12px;color:#666;">Customer signed on '+_bx(ci.custAt)+' to confirm the return summary above.</p>':'')
+    +'<p style="font-size:12px;color:#666;margin-top:20px;">If you have any questions about this report, simply reply to this email or contact us at info@gorent4x4.com.</p>'
+    +'</div></div>';
+}
+async function sendCIReport(to){
+  try{
+    var resp=await fetch(SB_URL+'/functions/v1/send-contract-email',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(await sbToken()),'apikey':SB_KEY},
+      body:JSON.stringify({to:to,fleet_no:ci.fn,subject:'Go Rent 4×4 — Vehicle Return Report · '+ci.fn+' · '+ci.v.cl,html:ciReportHTML()})});
+    var out=await resp.json().catch(function(){return {};});
+    return {ok:resp.ok&&out.success!==false,err:out.error||(!resp.ok?('Error '+resp.status):'')};
+  }catch(e){return {ok:false,err:String(e)};}
+}
+function ciMailBox(to,res){
+  var st=res?(res.ok?'<div style="color:var(--se);font-weight:800;">✅ Return report emailed to '+_bx(to)+' (office copied)</div>':'<div style="color:var(--rl);font-weight:800;">⚠ Report not sent'+(res.err?' — '+_bx(res.err):'')+'</div>'):'<div style="color:var(--al);font-weight:800;">⚠ No client email on the booking — enter it below</div>';
+  return '<div id="ci-mail" style="background:var(--g1);border:2px solid var(--g2);border-radius:var(--r);padding:12px 14px;margin:10px 0;">'
+    +'<div style="font-size:14px;margin-bottom:8px;">📧 '+st+'</div>'
+    +'<div style="display:flex;gap:8px;"><input id="ci-mail-to" type="email" value="'+_bx(to||'')+'" placeholder="client@email.com" style="flex:1;padding:10px 12px;border-radius:8px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:15px;">'
+    +'<button class="btn g" style="width:auto;padding:10px 16px;" onclick="resendCIReport()">'+(res&&res.ok?'Send again':'Send report')+'</button></div></div>';
+}
+async function resendCIReport(){
+  var to=(document.getElementById('ci-mail-to').value||'').trim();
+  if(!to){toast('Enter the client email','err');return;}
+  var box=document.getElementById('ci-mail');if(box)box.style.opacity='.6';
+  var res=await sendCIReport(to);
+  if(box)box.outerHTML=ciMailBox(to,res);
+  if(res.ok){toast('Return report sent ✅','ok');try{await SB.from('checkins').update({report_sent_to:to,report_sent_at:new Date().toISOString()}).eq('booking_id',ci.fn+'_'+ci.v.pu);}catch(e){}}
+  else toast('Report not sent: '+res.err,'err');
+}
+
 async function completeCI(){
   try{localStorage.removeItem(ipKey(ci.fn));}catch(e){}
+  // Email the client their return report (photos, summary, who received it, signatures)
+  try{await uploadCISigs();}catch(e){}
+  var _mailTo=(ci.v.email||'').trim(), _mail=null;
+  if(_mailTo){banner('Emailing return report to '+_mailTo);_mail=await sendCIReport(_mailTo);hideBanner();}
   const newDmg=ci.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
   ci.v.st=newDmg.length?'maintenance':'available';
   const allItems=RET_GROUPS.flatMap(g=>g.items);
@@ -4073,6 +4273,7 @@ async function completeCI(){
     deposit_decision:ci.deposit,manager_notes:ci.mgmtNotes,client_notes:ci.notes,
     fuel_receipts:ci.fuelPhotos||[],
     item_checks:ciItemChecks(),equipment_checked_by:ciEqChecks(),receiver_log:ci.rcvLog||[],
+    signature_urls:ci._sigUrls||{},report_sent_to:(_mail&&_mail.ok)?_mailTo:null,report_sent_at:(_mail&&_mail.ok)?new Date().toISOString():null,
     created_at:new Date().toISOString(),
   });
   // Read-only tablet: Fleet Manager data (vehicles/bookings) is never changed from here
@@ -4092,6 +4293,7 @@ async function completeCI(){
     <div class="al ${ci.v.st==='maintenance'?'warn':'ok'}">
       ${ci.v.st==='maintenance'?'⚠ Vehicle flagged for maintenance before next rental':'✓ Vehicle back in available fleet'}
     </div>
+    ${ciMailBox(_mailTo,_mail)}
     <button class="btn g" style="margin-top:10px" onclick="goPage('ov')">← Back to Overview</button>`;
   renderOV();
 }
@@ -4105,15 +4307,17 @@ async function renderReports(){
       <button class="tab-btn" onclick="rpTab(this,'rp-history');loadHistory()">📋 Activity Log</button>
       <button class="tab-btn" onclick="rpTab(this,'rp-alerts')">⚠️ Alerts</button>
       <button class="tab-btn" onclick="rpTab(this,'rp-who');loadAccountability()">👤 Who did what</button>
+      <button class="tab-btn" onclick="rpTab(this,'rp-files');loadRentalFiles('')">📁 Rental files</button>
     </div>
     <div id="rp-vehicles">${rpFleet()}</div>
     <div id="rp-history" style="display:none"></div>
     <div id="rp-alerts" style="display:none"></div>
-    <div id="rp-who" style="display:none"></div>`;
+    <div id="rp-who" style="display:none"></div>
+    <div id="rp-files" style="display:none"></div>`;
 }
 function rpTab(btn,id){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
-  document.querySelectorAll('#rp-vehicles,#rp-history,#rp-alerts,#rp-who').forEach(e=>e.style.display='none');
+  document.querySelectorAll('#rp-vehicles,#rp-history,#rp-alerts,#rp-who,#rp-files').forEach(e=>e.style.display='none');
   document.getElementById(id).style.display='';
 }
 function rpFleet(){
@@ -4780,7 +4984,8 @@ async function uploadPhotos(arr,fn,client,stage){
   for(let i=0;i<arr.length;i++){
     if(arr[i].startsWith('http'))continue;
     const blob=await(await fetch(arr[i])).blob();
-    const path=`${fn}/${cln}/${date}/${stage}/${Date.now()}_${i}.jpg`;
+    const _bk=curBkKey(fn);
+    const path=_bk?`bookings/${_bk}/${stage}/${Date.now()}_${i}.jpg`:`${fn}/${cln}/${date}/${stage}/${Date.now()}_${i}.jpg`;
     const{error}=await SB.storage.from('vehicle-photos').upload(path,blob,{contentType:'image/jpeg',upsert:false});
     if(!error){const{data:u}=SB.storage.from('vehicle-photos').getPublicUrl(path);arr[i]=u.publicUrl;}
   }
