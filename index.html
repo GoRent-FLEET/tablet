@@ -1959,7 +1959,7 @@ function coStepMech(){
   var doneCount=Object.keys(co.mechItems).filter(function(k){return k.startsWith('m');}).length;
   var allDone=doneCount>=mechCount;
   return '<div class="step-intro"><div class="step-ico">🔩</div>'
-    +'<div><div class="step-title">Mechanical Check</div>'
+    +'<div><div class="step-title">Step 2 — Mechanical</div>'
     +'<div class="step-sub">Check all mechanical components ('+doneCount+'/'+mechCount+')</div></div></div>'
     +'<div style="padding:0 4px;">'+rows+'</div>'
     +(allDone
@@ -1994,7 +1994,7 @@ function coStep1_equip(){
   return `
   <div class="step-intro">
     <div class="step-ico">🏕</div>
-    <div><div class="step-title">Step 2 — Camping Equipment</div>
+    <div><div class="step-title">Step 3 — Camping Equipment</div>
     <div class="step-sub">Check all equipment is present, clean and packed · once = ✅ OK · twice = ⚠ Problem · optional items tap to N/A</div></div>
   </div>
   <div class="prog-wrap">
@@ -2242,7 +2242,7 @@ function coStep1(){
   <div class="step-intro">
     <div class="step-ico">📷</div>
     <div>
-      <div class="step-title">Step 4 — Client &amp; Driver Details</div>
+      <div class="step-title">Step 5 — Client &amp; Driver Details</div>
       <div class="step-sub">Office staff: verify full legal names against passports, fill in all details and photograph documents for ALL drivers before handover</div>
     </div>
   </div>
@@ -2950,7 +2950,7 @@ function coStep4_dmg(){
 
   return '<div class="step-intro">'
     +'<div class="step-ico">🔍</div>'
-    +'<div><div class="step-title">Vehicle Inspection</div>'
+    +'<div><div class="step-title">Step 4 — Vehicle Inspection</div>'
     +'<div class="step-sub">Management review — unchecked and problem items</div></div>'
     +'</div>'
     +'<div style="background:var(--g1);border:2px solid var(--g2);border-radius:var(--rs);padding:10px 14px;margin-bottom:14px;">'
