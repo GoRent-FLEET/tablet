@@ -3684,6 +3684,7 @@ function ciStep0_CI(){
           style="width:100%;padding:10px 12px;background:var(--g0);border:2px solid var(--al);border-radius:var(--rs);color:var(--tx);font-size:14px;font-family:var(--font);resize:none;height:80px;box-sizing:border-box;"
           oninput="ci.fuelNote=this.value">${r.fuelNote||''}</textarea>
       </div>`:''}
+      ${(r.fuelIn&&r.fuelIn!==(v.fuelOut||'Full'))?photoHTML('ci.fuelPhotos','🧾 Fuel receipt — required','Take a photo of the filling-station receipt once the vehicle has been refuelled (can also be added at management sign-off).',3):''}
     </div>
   </div>
 
@@ -3931,6 +3932,7 @@ function ciStep4_CI(){
     <div style="font-size:15px;font-weight:800;color:var(--rl);margin-bottom:6px">💰 Action Required</div>
     ${newDmg.length?`<div style="font-size:14px;color:var(--rl);margin-bottom:4px">🔴 Get repair quote for ${newDmg.map(d=>d.view_name).join(', ')} — charge to ${v.cl}</div>`:''}
     ${fuelShort?`<div style="font-size:14px;color:var(--al);margin-bottom:4px">⛽ Charge refill: ${v.fuelOut||'Full'} → ${r.fuelIn}</div>`:''}
+    ${fuelShort?photoHTML('ci.fuelPhotos','🧾 Fuel receipt — required','Photograph the filling-station receipt for the refill. Needed before the rental can be closed.',3):''}
     ${missing.length?`<div style="font-size:14px;color:var(--rl)">❌ Charge replacement: ${missing.join(', ')}</div>`:''}
     <div style="font-size:13px;color:var(--am);margin-top:8px">📷 ${(r.dmgPhotos&&r.dmgPhotos.length)||0} photos on file as evidence</div>
   </div>`:''}
@@ -4045,7 +4047,9 @@ async function signMgmtCI(){
   ci.deposit=(function(){var _e=document.getElementById('ci-dep');return _e?_e.value:undefined;})()||ci.deposit;
   ci.mgmtNotes=(function(){var _e=document.getElementById('ci-mnotes');return _e?_e.value:undefined;})()||ci.mgmtNotes;
   if(!ci.mgmtName){toast('Enter manager name','err');return;}
+  if(!!ci.fuelIn&&ci.fuelIn!==ci.v.fuelOut&&!(ci.fuelPhotos&&ci.fuelPhotos.length)){toast('Fuel is short — take a photo of the fuel receipt first','err');return;}
   if(!hasSig('ci-m-sig')){toast('Manager must sign','err');return;}
+  try{await uploadPhotos(ci.fuelPhotos,ci.fn,ci.v.cl,'fuel-receipt');await uploadPhotos(ci.dmgPhotos,ci.fn,ci.v.cl,'damage-in');}catch(e){}
   ci.mgmtSig=getSig('ci-m-sig');ci.mgmtAt=now();
   toast('Rental closed ✅','ok');drawCI();
 }
@@ -4067,6 +4071,7 @@ async function completeCI(){
     customer_signed_at:ci.custSig?new Date().toISOString():null,
     manager_name:ci.mgmtName,manager_signed_at:ci.mgmtSig?new Date().toISOString():null,
     deposit_decision:ci.deposit,manager_notes:ci.mgmtNotes,client_notes:ci.notes,
+    fuel_receipts:ci.fuelPhotos||[],
     item_checks:ciItemChecks(),equipment_checked_by:ciEqChecks(),receiver_log:ci.rcvLog||[],
     created_at:new Date().toISOString(),
   });
@@ -4739,6 +4744,7 @@ function getPA(key){
   if(key==='co.prepPhotos')return co.prepPhotos;
   if(key==='co.dmgPhotos')return co.dmgPhotos;
   if(key==='ci.dmgPhotos')return(ci.dmgPhotos=ci.dmgPhotos||[]);
+  if(key==='ci.fuelPhotos')return(ci.fuelPhotos=ci.fuelPhotos||[]);
   return[];
 }
 function photoHTML(key,title,sub,max){
