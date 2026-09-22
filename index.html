@@ -2609,6 +2609,10 @@ function coStep2(){
         Camping Equipment cover (+N$103.50/day)
       </label>
     </div>
+    ${(function(){var on=!!(co.contract&&co.contract.fuel_deposit_received);
+      return '<label style="display:flex;align-items:center;gap:10px;font-size:15px;font-weight:800;cursor:pointer;margin:8px 0 6px;padding:10px 12px;border-radius:10px;border:2px solid '+(on?'var(--gb)':'var(--am)')+';background:'+(on?'var(--sg)':'var(--ag)')+';">'
+        +'<input type="checkbox" id="ct-fdr" '+(on?'checked':'')+' onchange="(co.contract=co.contract||{}).fuel_deposit_received=this.checked;drawCO()" style="width:22px;height:22px">'
+        +'<span>⛽ Fuel &amp; Admin deposit N$7,500.00 received <span style="color:'+(on?'var(--se)':'var(--al)')+';">— REQUIRED for every rental</span></span></label>';})()}
     ${(function(){var need=!!(co.v.xb||(co.contract&&co.contract.cross_border));var on=!!(co.contract&&co.contract.cross_border_deposit);
       return '<label style="display:flex;align-items:center;gap:10px;font-size:15px;font-weight:800;cursor:pointer;margin:8px 0 10px;padding:10px 12px;border-radius:10px;border:2px solid '+(on?'var(--gb)':need?'var(--re)':'var(--g3)')+';background:'+(on?'var(--sg)':need?'var(--rg)':'transparent')+';">'
         +'<input type="checkbox" id="ct-xbd" '+(on?'checked':'')+' onchange="(co.contract=co.contract||{}).cross_border_deposit=this.checked;drawCO()" style="width:22px;height:22px">'
@@ -2655,6 +2659,7 @@ function gatherContract(){
   co.contract.addon_windscreen=(function(){var _e=document.getElementById('ct-aws');return _e?_e.checked:false;})()||co.contract.addon_windscreen;
   co.contract.addon_equipment=(function(){var _e=document.getElementById('ct-aeq');return _e?_e.checked:false;})()||co.contract.addon_equipment;
   co.contract.cross_border_deposit=(function(){var _e=document.getElementById('ct-xbd');return _e?_e.checked:false;})()||!!co.contract.cross_border_deposit;
+  co.contract.fuel_deposit_received=(function(){var _e=document.getElementById('ct-fdr');return _e?_e.checked:false;})()||!!co.contract.fuel_deposit_received;
   co.contract.cross_border=(function(){var _e=document.getElementById('ct-xb');return _e?_e.value:undefined;})()||co.contract.cross_border;
   co.contract.additional_drivers=(function(){var _e=document.getElementById('ct-add');return _e?_e.value:undefined;})()||co.contract.additional_drivers||(co.drivers||[]).slice(1).filter(function(d){return d&&d.name;}).map(function(d){return [d.name,d.dob,d.nationality,d.licNo,d.licExpiry].filter(Boolean).join(' / ');}).join('\n');
   const days=co.v.pu&&co.v.rt?Math.max(1,Math.round((new Date(co.v.rt)-new Date(co.v.pu))/86400000)):0;
@@ -2665,6 +2670,7 @@ function gatherContract(){
 function previewAndSignContract(){
   gatherContract();
   const c=co.contract;
+  if(!c.fuel_deposit_received){toast('Tick the N$7,500 fuel & admin deposit first','err');var _f=document.getElementById('ct-fdr');if(_f)_f.scrollIntoView({block:'center'});return;}
   if((co.v.xb||c.cross_border)&&!c.cross_border_deposit){toast('Cross-border booking: tick the N$30,000 cross-border deposit first','err');var _x=document.getElementById('ct-xbd');if(_x)_x.scrollIntoView({block:'center'});return;}
 
   // Full-screen signing modal — locks the page, iPad-friendly
@@ -5673,7 +5679,7 @@ function buildContractHTML(c,sigUrl){
       </div>
       <!-- Fuel deposit -->
       <div style="display:flex;align-items:flex-start;gap:6px;padding:7px 8px;border:1px solid #ccc;border-radius:4px;background:#fff;margin-bottom:5px;">
-        ${chkBox(true)}
+        ${chkBox(!!c.fuel_deposit_received)}
         <div style="font-size:10.5px;line-height:1.5;"><strong>Fuel &amp; Admin Deposit (N$7,500.00) received</strong><br>
         <span style="font-size:9.5px;color:#555;">Refunded within 7 days of the vehicle's return. Any fuel shortage (fill-up cost) and admin costs will be deducted from this deposit before the balance is refunded.</span></div>
       </div>
@@ -5834,7 +5840,7 @@ function buildContractHTML(c,sigUrl){
     <div>
       <div style="font-size:13px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:6px;">For and on behalf of GO RENT 4X4 RENTALS AND TOURS CC</div>
       <div style="border-bottom:1px solid #000;min-height:64px;margin-bottom:4px;"></div>
-      <div style="font-size:13px;color:#555;">Authorised Representative Name: ${c.staff_signed_by||'___________________________'}</div>
+      <div style="font-size:13px;color:#555;">For and on behalf of Go Rent 4x4 Rentals and Tours CC: ${c.staff_signed_by||'___________________________'}</div>
     </div>
   </div>
 
