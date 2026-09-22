@@ -1631,7 +1631,7 @@ function drawCO(){
     else if(coStep===2){_stepLine=4; body=coStep1_equip();} // Equipment packing & checks
     else if(coStep===3){_stepLine=5; body=coStepMech();}    // Mechanical
     else if(coStep===4){_stepLine=6; body=coStep4_dmg();}   // Vehicle inspection
-    else if(coStep===5){_stepLine=7; body=coStep1();}       // Client ID / contract
+    else if(coStep===5){_stepLine=7; body=coStep1()+'<div style="height:14px"></div>'+coStep2();} // Client ID + the contract itself
     else if(coStep===6){_stepLine=8; body=coStep5_client();} // Handover
     else{_stepLine=9; body=coStep6_mgmt();}                 // Management
     _stepLine=9;
@@ -2610,7 +2610,7 @@ function previewAndSignContract(){
   // Full-screen signing modal — locks the page, iPad-friendly
   const modal=document.createElement('div');
   modal.id='contract-modal';
-  modal.style.cssText='position:fixed;inset:0;z-index:200;background:#fff;display:flex;flex-direction:column;overflow:hidden;';
+  modal.style.cssText='position:fixed;inset:0;z-index:99990;background:#fff;display:flex;flex-direction:column;overflow:hidden;';
 
   modal.innerHTML=`
     <!-- TOP BAR -->
@@ -2625,8 +2625,7 @@ function previewAndSignContract(){
     <!-- CONTRACT BODY — scrollable -->
     <div style="flex:1;overflow-y:auto;padding:20px 16px;background:#fff;" id="ct-scroll">
       ${buildContractHTML(c,null)}
-      <!-- Spacer so last content isn't hidden behind sig bar -->
-      <div style="height:240px"></div>
+
     </div>
 
     <!-- BOTTOM SIGNATURE BAR — fixed -->
@@ -2643,7 +2642,7 @@ function previewAndSignContract(){
         <div style="font-size:14px;font-weight:700;color:#1e8449;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">✍️ Type your full name to confirm identity</div>
         <input id="ct-name-confirm" type="text" placeholder="Type your full name exactly as on your passport"
           style="width:100%;padding:12px 14px;border:2px solid #1e8449;border-radius:8px;font-size:15px;font-family:inherit;color:#111;background:#fff;"
-          oninput="document.getElementById('ct-name-match').textContent=this.value.trim().toLowerCase()===((co.contract&&co.contract.client_name)||co.clientName||'').toLowerCase()?'✓ Name matches':'⚠ Name does not match — check spelling'">
+          oninput="document.getElementById('ct-name-match').textContent=ctNameOk(this.value)?'✓ Name matches':'⚠ Name does not match — check spelling'">
         <div id="ct-name-match" style="font-size:14px;color:#888;margin-top:5px;font-weight:700;min-height:16px;"></div>
         <div style="font-size:13px;color:#888;margin-top:3px;">Must match exactly: <strong style="color:#333;">${(co.contract&&co.contract.client_name)||co.clientName||'—'}</strong></div>
       </div>
@@ -2666,6 +2665,10 @@ function previewAndSignContract(){
     </div>`;
 
   document.body.appendChild(modal);
+  // Put the signing area at the end of the contract so the whole screen is used for reading
+  (function(){var bar=document.getElementById('ct-sig-bar'),sc=document.getElementById('ct-scroll');if(bar&&sc){bar.style.borderTop='3px solid #0f3d26';bar.style.marginTop='18px';sc.appendChild(bar);}})();
+  // Top bar shortcut to the signature
+  (function(){var top=modal.firstElementChild;if(!top)return;var b=document.createElement('button');b.textContent='Go to signature ↓';b.setAttribute('style','background:#3ddc84;border:none;border-radius:8px;color:#052010;padding:8px 12px;font-weight:800;font-size:14px;margin-left:auto;margin-right:8px;cursor:pointer;');b.onclick=function(){var bar=document.getElementById('ct-sig-bar');if(bar)bar.scrollIntoView({behavior:'smooth',block:'start'});};var last=top.lastElementChild;top.insertBefore(b,last);})();
 
   // Init signature canvas
   const cv=document.getElementById('ct-sig-canvas');
@@ -2697,11 +2700,17 @@ function previewAndSignContract(){
 
 function clrContractSig(){ window._ctClr&&window._ctClr(); }
 
+// Typed name must match the client (ignores capitals, spaces, dashes and accents)
+function ctNameOk(typed){
+  var norm=function(x){return String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');};
+  var t=norm(typed);if(!t)return false;
+  return [(co.drivers&&co.drivers[0]&&co.drivers[0].name),(co.contract&&co.contract.client_name),co.clientName,co.v&&co.v.cl].some(function(n){return n&&norm(n)===t;});
+}
 async function submitContractSig(){
   const nameInput=document.getElementById('ct-name-confirm');
   const typedName=((nameInput&&nameInput.value)||'').trim();
-  const expectedName=((co.contract&&co.contract.client_name)||co.clientName||'').trim();
-  const nameOk=typedName.toLowerCase()===expectedName.toLowerCase();
+  const expectedName=((co.drivers&&co.drivers[0]&&co.drivers[0].name)||(co.contract&&co.contract.client_name)||co.clientName||'').trim();
+  const nameOk=ctNameOk(typedName);
 
   if(!typedName){
     nameInput.style.border='2px solid #e74c3c';
