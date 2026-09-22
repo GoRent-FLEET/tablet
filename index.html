@@ -3866,10 +3866,10 @@ function ciStep3_CI(){
       ${missing.map(i=>`<div style="font-size:14px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">❌ MISSING: ${i}</div>`).join('')}
     </div>`:''}
     <div style="padding:12px 16px;border-bottom:1px solid var(--g2);background:rgba(0,0,0,.2);${newDmg.length?'':'display:none;'}">
-      <div style="font-size:14px;font-weight:700;color:var(--tx);margin-bottom:8px">By signing you confirm:</div>
-      ${['You have reviewed this return summary and agree it is accurate',
-         hasIssues?'You accept responsibility for the items listed above':'Vehicle returned in good order — no new damage or missing items',
-         'The rental period has ended and all obligations are fulfilled',
+      <div style="font-size:14px;font-weight:700;color:var(--tx);margin-bottom:8px">By signing below, I confirm that:</div>
+      ${['I have checked this return summary with staff and agree that it is correct.',
+         'I accept responsibility for the new damage and for any missing or damaged items listed above.',
+         'I understand that the cost of repairs, replacement of missing items and any fuel shortfall may be deducted from my security deposit.',
       ].map(t=>`<div style="display:flex;gap:8px;padding:4px 0;font-size:14px;color:var(--g6)"><span style="color:var(--se)">✓</span>${t}</div>`).join('')}
     </div>
     <div style="padding:14px 16px">
