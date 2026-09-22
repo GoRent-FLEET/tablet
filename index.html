@@ -5801,8 +5801,8 @@ function buildContractHTML(c,sigUrl){
         ['Damage deposit', c.deposit_amount?'N$ '+Number(c.deposit_amount).toLocaleString('en-ZA',{minimumFractionDigits:2}):'—'],
         ['Fuel & admin deposit', 'N$ 7,500.00'],
         ['Cross-border deposit', c.cross_border_deposit?'N$ 30,000.00 received':(c.cross_border?'Not received':'N/A')],
-        ['Windscreen & Tyre add-on', c.addon_windscreen?'N$ '+(184*days).toLocaleString('en-ZA',{minimumFractionDigits:2}):'Not selected'],
-        ['Camping Equipment cover', c.addon_equipment?'N$ '+(103.50*days).toLocaleString('en-ZA',{minimumFractionDigits:2}):'Not selected'],
+        ['Windscreen & Tyre add-on', c.addon_windscreen?'Selected':'Not selected'],
+        ['Camping Equipment cover', c.addon_equipment?'Selected':'Not selected'],
         ['Deposit method', c.deposit_method||'—'],
       ].map(([l,v])=>`<div style="padding:5px 8px;border-bottom:1px solid #eee;font-size:14px;"><span style="color:#555;font-weight:600;">${l}:</span> <span style="color:#111;font-weight:700;">${v}</span></div>`).join('')}
     </div>
