@@ -3551,7 +3551,7 @@ function startCI(fn){
     // Restore staff name
     if(prev.staff){ci.receivedBy=prev.staff;}
   }catch(e){}
-  RET_GROUPS.forEach(g=>g.items.forEach(i=>{retSt[i]='ok';}));
+  RET_GROUPS.forEach(g=>g.items.forEach(i=>{retSt[i]='';})); // nothing pre-ticked: staff confirm each item came back
   ci={v,fn,receivedBy:(APP_USER&&APP_USER.name)||'',odoIn:v.odo+1200,odometerOut:(co&&co.odometerOut)||v.odo,fuelIn:'',fuelNote:'',notes:'',
       dmgd:[],dmgPhotos:[],custSig:null,custAt:'',
       mgmtName:'',mgmtSig:null,mgmtAt:'',deposit:'Full deposit returned',mgmtNotes:'',
@@ -3828,7 +3828,7 @@ function ciStep2_CI(){
   <div class="step-intro">
     <div class="step-ico">🏕</div>
     <div><div class="step-title">Step 3 — Equipment Return</div>
-    <div class="step-sub">Verify all items returned in acceptable condition</div></div>
+    <div class="step-sub">Only check that each item has come back · cleaning and working condition are inspected at check-out</div></div>
   </div>
   <div id="ret-grps">${renderRetGroups()}</div>
   <div class="fi" style="margin-top:10px">
@@ -3872,7 +3872,7 @@ function ciStep3_CI(){
     ${hasIssues?`<div style="padding:12px 16px;border-bottom:1px solid var(--g2)">
       ${newDmg.map(d=>`<div style="font-size:14px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">🔴 NEW DAMAGE — ${d.view_name}: ${d.types.filter(t=>t!=='pr').map(t=>t==='sc'?'Scratch':'Dent').join(', ')}</div>`).join('')}
       ${fuelShort?`<div style="font-size:14px;color:var(--al);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">⛽ Fuel short — ${v.fuelOut||'Full'} out → ${r.fuelIn} returned — refill cost charged</div>`:''}
-      ${missing.map(i=>`<div style="font-size:14px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">❌ MISSING: ${i}</div>`).join('')}
+      ${missing.map(i=>`<div style="font-size:14px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">❌ NOT RETURNED: ${i}</div>`).join('')}
     </div>`:''}
     <div style="padding:12px 16px;border-bottom:1px solid var(--g2);background:rgba(0,0,0,.2);${newDmg.length?'':'display:none;'}">
       <div style="font-size:14px;font-weight:700;color:var(--tx);margin-bottom:8px">By signing below, I confirm that:</div>
@@ -3977,7 +3977,7 @@ function ciReturnView(v,r,newDmg,fuelShort,missing,damaged){
     ${hasIssues?`<div style="padding:12px 16px;border-bottom:1px solid var(--g2)">
       ${newDmg.map(d=>`<div style="font-size:14px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">🔴 NEW DAMAGE — ${d.view_name}: ${d.types.filter(t=>t!=='pr').map(t=>t==='sc'?'Scratch':'Dent').join(', ')}</div>`).join('')}
       ${fuelShort?`<div style="font-size:14px;color:var(--al);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">⛽ Fuel not returned full — refill cost will be charged</div>`:''}
-      ${missing.map(i=>`<div style="font-size:14px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">❌ MISSING: ${i} — replacement cost charged</div>`).join('')}
+      ${missing.map(i=>`<div style="font-size:14px;color:var(--rl);padding:4px 0;border-bottom:1px solid rgba(240,80,80,.2)">❌ NOT RETURNED: ${i} — replacement cost charged</div>`).join('')}
     </div>`:''}
     <div style="padding:12px 16px;border-bottom:1px solid var(--g2);background:rgba(0,0,0,.2)">
       <div style="font-size:14px;font-weight:700;color:var(--tx);margin-bottom:8px">By signing you confirm:</div>
@@ -4066,7 +4066,7 @@ async function completeCI(){
     customer_signed_at:ci.custSig?new Date().toISOString():null,
     manager_name:ci.mgmtName,manager_signed_at:ci.mgmtSig?new Date().toISOString():null,
     deposit_decision:ci.deposit,manager_notes:ci.mgmtNotes,client_notes:ci.notes,
-    item_checks:ciItemChecks(),equipment_checked_by:ci.retEqBy||{},receiver_log:ci.rcvLog||[],
+    item_checks:ciItemChecks(),equipment_checked_by:ciEqChecks(),receiver_log:ci.rcvLog||[],
     created_at:new Date().toISOString(),
   });
   // Read-only tablet: Fleet Manager data (vehicles/bookings) is never changed from here
@@ -4619,6 +4619,7 @@ async function loadAccountability(){
       if(x.st==='unchecked')p.unchecked++;else{p.ticked++;if(x.st==='prob')p.problems++;}});
     var eq=c.equipment_checked_by||{};
     (c.missing_items||[]).forEach(function(i){P((eq[i]&&eq[i].by)||c.received_by).missing++;});
+    Object.keys(eq).forEach(function(i){if(eq[i]&&eq[i].st==='unchecked')P(eq[i].by||c.received_by).unchecked++;});
   });
   var th='style="text-align:left;padding:6px 8px;font-size:11px;color:var(--g5);text-transform:uppercase;border-bottom:1px solid var(--g2);"';
   var td='style="padding:7px 8px;font-size:14px;border-bottom:1px solid var(--g2);color:var(--tx);"';
@@ -4633,6 +4634,7 @@ async function loadAccountability(){
     Object.keys(ic).forEach(function(k){var x=ic[k]||{};
       if(x.st==='prob')lines.push('<div style="color:var(--al);">⚠ Problem: <b>'+k+'</b> — ticked by '+(x.by||'—')+(x.at?' at '+x.at:'')+'</div>');
       if(x.st==='unchecked')lines.push('<div style="color:var(--g5);">⬜ Not checked: <b>'+k+'</b> — '+(x.by||c.received_by||'—')+' responsible</div>');});
+    Object.keys(eq).forEach(function(k){var x=eq[k]||{};if(x.st==='unchecked')lines.push('<div style="color:var(--g5);">⬜ Equipment not confirmed returned: <b>'+k+'</b> — '+(x.by||c.received_by||'—')+' responsible</div>');});
     var log=(c.receiver_log||[]).filter(function(x){return x.from;}).map(function(x){return (x.from||'—')+' → '+x.to+(x.pin_verified?' (PIN ✓)':'')+' '+new Date(x.at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}).join(' · ');
     return '<div class="rpt-card" style="margin-bottom:10px;border-color:'+(lines.length?'var(--am)':'var(--g2)')+';">'
       +'<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><div style="font-size:15px;font-weight:900;color:var(--tx);">'+c.fleet_no+' · '+(c.client||'')+'</div><div style="font-size:12px;color:var(--g5);">'+new Date(c.created_at).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+'</div></div>'
@@ -4857,20 +4859,45 @@ function getDmgData(){const out=[];VIEWS.forEach(v=>{const m=imarks[v][isize];if
 
 // ── EQUIPMENT RETURN ──────────────────────────────────────────────
 function renderRetGroups(){
-  return RET_GROUPS.map((grp,gi)=>{
-    const sts=grp.items.map(i=>retSt[i]||'ok');
-    const allOk=sts.every(s=>s==='ok'),anyMiss=sts.some(s=>s==='missing'),anyDmg=sts.some(s=>s==='dmg');
-    const cls=allOk?'ok':anyMiss?'miss':'dmg';
-    return`<div class="ret-grp ${cls}">
-      <div class="ret-grp-name">${allOk?'✅':anyMiss?'❌':'⚠️'} ${grp.g}</div>
-      <div class="ret-grp-items">${grp.items.join(' · ')}</div>
-      <div class="ret-btns">
-        <div class="rbtn${allOk?' ok-on':''}" onclick="setRetGrp(${gi},'ok')">✓ OK</div>
-        <div class="rbtn${anyDmg?' dmg-on':''}" onclick="setRetGrp(${gi},'dmg')">⚠ Damaged</div>
-        <div class="rbtn${anyMiss?' miss-on':''}" onclick="setRetGrp(${gi},'missing')">✗ Missing</div>
-      </div>
-    </div>`;
+  // Check-in only records whether equipment came back: Returned / Not returned (tap an item to change it)
+  return RET_GROUPS.map(function(grp,gi){
+    var sts=grp.items.map(function(i){return retSt[i]||'';});
+    var allOk=sts.every(function(x){return x==='ok';}),anyMiss=sts.some(function(x){return x==='missing';});
+    var cls=allOk?'ok':anyMiss?'miss':'';
+    var chips=grp.items.map(function(i,ii){
+      var st=retSt[i]||'';
+      var bg=st==='ok'?'var(--sg)':st==='missing'?'var(--rg)':'var(--g0)';
+      var bd=st==='ok'?'var(--se)':st==='missing'?'var(--re)':'var(--g3)';
+      var fg=st==='ok'?'var(--se)':st==='missing'?'var(--rl)':'var(--g5)';
+      return '<div onclick="setRetItem('+gi+','+ii+')" style="padding:10px 12px;border-radius:10px;border:2px solid '+bd+';background:'+bg+';color:'+fg+';font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;">'
+        +(st==='ok'?'✓ ':st==='missing'?'✗ ':'⬜ ')+i+(st==='missing'?' — not returned':'')+'</div>';
+    }).join('');
+    return '<div class="ret-grp '+cls+'">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">'
+      +'<div class="ret-grp-name" style="margin:0;">'+(allOk?'✅':anyMiss?'❌':'⬜')+' '+grp.g+'</div>'
+      +'<div class="rbtn'+(allOk?' ok-on':'')+'" style="padding:8px 14px;font-size:12px;" onclick="setRetGrp('+gi+',\'ok\')">✓ All returned</div>'
+      +'</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:8px;">'+chips+'</div>'
+      +'</div>';
   }).join('');
+}
+function setRetItem(gi,ii){
+  var i=RET_GROUPS[gi].items[ii];
+  var cur=retSt[i]||'';
+  var nx=cur==='ok'?'missing':'ok';
+  retSt[i]=nx;
+  if(ci){if(!ci.retEqBy)ci.retEqBy={};ci.retEqBy[i]={st:nx,by:ci.receivedBy||(APP_USER&&APP_USER.name)||'',at:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};}
+  var el=document.getElementById('ret-grps');if(el)el.innerHTML=renderRetGroups();
+}
+// Equipment result for saving: includes items nobody confirmed (receiver responsible)
+function ciEqChecks(){
+  var out={};
+  RET_GROUPS.forEach(function(g){g.items.forEach(function(i){
+    var e=ci.retEqBy&&ci.retEqBy[i];
+    out[i]=e?e:{st:retSt[i]||'unchecked',by:ci.receivedBy||'',at:''};
+    if(!retSt[i])out[i]={st:'unchecked',by:ci.receivedBy||'',at:''};
+  });});
+  return out;
 }
 function setRetGrp(gi,status){var _who=(ci&&ci.receivedBy)||(APP_USER&&APP_USER.name)||'';var _at=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});if(ci&&!ci.retEqBy)ci.retEqBy={};RET_GROUPS[gi].items.forEach(i=>{retSt[i]=status;if(ci)ci.retEqBy[i]={st:status,by:_who,at:_at};});document.getElementById('ret-grps').innerHTML=renderRetGroups();}
 
