@@ -3683,6 +3683,7 @@ function ciStep0_CI(){
 
   <div class="chk-list">${L_PREP.map(([ico,lbl,det],i)=>{
     if(CI_SKIP.indexOf(lbl)>=0) return '';
+    if(ico==='__CAMPING__') ico=TENT_ICON;
     if(ico==='__SECTION__'||ico==='__OPTIONAL__'){
       const isOpt=ico==='__OPTIONAL__';
       const isMain=!isOpt&&(lbl.startsWith('🚗 Vehicle')||lbl.startsWith('🏕')||lbl.startsWith('📦')||lbl.startsWith('📦 Loose'));
@@ -3739,7 +3740,8 @@ function ciStep0_CI(){
 }
 
 // Check-out items that are NOT re-checked when the vehicle comes back
-var CI_SKIP=['Exterior washed','Canopy & roof','Mounting brackets & load bars','Tent load bars','Canopy locks','Tailgate & lock','Hooter','Canopy bolts fastened'];
+var CI_SKIP=['Exterior washed','Canopy & roof','Mounting brackets & load bars','Tent load bars','Canopy locks','Tailgate & lock','Hooter','Canopy bolts fastened',
+  'Tent canvas & flysheet','Tent straps','Tent hinges & locks','Tent ladder','Tent mattress','Fitted sheet'];
 function tapRetItem(i){
   const nm=(function(){var _e=document.getElementById('ci-rcv');return _e?_e.value:undefined;})();if(nm)ci.receivedBy=nm;
   if(!ci.receivedBy){toast('Select your name first','err');return;}
