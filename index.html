@@ -3628,10 +3628,10 @@ function ciStep0_CI(){
   const _rby=l=>{const x=ci.retItems[l];return (x&&x.by)||'';};
   const _rat=l=>{const x=ci.retItems[l];return (x&&x.at)||'';};
   // Use L_PREP as the return checklist — same items as check-out
-  const done=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&(l.startsWith('__QTY__')?_rst(l.replace('__QTY__','')):_rst(l))&&(_rst(l)!=='na')).length;
-  const checkable=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__').length;
+  const done=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&CI_SKIP.indexOf(l)<0&&(l.startsWith('__QTY__')?_rst(l.replace('__QTY__','')):_rst(l))&&(_rst(l)!=='na')).length;
+  const checkable=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&CI_SKIP.indexOf(l)<0).length;
   const pct=Math.round(done/checkable*100);
-  const probs=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&_rst(l)==='prob').map(([i,l])=>l);
+  const probs=L_PREP.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&CI_SKIP.indexOf(l)<0&&_rst(l)==='prob').map(([i,l])=>l);
   const retStaff=Object.keys(ci.retCheckedBy||{});
   const km=r.odoIn-(ci.odometerOut||v.odo);
 
@@ -3682,6 +3682,7 @@ function ciStep0_CI(){
   </div>
 
   <div class="chk-list">${L_PREP.map(([ico,lbl,det],i)=>{
+    if(CI_SKIP.indexOf(lbl)>=0) return '';
     if(ico==='__SECTION__'||ico==='__OPTIONAL__'){
       const isOpt=ico==='__OPTIONAL__';
       const isMain=!isOpt&&(lbl.startsWith('🚗 Vehicle')||lbl.startsWith('🏕')||lbl.startsWith('📦')||lbl.startsWith('📦 Loose'));
@@ -3737,6 +3738,8 @@ function ciStep0_CI(){
     <button class="btn g" onclick="signRetCheck()">✓ Sign & Confirm — Vehicle Return Check</button>`}`;
 }
 
+// Check-out items that are NOT re-checked when the vehicle comes back
+var CI_SKIP=['Exterior washed','Canopy & roof','Mounting brackets & load bars','Tent load bars','Canopy locks','Tailgate & lock','Hooter','Canopy bolts fastened'];
 function tapRetItem(i){
   const nm=(function(){var _e=document.getElementById('ci-rcv');return _e?_e.value:undefined;})();if(nm)ci.receivedBy=nm;
   if(!ci.receivedBy){toast('Select your name first','err');return;}
@@ -3744,10 +3747,10 @@ function tapRetItem(i){
   if(L_PREP[i][1]&&L_PREP[i][1].startsWith('__QTY__'))return;
   const lbl=L_PREP[i][1];
   const isOpt=L_PREP[i][0]==='__OPT_ITEM__';
-  const prevSt=(ci.retItems[lbl]?.st)||ci.retItems[lbl]||'';
+  const _ri=ci.retItems[lbl];const prevSt=(_ri&&typeof _ri==='object')?(_ri.st||''):(_ri||'');
   let newSt;
-  if(isOpt) newSt=prevSt===''?'ok':prevSt==='ok'?'prob':prevSt==='prob'?'na':'';
-  else newSt=prevSt===''?'ok':prevSt==='ok'?'prob':'';
+  if(isOpt) newSt=prevSt==='ok'?'prob':prevSt==='prob'?'na':'ok';
+  else newSt=prevSt==='ok'?'prob':'ok';
   const ts=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   ci.retItems[lbl]={st:newSt,by:ci.receivedBy,at:ts};
   if(!ci.retLog) ci.retLog=[];
