@@ -3586,10 +3586,11 @@ function startCI(fn){
   (v.dmgd||[]).forEach(d=>{(d.cells||[]).forEach(c=>{imarks[d.view]&&imarks[d.view]['M']&&(imarks[d.view]['M'][c.r+','+c.c]='pr');});});
   goPage('ci');drawCI();
   // Km and fuel at departure: take them from this booking's check-out record if it exists
-  try{SB.from('checkouts').select('odo_out,fuel_out').eq('booking_id',bkKey(v)).order('created_at',{ascending:false}).limit(1).then(function(r){
+  try{SB.from('checkouts').select('odo_out,fuel_out,prep_checklist').eq('booking_id',bkKey(v)).order('created_at',{ascending:false}).limit(1).then(function(r){
     var row=r&&r.data&&r.data[0];if(!row||!ci||ci.fn!==fn)return;
     if(row.odo_out)ci.odometerOut=row.odo_out;
     if(row.fuel_out)ci.v.fuelOut=row.fuel_out;
+    if(row.prep_checklist&&typeof row.prep_checklist==='object'&&Object.keys(row.prep_checklist).length)ci._coItems=row.prep_checklist;
     try{drawCI();}catch(e){}
   },function(){});}catch(e){}
 }
@@ -3672,10 +3673,10 @@ function ciStep0_CI(){
   const _rby=l=>{const x=ci.retItems[l];return (x&&x.by)||'';};
   const _rat=l=>{const x=ci.retItems[l];return (x&&x.at)||'';};
   // Use L_CI as the return checklist — same items as check-out
-  const done=L_CI.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&CI_SKIP.indexOf(l)<0&&(l.startsWith('__QTY__')?_rst(l.replace('__QTY__','')):_rst(l))&&(_rst(l)!=='na')).length;
-  const checkable=L_CI.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&CI_SKIP.indexOf(l)<0).length;
+  const done=L_CI.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&ciShowL(l)&&(l.startsWith('__QTY__')?_rst(l.replace('__QTY__','')):_rst(l))&&(_rst(l)!=='na')).length;
+  const checkable=L_CI.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&ciShowL(l)).length;
   const pct=Math.round(done/checkable*100);
-  const probs=L_CI.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&CI_SKIP.indexOf(l)<0&&_rst(l)==='prob').map(([i,l])=>l);
+  const probs=L_CI.filter(([i,l])=>i!=='__SECTION__'&&i!=='__OPTIONAL__'&&ciShowL(l)&&_rst(l)==='prob').map(([i,l])=>l);
   const retStaff=Object.keys(ci.retCheckedBy||{});
   const km=r.odoIn-(ci.odometerOut||v.odo);
 
@@ -3683,7 +3684,7 @@ function ciStep0_CI(){
   <div class="step-intro">
     <div class="step-ico">🧹</div>
     <div><div class="step-title">Step 1 — Vehicle Return Check</div>
-    <div class="step-sub">Tick each item: once = ✅ OK · twice = ⚠ Problem · grey = NOT CHECKED = your liability</div></div>
+    <div class="step-sub">Only check that everything issued at check-out is back · once = ✅ Present · twice = ⚠ Missing / problem · grey = NOT CHECKED = your liability</div></div>
   </div>
   <div class="who-box">
     <div class="who-lbl">👤 Who is receiving this vehicle?</div>
@@ -3727,8 +3728,9 @@ function ciStep0_CI(){
   </div>
 
   <div class="chk-list">${L_CI.map(([ico,lbl,det],i)=>{
-    if(CI_SKIP.indexOf(lbl)>=0) return '';
+    if(!ciShow(L_CI[i],i)) return '';
     if(CI_DESC[lbl]) det=CI_DESC[lbl];
+    else if(ico!=='__SECTION__'&&ico!=='__OPTIONAL__'&&lbl.indexOf('__QTY__')!==0&&ciSection(i).indexOf('Exterior')<0) det='Present — returned';
     if(ico==='__CAMPING__') ico=TENT_ICON;
     if(ico==='__SECTION__'||ico==='__OPTIONAL__'){
       const isOpt=ico==='__OPTIONAL__';
@@ -3788,9 +3790,29 @@ function ciStep0_CI(){
 // Check-out items that are NOT re-checked when the vehicle comes back
 var CI_SKIP=['Exterior washed','Canopy & roof','Mounting brackets & load bars','Tent load bars','Canopy locks','Tailgate & lock','Hooter','Canopy bolts fastened',
   'Tent canvas & flysheet','Tent straps','Tent hinges & locks','Tent ladder','Tent mattress','Fitted sheet',
-  'Interior vacuumed','Tent roof rails'];
+  'Interior vacuumed','Tent roof rails','All packed & locked'];
+// Which items appear at check-in: skip listed ones, camping items without camping,
+// and anything the check-out marked as not issued (N/A) or optional extras that were not issued
+function ciSection(i){for(var k=i;k>=0;k--){var x=L_CI[k];if(x&&(x[0]==='__SECTION__'||x[0]==='__OPTIONAL__'))return String(x[1]||'');}return '';}
+function ciShow(x,i){
+  if(!x)return false;
+  var ico=x[0],l=x[1];
+  if(ico==='__SECTION__'||ico==='__OPTIONAL__'){
+    for(var k=i+1;k<L_CI.length;k++){var y=L_CI[k];if(y[0]==='__SECTION__'||y[0]==='__OPTIONAL__')break;if(ciShow(y,k))return true;}
+    return false;
+  }
+  if(CI_SKIP.indexOf(l)>=0)return false;
+  if(ico==='__CAMPING__'&&ci&&ci.v&&!ci.v.camping)return false;
+  var ck=ci&&ci._coItems;
+  if(ck){var v=ck[String(l).replace('__QTY__','')];var st=(v&&typeof v==='object')?v.st:v;
+    if(st==='na')return false;
+    if(ico==='__OPT_ITEM__'&&!st)return false;}
+  return true;
+}
+function ciShowL(l){var k=L_CI.findIndex(function(x){return x[1]===l;});return k>=0&&ciShow(L_CI[k],k);}
 // What staff check on these items when the vehicle comes back (check-out wording stays as it is)
 var CI_DESC={
+  'Glass & mirrors':'Windows and mirrors present — nothing missing or broken',
   'Wheels & tyres':'All rims present · 2 × spare wheels present (no need to check cleaning)',
   'Lights & binoculars':'Returned — camping lights and binoculars handed back',
   'Fridge':'Returned — fridge is inspected at the next check-out',
@@ -4891,9 +4913,9 @@ function logReceiver(val,pinChecked){
 // Full list of what was checked at return, incl. items left unchecked (receiver's liability)
 function ciItemChecks(){
   var out={};
-  L_CI.forEach(function(x){
+  L_CI.forEach(function(x,xi){
     var ico=x[0],lbl=x[1];
-    if(ico==='__SECTION__'||ico==='__OPTIONAL__'||CI_SKIP.indexOf(lbl)>=0)return;
+    if(ico==='__SECTION__'||ico==='__OPTIONAL__'||!ciShow(x,xi))return;
     var real=String(lbl).replace('__QTY__','');
     var v=(ci.retItems||{})[real];
     if(v&&typeof v==='object'&&v.st) out[real]=v;
