@@ -920,28 +920,40 @@ function renderCIPicker(){
   if(!body)return;
   if(ci&&ci.v){drawCI();return;}
   var today=new Date().toISOString().split('T')[0];
-  var returning=FLEET.filter(function(v){
-    var diff=Math.round((new Date(v.rt+'T00:00:00')-new Date(today+'T00:00:00'))/86400000);
-    return diff>=0&&diff<=7;
-  }).sort(function(a,b){return a.rt>b.rt?1:-1;});
-  var rows='';
-  returning.forEach(function(v){
-    var isToday=v.rt===today;
-    var badge=isToday?'<span style="background:#2a9d5c;color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">TODAY</span>':'<span style="background:var(--g2);color:var(--g5);font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">UPCOMING</span>';
+  var dd=function(v){return Math.round((new Date(v.rt+'T00:00:00')-new Date(today+'T00:00:00'))/86400000);};
+  var returning=FLEET.filter(function(v){var d=dd(v);return d>=0&&d<=7;}).sort(function(a,b){return a.rt>b.rt?1:-1;});
+  // vehicles out on rental now that are due back later (early returns)
+  var outNow=FLEET.filter(function(v){return v.pu&&v.rt&&v.pu<=today&&dd(v)>7;}).sort(function(a,b){return a.rt>b.rt?1:-1;});
+  function row(v,early){
+    var isToday=v.rt===today,d=dd(v);
     var dt=new Date(v.rt+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
-    var col=isToday?'#2a9d5c':'var(--g3)';
-    rows+='<div data-fn="'+v.fn+'" class="picker-row-ci" ontouchend="event.preventDefault();startCI(this.dataset.fn);" style="background:var(--g1);border:2px solid '+col+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
+    var badge=early?'<span style="background:rgba(245,166,35,.2);color:var(--al);border:1px solid var(--am);font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">OUT · due in '+d+' days</span>'
+      :isToday?'<span style="background:#2a9d5c;color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">TODAY</span>'
+      :'<span style="background:var(--g2);color:var(--g5);font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">'+dt+'</span>';
+    var col=early?'var(--am)':isToday?'#2a9d5c':'var(--g3)';
+    var srch=(v.fn+' '+(v.cl||'')+' '+(v.reg||'')).toLowerCase();
+    return '<div data-fn="'+v.fn+'" data-bid="'+_bx(v.bid||'')+'" data-s="'+_bx(srch)+'" class="picker-row-ci" style="background:var(--g1);border:2px solid '+col+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;">'
       +'<div><div style="font-size:16px;font-weight:900;color:var(--se);">'+v.fn+'</div>'
-      +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+v.cl+'</div>'
-      +'<div style="font-size:11px;color:var(--g5);margin-top:3px;">'+v.reg+' &middot; Return: '+dt+'</div></div>'
+      +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+_bx(v.cl||'')+'</div>'
+      +'<div style="font-size:11px;color:var(--g5);margin-top:3px;">'+_bx(v.reg||'')+' &middot; Return: '+dt+'</div></div>'
       +'<div>'+badge+'</div></div></div>';
-  });
-  if(!returning.length) rows='<div style="padding:40px;text-align:center;color:var(--g5);font-size:13px;">No check-ins in the next 7 days</div>';
-  body.innerHTML='<div style="padding:16px;"><div style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;">&#9664; Select Vehicle to Check In</div>'+rows+'</div>';
+  }
+  var rows=returning.map(function(v){return row(v,false);}).join('')||'<div style="padding:24px;text-align:center;color:var(--g5);font-size:13px;">No check-ins in the next 7 days</div>';
+  var early=outNow.map(function(v){return row(v,true);}).join('')||'<div style="padding:16px;text-align:center;color:var(--g5);font-size:13px;">No other vehicles out on rental</div>';
+  body.innerHTML='<div style="padding:16px;">'
+    +'<input id="ci-find" type="search" placeholder="🔎 Find a vehicle — fleet no., client or registration" oninput="ciFilterPicker(this.value)" style="width:100%;padding:13px 14px;font-size:16px;border-radius:12px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);margin-bottom:14px;">'
+    +'<div style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;">&#9664; Due back in the next 7 days</div>'+rows
+    +'<div style="font-size:13px;font-weight:800;color:var(--al);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 6px;">⏪ Early return — vehicles out on rental now</div>'
+    +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px;">Client brought it back before the due date? Tap the vehicle to check it in early.</div>'+early
+    +'</div>';
   body.querySelectorAll('.picker-row-ci').forEach(function(el){
-    el.addEventListener('click',function(){ startCI(this.dataset.fn); });
+    el.addEventListener('click',function(){ if(this.dataset.bid)window._forceBid=this.dataset.bid; startCI(this.dataset.fn); });
   });
+}
+function ciFilterPicker(q){
+  q=String(q||'').toLowerCase().trim();
+  document.querySelectorAll('#ci-body .picker-row-ci').forEach(function(el){el.style.display=!q||el.dataset.s.indexOf(q)>=0?'':'none';});
 }
 
 
@@ -3720,7 +3732,13 @@ function startCI(fn){
   // Accept if vehicle is rented OR has a return date in the past/today (may not have been updated)
   const today=new Date().toISOString().split('T')[0];
   const daysToReturn=v.rt?Math.round((new Date(v.rt+'T00:00:00')-new Date(today+'T00:00:00'))/86400000):99;
-  if(v.st!=='rented'&&daysToReturn>1){toast('Vehicle not due for return yet','err');return;}
+  var _early=false;
+  if(daysToReturn>1){
+    if(v.pu&&v.pu>today){toast('This booking has not started yet ('+v.pu+')','err');return;}
+    var _due=new Date(v.rt+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+    if(!confirm('EARLY RETURN\n\n'+fn+' ('+(v.cl||'')+') is only due back on '+_due+' — '+daysToReturn+' days early.\n\nCheck it in now as an early return?'))return;
+    _early=true;
+  }
   // Mark as in-progress (preserve existing staff if already set)
   try{
     const existing=localStorage.getItem(ipKey(fn));
@@ -3744,6 +3762,7 @@ function startCI(fn){
   (v.dmgd||[]).forEach(d=>{(d.cells||[]).forEach(c=>{imarks[d.view]&&imarks[d.view]['M']&&(imarks[d.view]['M'][c.r+','+c.c]='pr');});});
   for(var _k in retSt)delete retSt[_k];
   ciBuildRetGroups();
+  if(_early){ci.early=true;ci.dueBack=v.rt;ci.notes='EARLY RETURN — was due back '+v.rt+(ci.notes?'. '+ci.notes:'');}
   goPage('ci');drawCI();
   // Km and fuel at departure: take them from this booking's check-out record if it exists
   try{SB.from('checkouts').select('odo_out,fuel_out,prep_checklist,damage_panels').eq('booking_id',bkKey(v)).order('created_at',{ascending:false}).limit(1).then(function(r){
@@ -3976,6 +3995,7 @@ function ciTripInfo(v){
   var trCol=/on us|included/.test(trl)?'var(--se)':(/client|paid/.test(trl)?'var(--al)':'rgba(255,255,255,.6)');
   function chip(ico,lbl,val,col){return '<div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:5px 9px;font-size:12px;"><span>'+ico+'</span><span style="color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;font-size:10px;">'+lbl+'</span><span style="font-weight:800;color:'+(col||'#fff')+';">'+val+'</span></div>';}
   var h='';
+  if(ci&&ci.early)h+='<div style="display:flex;align-items:center;gap:6px;background:rgba(245,166,35,.18);border:2px solid var(--am);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:900;color:var(--al);">⏪ EARLY RETURN — was due back '+_bx(new Date(ci.dueBack+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}))+'</div>';
   h+=chip('🚐','Transfer',_bx(tr||'None arranged'),tr?trCol:'rgba(255,255,255,.6)');
   if(b.arrival_flight)h+=chip('🛬','Arrived',_bx(b.arrival_flight));
   h+=chip('🛫','Departs',b.departure_flight?_bx(b.departure_flight):'No flight on booking',b.departure_flight?'#7db8ff':'rgba(255,255,255,.6)');
