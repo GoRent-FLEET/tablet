@@ -3206,7 +3206,8 @@ function coStep5_client(){
        {k:'accident',    lbl:'Accident procedure explained', det:'Stop, photos, police report if required, call Go Rent immediately — do NOT move vehicle until cleared'},
        {k:'contractcond', lbl:'Contract conditions explained', det:'Key terms, exclusions, no-go areas, speed limits and negligence clauses confirmed with client'},
      ]},
-  ];
+  ];  window._HO_SECTIONS=HO_SECTIONS;
+
 
   const totalItems=HO_SECTIONS.reduce((s,sec)=>s+sec.items.length,0);
   const doneItems=HO_SECTIONS.reduce((s,sec)=>s+sec.items.filter(it=>hc[it.k]==='ok').length,0);
@@ -3634,8 +3635,11 @@ async function completeCO(){
       <button class="btn g" style="margin-top:14px" onclick="goPage('ov')">← Back to Overview</button>
     </div>`;
 
-  // Store handover HTML for sending
-  window._handoverHTML=handoverHTML;
+  // Store handover HTML for sending: add checklist, damage diagram and the full signed contract, save it as a link
+  var _hFull=handoverHTML.replace('<div class="logo">Go Rent <span>4×4</span> Namibia</div>','<img src="'+GR_LOGO+'" alt="Go Rent Namibia" style="width:150px;">').replace('</body>',coHandoverExtras()+'</body>');
+  window._handoverHTML=_hFull;
+  co._handoverLink='';
+  saveHandoverLink(_hFull).then(function(l){co._handoverLink=l;var st=document.getElementById('send-status');if(st)st.innerHTML=l?'<div class="al ok">✅ Handover report ready to send on WhatsApp</div>':'<div class="al warn">⚠ Could not save the handover report link (no connection?)</div>';});
   renderOV();
 }
 
@@ -3673,14 +3677,49 @@ async function sendHandoverEmail(){
   }
 }
 
+// ── Client handover report (sent on WhatsApp): checklist, damage diagram + photos, full signed contract ──
+function viewImg(v){try{var h=insHTML();var i=h.indexOf("insClearV('"+v+"')");var j=h.indexOf('<img src="',i)+10;return h.slice(j,h.indexOf('"',j));}catch(e){return '';}}
+function coDamageDiagrams(){
+  var col={sc:'rgba(74,158,255,.6)',de:'rgba(240,80,80,.65)',pr:'rgba(245,166,35,.65)',cr:'rgba(240,80,80,.65)'};
+  return (co.dmgd||[]).filter(function(d){return d.cells&&d.cells.length;}).map(function(d){
+    var g=(IGR[d.view]&&IGR[d.view][d.size||'M'])||[32,10];var m={};d.cells.forEach(function(c){m[c.r+','+c.c]=c.t;});
+    var cells='';for(var r=0;r<g[1];r++)for(var c=0;c<g[0];c++){var t=m[r+','+c];cells+='<div style="'+(t?'background:'+col[t]+';outline:1px solid rgba(0,0,0,.35);':'')+'"></div>';}
+    return '<div style="margin:8px 0 14px;"><div style="font-weight:700;font-size:14px;margin-bottom:4px;">'+_bx(d.view_name||d.view)+'</div>'
+      +'<div style="position:relative;border:1px solid #ccc;border-radius:6px;overflow:hidden;"><img src="'+viewImg(d.view)+'" style="width:100%;display:block;">'
+      +'<div style="position:absolute;inset:0;display:grid;grid-template-columns:repeat('+g[0]+',1fr);grid-template-rows:repeat('+g[1]+',1fr);">'+cells+'</div></div></div>';
+  }).join('');
+}
+function coHandoverExtras(){
+  var hc=co.handoverChecks||{},secs=window._HO_SECTIONS||[];
+  var chk=secs.map(function(sec){
+    var items=sec.items.filter(function(it){return !(it.k==='xb'&&!co.v.xb)&&!(sec.key==='camping'&&!co.v.camping);});
+    if(!items.length)return '';
+    return '<tr><th colspan="2">'+sec.ico+' '+_bx(sec.title)+'</th></tr>'+items.map(function(it){var ok=hc[it.k]==='ok';return '<tr><td>'+(ok?'✅':'—')+' '+_bx(it.lbl)+'</td><td style="color:#666;">'+_bx(it.det)+'</td></tr>';}).join('');
+  }).join('');
+  var diag=coDamageDiagrams();
+  var ct=(co.contract&&co.contract.contract_html)||'';
+  return '<h2>🤝 Handover Checklist</h2><p style="font-size:13px;color:#666;">Handed over by '+_bx(co.mechBy||co.inspBy||'—')+' · ✅ = explained / shown to the client</p><table>'+chk+'</table>'
+    +'<p style="font-size:14px;margin-top:10px;">📶 WiFi device: <b>'+(((co.docItems||{}).wifi==='ok')?'handed to client — must be returned':'not issued')+'</b>'+(co.v.xb?' · 🌍 Cross-border documents ('+_bx(co.v.xb)+'): <b>'+(((co.docItems||{}).xb==='ok')?'handed to client':'—')+'</b>':'')+'</p>'
+    +(diag?'<h2>🗺 Damage Diagram (marked at departure)</h2><p style="font-size:13px;color:#666;">Blue = scratch · Red = dent · Yellow = pre-existing — the client is not liable for damage recorded here.</p>'+diag:'')
+    +(ct?'<h2>📋 Signed Rental Contract</h2><div style="border:2px solid #145c30;border-radius:8px;padding:12px;background:#fff;">'+ct+'</div>':'<h2>📋 Signed Rental Contract</h2><p style="font-size:14px;color:#b45309;">The signed contract is kept in the Go Rent office file.</p>');
+}
+async function saveHandoverLink(html){
+  try{
+    var path='bookings/'+bkKey(co.v)+'/handover-report_'+Date.now()+'.html';
+    var up=await SB.storage.from('client-docs').upload(path,new Blob([html],{type:'text/plain'}),{contentType:'text/plain;charset=utf-8',upsert:true});
+    if(up&&up.error)return '';
+    var su=await SB.storage.from('client-docs').createSignedUrl(path,60*60*24*REPORT_LINK_DAYS);
+    var signed=su&&su.data&&su.data.signedUrl;if(!signed)return '';
+    return 'https://gorent-fleet.github.io/fleet/#r='+encodeURIComponent(signed);
+  }catch(e){return '';}
+}
 function sendHandoverWA(){
-  const phone=((function(){var _e=document.getElementById('send-wa');return _e?_e.value:undefined;})()||'').trim().replace(/\s+/g,'');
+  const phone=((function(){var _e=document.getElementById('send-wa');return _e?_e.value:undefined;})()||'').trim();
   if(!phone){toast('Enter WhatsApp number','err');return;}
-  const intlPhone=phone.startsWith('+')?phone.replace('+',''):'264'+phone.replace(/^0/,'');
-  const msg=encodeURIComponent(
-    `Hi ${co.clientName||''},\n\nThank you for renting with Go Rent 4×4 Namibia!\n\nVehicle: ${co.fn} (${co.v.reg})\nPickup: ${co.v.pu||'today'} | Return: ${co.v.rt||'—'}\nFuel at departure: ${co.fuelOut} — please return at the same level\n\nEquipment issued:\n${(((window._handoverHTML||'').match(/✓ [^<]+/g))||[]).slice(0,12).join('\n') || 'See attached document'}\n\n⛽ DIESEL ONLY\n\nSafe travels! Call us anytime: +264 81 XXX XXXX\n— Go Rent 4×4 Team`
-  );
-  window.open('https://wa.me/'+intlPhone+'?text='+msg,'_blank');
+  if(!co._handoverLink){toast('The handover report is still being saved — try again in a moment','err');return;}
+  var first=String(co.clientName||co.v.cl||'').split(' ')[0]||'';
+  const msg=encodeURIComponent('Hi '+first+',\n\nThank you for renting with Go Rent 4x4 Namibia!\n\nVehicle: '+co.fn+' ('+(co.v.reg||'')+')\nPickup: '+(co.v.pu||'today')+' | Return: '+(co.v.rt||'-')+'\nFuel at departure: '+(co.fuelOut||'Full')+' - please return at the same level. DIESEL ONLY.\n\nYour handover document - handover checklist, vehicle condition and damage, photos, equipment issued and your full signed rental contract:\n'+co._handoverLink+'\n\nSafe travels! WhatsApp us anytime: +264 81 861 8085\n- Go Rent 4x4 Team');
+  window.open('https://wa.me/'+waNumber(phone)+'?text='+msg,'_blank');
 }
 
 // ═══════════════════════════════════════════════════════════════
