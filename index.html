@@ -3564,7 +3564,7 @@ function startCI(fn){
     if(prev.staff){ci.receivedBy=prev.staff;}
   }catch(e){}
   RET_GROUPS.forEach(g=>g.items.forEach(i=>{retSt[i]='';})); // nothing pre-ticked: staff confirm each item came back
-  ci={v,fn,receivedBy:(APP_USER&&APP_USER.name)||'',odoIn:v.odo+1200,odometerOut:(co&&co.odometerOut)||v.odo,fuelIn:'',fuelNote:'',notes:'',
+  ci={v,fn,receivedBy:(APP_USER&&APP_USER.name)||'',odoIn:'',odometerOut:(co&&co.odometerOut)||v.odo,fuelIn:'',fuelNote:'',notes:'',
       dmgd:[],dmgPhotos:[],custSig:null,custAt:'',
       mgmtName:'',mgmtSig:null,mgmtAt:'',deposit:'Full deposit returned',mgmtNotes:'',
       retItems:{},retSig:null,retAt:''};
@@ -3572,6 +3572,13 @@ function startCI(fn){
   initIM();
   (v.dmgd||[]).forEach(d=>{(d.cells||[]).forEach(c=>{imarks[d.view]&&imarks[d.view]['M']&&(imarks[d.view]['M'][c.r+','+c.c]='pr');});});
   goPage('ci');drawCI();
+  // Km and fuel at departure: take them from this booking's check-out record if it exists
+  try{SB.from('checkouts').select('odo_out,fuel_out').eq('booking_id',bkKey(v)).order('created_at',{ascending:false}).limit(1).then(function(r){
+    var row=r&&r.data&&r.data[0];if(!row||!ci||ci.fn!==fn)return;
+    if(row.odo_out)ci.odometerOut=row.odo_out;
+    if(row.fuel_out)ci.v.fuelOut=row.fuel_out;
+    try{drawCI();}catch(e){}
+  },function(){});}catch(e){}
 }
 
 function drawCI(){
@@ -3673,11 +3680,11 @@ function ciStep0_CI(){
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
     <div>
       <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">🛣 Odometer IN (km) *</div>
-      <input type="number" inputmode="numeric" pattern="[0-9]*" id="ci-odo" value="${r.odoIn}"
-        oninput="ci.odoIn=+this.value;document.getElementById('ci-km-disp').textContent=(+this.value-(ci.odometerOut||v.odo)).toLocaleString()+' km driven';drawCI()"
+      <input type="number" inputmode="numeric" pattern="[0-9]*" id="ci-odo" value="${r.odoIn||''}" placeholder="Type km from dashboard" onfocus="this.select()"
+        oninput="ci.odoIn=+this.value||'';var _o=ci.odometerOut||ci.v.odo||0,_k=(+this.value)-_o;document.getElementById('ci-km-disp').textContent=(this.value&&_o&&_k>=0)?_k.toLocaleString()+' km driven':(this.value&&_o&&_k<0?'⚠ Lower than km out — check the reading':'')"
         style="padding:12px 14px;font-size:16px;font-weight:700;background:var(--g0);border:2px solid var(--gb);border-radius:var(--rs);color:var(--tx);width:100%;">
       <div id="ci-km-disp" style="font-size:14px;color:var(--se);margin-top:4px;font-weight:700;">${km>0?km.toLocaleString()+' km driven':''}</div>
-      <div style="font-size:13px;color:var(--g5);margin-top:2px;">ODO out: ${(ci.odometerOut||v.odo).toLocaleString()} km</div>
+      <div style="font-size:13px;color:var(--g5);margin-top:2px;">ODO out: ${(ci.odometerOut||v.odo)?Number(ci.odometerOut||v.odo).toLocaleString()+' km':'not recorded'}</div>
     </div>
     <div>
       <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:4px;">⛽ Fuel IN *</div>
@@ -3813,6 +3820,9 @@ function signRetCheck(){
   ci.odoIn=+(function(){var _e=document.getElementById('ci-odo');return _e?_e.value:undefined;})()||ci.odoIn;
   ci.fuelIn=(function(){var _e=document.getElementById('ci-fuel');return _e?_e.value:undefined;})()||ci.fuelIn;
   if(!ci.fuelIn){toast('Check the fuel gauge and select the fuel level','err');return;}
+  if(!ci.odoIn){toast('Type the odometer reading (km) from the dashboard','err');return;}
+  var _oo=ci.odometerOut||ci.v.odo||0;
+  if(_oo&&ci.odoIn<_oo){toast('Odometer IN ('+ci.odoIn+') is lower than km OUT ('+_oo+') — check the reading','err');return;}
   ci.retSig=getSig('ci-ret-sig');ci.retAt=now();
   try{
     const raw=localStorage.getItem(ipKey(ci.fn));
@@ -4023,24 +4033,7 @@ async function signCustCI(){
   ci.notes=(function(){var _e=document.getElementById('ci-notes');return _e?_e.value:undefined;})()||ci.notes;
   ci.custSig=getSig('ci-c-sig');ci.custAt=now();
   uploadPhotos(ci.dmgPhotos,ci.fn,ci.v.cl,'damage-in');
-  // Send management alert if issues
-  const allItems=RET_GROUPS.flatMap(g=>g.items);
-  const missing=allItems.filter(i=>retSt[i]==='missing');
-  const damaged=allItems.filter(i=>retSt[i]==='dmg');
-  const newDmg=ci.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
-  const fuelShort=(!!ci.fuelIn&&ci.fuelIn!==ci.v.fuelOut);
-  if(newDmg.length||fuelShort||missing.length||damaged.length){
-    SB.from('management_alerts').insert({
-      fleet_no:ci.fn,client:ci.v.cl,received_by:ci.receivedBy,
-      new_damage:newDmg.length>0,fuel_short:fuelShort,
-      missing_items:missing,damaged_items:damaged,
-      message:`RETURN ISSUE — ${ci.fn}/${ci.v.cl}: ${[newDmg.length?'New damage':'',fuelShort?'Fuel short':'',missing.length?'Missing items':''].filter(Boolean).join(', ')}`,
-      created_at:new Date().toISOString(),
-    });
-    toast('⚠ Management alerted','err');
-  } else {
-    toast('Customer signed ✅','ok');
-  }
+  toast('Customer signed ✅','ok');
   drawCI();
 }
 
@@ -4347,6 +4340,16 @@ async function completeCI(){
     signature_urls:ci._sigUrls||{},report_link:ci._reportLink||null,report_sent_to:(_mail&&_mail.ok)?_mailTo:null,report_sent_at:(_mail&&_mail.ok)?new Date().toISOString():null,
     created_at:new Date().toISOString(),
   });
+  // Alert management about any return issue (damage, fuel, missing or damaged equipment)
+  var _fs=(!!ci.fuelIn&&ci.fuelIn!==ci.v.fuelOut);
+  if(newDmg.length||_fs||missing.length||damaged.length){
+    try{SB.from('management_alerts').insert({
+      booking_id:bkKey(ci.v),fleet_no:ci.fn,client:ci.v.cl,received_by:ci.receivedBy,
+      new_damage:newDmg.length>0,fuel_short:_fs,missing_items:missing,damaged_items:damaged,
+      message:'RETURN ISSUE — '+ci.fn+'/'+ci.v.cl+': '+[newDmg.length?'New damage':'',_fs?'Fuel short':'',missing.length?'Items not returned: '+missing.join(', '):'',damaged.length?'Damaged equipment':''].filter(Boolean).join(' · '),
+      created_at:new Date().toISOString()
+    }).then(function(){},function(){});}catch(e){}
+  }
   // Read-only tablet: Fleet Manager data (vehicles/bookings) is never changed from here
   const hasIssues=newDmg.length||((!!ci.fuelIn&&ci.fuelIn!==ci.v.fuelOut))||missing.length||damaged.length;
   document.getElementById('ci-body').innerHTML=`
