@@ -131,7 +131,8 @@ textarea{resize:vertical;min-height:60px;}
 .sig-clr{font-size:10px;color:var(--g4);cursor:pointer;padding:3px 8px;border-radius:4px;}
 .sig-clr:hover{color:var(--re);}
 .sig-cv{display:block;width:100%;height:90px;cursor:crosshair;touch-action:none;}
-#ci-ret-sig,#ci-m-sig{height:220px!important;}
+#ci-ret-sig{height:220px!important;}
+#ci-m-sig{height:340px!important;}
 #ci-c-sig{height:340px!important;}
 .signed{display:flex;align-items:center;gap:10px;background:var(--sg);border:2px solid var(--gb);border-radius:var(--r);padding:12px 14px;margin:8px 0;font-size:18px;}
 .signed-name{font-size:14px;font-weight:700;color:var(--se);}
@@ -3940,10 +3941,10 @@ function ciStep4_CI(){
             <option>Withhold pending investigation</option>
           </select>
         </div>
-        <div class="fi"><label>Manager name *</label><input id="ci-mgmt" value="${r.mgmtName}" oninput="ci.mgmtName=this.value" placeholder="Manager"></div>
+        <div class="fi"><label>Manager name *</label>${ciMgrSelect(r.mgmtName)}</div>
       </div>
       <div class="fi"><label>Notes</label><textarea id="ci-mnotes" oninput="ci.mgmtNotes=this.value" placeholder="Deposit decision notes..." style="min-height:50px">${r.mgmtNotes||''}</textarea></div>
-      <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">Manager — sign to close rental</span><span class="sig-clr" onclick="clrSig('ci-m-sig')">Clear</span></div><canvas class="sig-cv" id="ci-m-sig"></canvas></div>
+      <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl" id="ci-m-lbl">${r.mgmtName?r.mgmtName+' — ':'Manager — '}sign to close rental</span><span class="sig-clr" onclick="clrSig('ci-m-sig')">Clear</span></div><canvas class="sig-cv" id="ci-m-sig"></canvas></div>
       <button class="btn ${hasIssues?'r':'g'}" style="${hasIssues?'background:#c0392b;color:#fff':''}" onclick="signMgmtCI()">✅ Close Rental &amp; Sign Off</button>
     </div>`}`;
 }
@@ -4020,6 +4021,16 @@ async function signCustCI(){
   drawCI();
 }
 
+// Managers who may sign off a check-in (everyone with full access)
+function ciManagers(){return STAFF_ROSTER.map(function(x){return x.name;}).filter(function(n){return !STEP_ACCESS[n];});}
+function ciMgrSelect(val){
+  var list=ciManagers();
+  if(!val&&APP_USER&&list.indexOf(APP_USER.name)>=0){val=APP_USER.name;ci.mgmtName=val;}
+  return '<select id="ci-mgmt" onchange="ci.mgmtName=this.value;var l=document.getElementById(\'ci-m-lbl\');if(l)l.textContent=(this.value||\'Manager\')+\' — sign to close rental\';this.style.borderColor=this.value?\'var(--gb)\':\'var(--am)\';" style="color-scheme:dark;width:100%;padding:12px 14px;font-size:15px;font-weight:700;background:var(--g0);border:2px solid '+(val?'var(--gb)':'var(--am)')+';border-radius:var(--rs);color:var(--tx);">'
+    +'<option value="">— Select manager —</option>'
+    +list.map(function(n){return '<option'+(n===val?' selected':'')+'>'+n+'</option>';}).join('')
+    +'</select>';
+}
 async function signMgmtCI(){
   ci.mgmtName=(function(){var _e=document.getElementById('ci-mgmt');return _e?_e.value:undefined;})().trim()||ci.mgmtName;
   ci.deposit=(function(){var _e=document.getElementById('ci-dep');return _e?_e.value:undefined;})()||ci.deposit;
