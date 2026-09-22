@@ -1809,6 +1809,20 @@ function coStep0(){
   ${coCleanReport()}`;
 }
 
+// ── WiFi device (goes with EVERY vehicle) + cross-border documents — big, flashing until checked ──
+function wifiBox(title,sub,val,onOk,onBad,okLbl,badLbl){
+  var done=!!val,bad=val==='missing'||val==='issue';
+  var bs='padding:14px 18px;border-radius:10px;font-size:16px;font-weight:900;cursor:pointer;touch-action:manipulation;flex:1;';
+  return '<div class="'+(done?'':'insp-flash')+'" style="border:3px solid '+(done?(bad?'var(--re)':'var(--gb)'):'var(--re)')+';border-radius:14px;padding:14px 16px;margin:12px 0;background:'+(done?(bad?'var(--rg)':'var(--sg)'):'')+';">'
+    +'<div style="font-size:19px;font-weight:900;color:#fff;margin-bottom:2px;">'+title+'</div>'
+    +'<div style="font-size:13px;color:rgba(255,255,255,.8);margin-bottom:10px;">'+sub+'</div>'
+    +'<div style="display:flex;gap:10px;">'
+    +'<button style="'+bs+(val==='ok'?'border:2px solid var(--gb);background:var(--se);color:#052010;':'border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;')+'" onclick="'+onOk+'">'+(val==='ok'?'✓ ':'')+okLbl+'</button>'
+    +'<button style="'+bs+(bad?'border:2px solid #fff;background:var(--re);color:#fff;':'border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;')+'" onclick="'+onBad+'">'+(bad?'⚠ ':'')+badLbl+'</button>'
+    +'</div></div>';
+}
+function coSetDoc(k,v){if(!co.docItems)co.docItems={};co.docItems[k]=v;if(!co.docWho)co.docWho={};co.docWho[k]=((APP_USER&&APP_USER.name)||'')+' · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});saveCOProgress();drawCO();}
+function ciSetWifi(v){retSt['WiFi device']=v;if(!ci.retEqBy)ci.retEqBy={};ci.retEqBy['WiFi device']={st:v,by:ci.receivedBy||(APP_USER&&APP_USER.name)||'',at:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};drawCI();}
 // ── No-camping bookings: only vehicle, mechanical, Box 4 and a few loose items ─────────
 // Camping (2 or 4 pax): every tent / camping check is done. No camping: hide the camping gear below.
 var NO_CAMP_HIDE=['Towels','Towels & pillows','Fridge','Table','Chairs','Sleeping bags','Lights & binoculars','Braai grid','Gas stove'];
@@ -3078,6 +3092,8 @@ function tapMech(i){
 }
 
 function signHandover(){
+  if(!(co.docItems&&co.docItems.wifi)){toast('Check the WiFi device first (top of this step)','err');return;}
+  if(co.v.xb&&!(co.docItems&&co.docItems.xb)){toast('Check the cross-border documents first','err');return;}
   if(!hasSig('co-c-sig')){toast('Customer must sign','err');return;}
   co.custSig=getSig('co-c-sig');co.custAt=now();
   co.dmgd=getDmgData();
@@ -3180,6 +3196,8 @@ function coStep5_client(){
   const pct=Math.round(doneItems/totalItems*100);
 
   return `
+  ${wifiBox('📶 WIFI DEVICE — goes with every vehicle','Show the client the WiFi device, charger and how to use it · it must come back at check-in',(co.docItems||{}).wifi||'',"coSetDoc('wifi','ok')","coSetDoc('wifi','issue')",'Handed to client','Not available')}
+  ${v.xb?wifiBox('🌍 CROSS-BORDER DOCUMENTS — '+v.xb,'Authorisation letter, registration papers and cross-border permit handed to the client',(co.docItems||{}).xb||'',"coSetDoc('xb','ok')","coSetDoc('xb','issue')",'Handed to client','Missing'):''}
   ${dmgSectionHTML}
   <div class="step-intro">
     <div class="step-ico">🤝</div>
@@ -3800,6 +3818,7 @@ function ciStep0_CI(){
     <div class="who-lbl">👤 Who is receiving this vehicle?</div>
     ${selStaff('ci-rcv',STAFF_HO,r.receivedBy)}
   </div>
+  ${wifiBox('📶 WIFI DEVICE — returned?','Every vehicle goes out with a WiFi device · check the device (and charger) is back',retSt['WiFi device']||'',"ciSetWifi('ok')","ciSetWifi('missing')",'Returned','NOT returned')}
   <!-- ODO + FUEL ROW -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
     <div>
@@ -3977,7 +3996,7 @@ function ciBuildRetGroups(){
     if(!cur||cur.g.indexOf('Exterior')>=0||!ciShow(x,i))return;
     cur.items.push(String(x[1]).replace('__QTY__',''));
   });
-  groups.push({g:'🔑 Keys & documents',items:['All keys & remote','Vehicle licence & insurance']});
+  groups.push({g:'🔑 Keys, WiFi & documents',items:['WiFi device','All keys & remote','Vehicle licence & insurance']});
   groups=groups.filter(function(g){return g.items.length;});
   RET_GROUPS.length=0;groups.forEach(function(g){RET_GROUPS.push(g);});
   RET_GROUPS.forEach(function(g){g.items.forEach(function(i){if(retSt[i]===undefined)retSt[i]='';});});
@@ -4032,6 +4051,7 @@ function signRetCheck(){
   if(!ci.odoIn){toast('Type the odometer reading (km) from the dashboard','err');return;}
   var _oo=ci.odometerOut||ci.v.odo||0;
   if(_oo&&ci.odoIn<_oo){toast('Odometer IN ('+ci.odoIn+') is lower than km OUT ('+_oo+') — check the reading','err');return;}
+  if(!retSt['WiFi device']){toast('Check the WiFi device first (top of this step)','err');return;}
   ci.retSig=getSig('ci-ret-sig');ci.retAt=now();
   try{
     const raw=localStorage.getItem(ipKey(ci.fn));
