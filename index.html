@@ -936,7 +936,7 @@ function renderCIPicker(){
       +'<div style="display:flex;justify-content:space-between;align-items:center;">'
       +'<div><div style="font-size:16px;font-weight:900;color:var(--se);">'+v.fn+'</div>'
       +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+_bx(v.cl||'')+'</div>'
-      +'<div style="font-size:11px;color:var(--g5);margin-top:3px;">'+_bx(v.reg||'')+' &middot; Return: '+dt+'</div></div>'
+      +'<div style="font-size:11px;color:var(--g5);margin-top:3px;">'+_bx(v.reg||'')+' &middot; Return: '+dt+' <b class="ci-rt" style="color:#7db8ff;margin-left:6px;"></b></div></div>'
       +'<div>'+badge+'</div></div></div>';
   }
   var rows=returning.map(function(v){return row(v,false);}).join('')||'<div style="padding:24px;text-align:center;color:var(--g5);font-size:13px;">No check-ins in the next 7 days</div>';
@@ -950,6 +950,12 @@ function renderCIPicker(){
   body.querySelectorAll('.picker-row-ci').forEach(function(el){
     el.addEventListener('click',function(){ if(this.dataset.bid)window._forceBid=this.dataset.bid; startCI(this.dataset.fn); });
   });
+  // expected return time given at handover
+  try{var keys=returning.concat(outNow).map(function(v){return bkKey(v);});
+    if(keys.length)SB.from('checkouts').select('booking_id,return_time').in('booking_id',keys).then(function(r){
+      (r&&r.data||[]).forEach(function(x){if(!x.return_time)return;returning.concat(outNow).forEach(function(v){if(bkKey(v)!==x.booking_id)return;
+        var el=document.querySelector('#ci-body .picker-row-ci[data-bid="'+(v.bid||'')+'"][data-fn="'+v.fn+'"] .ci-rt');if(el)el.textContent='🕑 expected '+x.return_time;});});
+    },function(){});}catch(e){}
 }
 function ciFilterPicker(q){
   q=String(q||'').toLowerCase().trim();
@@ -1832,6 +1838,30 @@ function wifiBox(title,sub,val,onOk,onBad,okLbl,badLbl){
     +'<button style="'+bs+(bad?'border:2px solid #fff;background:var(--re);color:#fff;':'border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;')+'" onclick="'+onBad+'">'+(bad?'⚠ ':'')+badLbl+'</button>'
     +'</div></div>';
 }
+function miniBox(title,val,onOk,onBad,okLbl,badLbl){
+  var done=!!val,bad=val==='missing'||val==='issue';
+  var bs='padding:8px 10px;border-radius:8px;font-size:13px;font-weight:900;cursor:pointer;touch-action:manipulation;flex:1;';
+  return '<div class="'+(done?'':'insp-flash')+'" style="border:2px solid '+(done?(bad?'var(--re)':'var(--gb)'):'var(--re)')+';border-radius:10px;padding:8px 10px;background:'+(done?(bad?'var(--rg)':'var(--sg)'):'')+';">'
+    +'<div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:6px;">'+title+'</div><div style="display:flex;gap:6px;">'
+    +'<button style="'+bs+(val==='ok'?'border:2px solid var(--gb);background:var(--se);color:#052010;':'border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.3);color:#fff;')+'" onclick="'+onOk+'">'+(val==='ok'?'✓ ':'')+okLbl+'</button>'
+    +'<button style="'+bs+(bad?'border:2px solid #fff;background:var(--re);color:#fff;':'border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.3);color:#fff;')+'" onclick="'+onBad+'">'+(bad?'⚠ ':'')+badLbl+'</button></div></div>';
+}
+// Handover: WiFi device (+ cross-border docs) next to the expected return date & time
+function hoTopRow(){
+  var v=co.v,d=co.docItems||{};
+  var due=v.rt?new Date(v.rt+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}):'—';
+  var fl=(v.b&&v.b.departure_flight)?'<div style="font-size:11px;color:var(--g5);margin-top:4px;">🛫 Client flight: '+_bx(v.b.departure_flight)+'</div>':'';
+  var ret='<div style="border:2px solid '+(co.returnTime?'var(--gb)':'var(--am)')+';border-radius:10px;padding:8px 10px;background:'+(co.returnTime?'var(--sg)':'var(--ag)')+';">'
+    +'<div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:6px;">📅 Return: '+due+'</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;font-weight:800;color:var(--g5);">Expected time *</span>'
+    +'<input type="time" id="ho-rtime" value="'+_bx(co.returnTime||'')+'" onchange="co.returnTime=this.value;saveCOProgress();drawCO()" style="color-scheme:dark;flex:1;padding:8px 10px;font-size:16px;font-weight:900;border-radius:8px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);"></div>'
+    +fl+'</div>';
+  return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 12px;">'
+    +miniBox('📶 WiFi device',d.wifi||'',"coSetDoc('wifi','ok')","coSetDoc('wifi','issue')",'Handed over','Not available')
+    +ret
+    +(v.xb?miniBox('🌍 Cross-border docs — '+_bx(v.xb),d.xb||'',"coSetDoc('xb','ok')","coSetDoc('xb','issue')",'Handed over','Missing'):'')
+    +'</div>';
+}
 function coSetDoc(k,v){if(!co.docItems)co.docItems={};co.docItems[k]=v;if(!co.docWho)co.docWho={};co.docWho[k]=((APP_USER&&APP_USER.name)||'')+' · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});saveCOProgress();drawCO();}
 function ciSetWifi(v){retSt['WiFi device']=v;if(!ci.retEqBy)ci.retEqBy={};ci.retEqBy['WiFi device']={st:v,by:ci.receivedBy||(APP_USER&&APP_USER.name)||'',at:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};drawCI();}
 // ── No-camping bookings: only vehicle, mechanical, Box 4 and a few loose items ─────────
@@ -2662,6 +2692,7 @@ function gatherContract(){
   co.contract.vehicle_reg=co.v.reg;
   co.contract.pickup_date=co.v.pu;
   co.contract.return_date=co.v.rt;
+  if(co.returnTime)co.contract.return_time=co.returnTime;
   co.contract.odo_out=co.v.odo;
   co.contract.fuel_out=co.fuelOut;
   co.contract.pickup_location=(function(){var _e=document.getElementById('ct-ploc');return _e?_e.value:undefined;})()||'Go Rent 4×4 Workshop, Windhoek';
@@ -3122,6 +3153,7 @@ function tapMech(i){
 function signHandover(){
   if(!(co.docItems&&co.docItems.wifi)){toast('Check the WiFi device first (top of this step)','err');return;}
   if(co.v.xb&&!(co.docItems&&co.docItems.xb)){toast('Check the cross-border documents first','err');return;}
+  if(!co.returnTime){toast('Ask the client what time they will return and enter it (top of this step)','err');var _t=document.getElementById('ho-rtime');if(_t)_t.focus();return;}
   if(!hasSig('co-c-sig')){toast('Customer must sign','err');return;}
   co.custSig=getSig('co-c-sig');co.custAt=now();
   co.dmgd=getDmgData();
@@ -3225,8 +3257,7 @@ function coStep5_client(){
   const pct=Math.round(doneItems/totalItems*100);
 
   return `
-  ${wifiBox('📶 WIFI DEVICE — goes with every vehicle','Show the client the WiFi device, charger and how to use it · it must come back at check-in',(co.docItems||{}).wifi||'',"coSetDoc('wifi','ok')","coSetDoc('wifi','issue')",'Handed to client','Not available')}
-  ${v.xb?wifiBox('🌍 CROSS-BORDER DOCUMENTS — '+v.xb,'Authorisation letter, registration papers and cross-border permit handed to the client',(co.docItems||{}).xb||'',"coSetDoc('xb','ok')","coSetDoc('xb','issue')",'Handed to client','Missing'):''}
+  ${hoTopRow()}
   ${dmgSectionHTML}
   <div class="step-intro">
     <div class="step-ico">🤝</div>
@@ -3495,7 +3526,7 @@ async function completeCO(){
     customer_signed_at:co.custSig?new Date().toISOString():null,
     manager_name:co.mgmtBy, manager_signed_at:co.mgmtSig?new Date().toISOString():null,
     odo_out:co.odometerOut||co.v.odo, unchecked_prep:uncPrep, unchecked_mech:uncMech,
-    damage_panels:co.dmgd, prep_checklist:co.prepItems||{}, mech_checklist:co.mechItems||{}, mech_by:co.mechCheckBy||null, mech_who:co.mechWho||{}, doc_checks:co.docItems||{},
+    damage_panels:co.dmgd, prep_checklist:co.prepItems||{}, mech_checklist:co.mechItems||{}, mech_by:co.mechCheckBy||null, mech_who:co.mechWho||{}, return_time:co.returnTime||null, doc_checks:co.docItems||{},
     created_at:new Date().toISOString(),
   }).then(function(r){if(r&&r.error)toast('Check-out not saved: '+r.error.message,'err');},function(){});
   // Read-only tablet: Fleet Manager data (vehicles/bookings) is never changed from here
@@ -3765,7 +3796,7 @@ function startCI(fn){
   if(_early){ci.early=true;ci.dueBack=v.rt;ci.notes='EARLY RETURN — was due back '+v.rt+(ci.notes?'. '+ci.notes:'');}
   goPage('ci');drawCI();
   // Km and fuel at departure: take them from this booking's check-out record if it exists
-  try{SB.from('checkouts').select('odo_out,fuel_out,prep_checklist,damage_panels').eq('booking_id',bkKey(v)).order('created_at',{ascending:false}).limit(1).then(function(r){
+  try{SB.from('checkouts').select('odo_out,fuel_out,prep_checklist,damage_panels,return_time').eq('booking_id',bkKey(v)).order('created_at',{ascending:false}).limit(1).then(function(r){
     var row=r&&r.data&&r.data[0];if(!ci||ci.fn!==fn)return;
     ci._coLoaded=!!row;if(!row){try{drawCI();}catch(e){}return;}
     if(Array.isArray(row.damage_panels)&&row.damage_panels.length){
@@ -3775,6 +3806,7 @@ function startCI(fn){
     }
     if(row.odo_out)ci.odometerOut=row.odo_out;
     if(row.fuel_out)ci.v.fuelOut=row.fuel_out;
+    if(row.return_time)ci.returnTime=row.return_time;
     if(row.prep_checklist&&typeof row.prep_checklist==='object'&&Object.keys(row.prep_checklist).length){ci._coItems=row.prep_checklist;ciBuildRetGroups();}
     try{drawCI();}catch(e){}
   },function(){});}catch(e){}
@@ -3996,6 +4028,7 @@ function ciTripInfo(v){
   function chip(ico,lbl,val,col){return '<div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:5px 9px;font-size:12px;"><span>'+ico+'</span><span style="color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;font-size:10px;">'+lbl+'</span><span style="font-weight:800;color:'+(col||'#fff')+';">'+val+'</span></div>';}
   var h='';
   if(ci&&ci.early)h+='<div style="display:flex;align-items:center;gap:6px;background:rgba(245,166,35,.18);border:2px solid var(--am);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:900;color:var(--al);">⏪ EARLY RETURN — was due back '+_bx(new Date(ci.dueBack+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}))+'</div>';
+  if(ci&&ci.returnTime)h+=chip('🕑','Expected',_bx(ci.returnTime),'#7db8ff');
   h+=chip('🚐','Transfer',_bx(tr||'None arranged'),tr?trCol:'rgba(255,255,255,.6)');
   if(b.arrival_flight)h+=chip('🛬','Arrived',_bx(b.arrival_flight));
   h+=chip('🛫','Departs',b.departure_flight?_bx(b.departure_flight):'No flight on booking',b.departure_flight?'#7db8ff':'rgba(255,255,255,.6)');
