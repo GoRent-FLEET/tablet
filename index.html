@@ -413,6 +413,7 @@ input[type=file]{display:none;}
     <button class="nb on" id="nb-ov" onclick="goPage('ov')">📊 Dashboard</button>
     <button class="nb" id="nb-co" onclick="goPage('co')">🚗 Check-Out</button>
     <button class="nb" id="nb-ci" onclick="goPage('ci')">🏠 Check-In</button>
+    <button class="nb" id="nb-out" onclick="goPage('out')">🚙 Out</button>
     <button class="nb" id="nb-rp" onclick="goPage('rp')">📋 Reports</button>
     <div style="margin-left:auto;display:flex;align-items:center;gap:6px;padding-right:6px;">
       <span id="nav-user" style="font-size:11px;font-weight:700;color:var(--se);white-space:nowrap;"></span>
@@ -479,6 +480,7 @@ input[type=file]{display:none;}
     <div class="page" id="page-co"><div class="scroll" id="co-body"><div style="padding:40px;text-align:center;color:var(--g5)">Select a vehicle from Overview</div></div></div>
     <div class="page" id="page-ci"><div class="scroll" id="ci-body"><div style="padding:40px;text-align:center;color:var(--g5)">Select a returning vehicle from Overview</div></div></div>
     <div class="page" id="page-rp"><div class="scroll" id="rp-body"></div></div>
+    <div class="page" id="page-out"><div class="scroll" id="out-body"></div></div>
   </div>
 </div>
 
@@ -884,6 +886,7 @@ function goPage(p){
   else if(p==='rp')renderReports();
   else if(p==='co')renderCOPicker();
   else if(p==='ci')renderCIPicker();
+  else if(p==='out')renderOut();
 }
 
 function renderCOPicker(){
@@ -915,6 +918,77 @@ function renderCOPicker(){
   });
 }
 
+// ── 🚙 Vehicles out: every vehicle handed over on the tablet and not yet checked in ─────────────
+// Staff can add notes and change the return date / expected time at any time.
+var OUT_ROWS=[],OUT_OPEN=null;
+async function renderOut(){
+  var body=document.getElementById('out-body');if(!body)return;
+  body.innerHTML='<div style="padding:30px;text-align:center;color:var(--g5);">Loading vehicles out…</div>';
+  var co_=[],ci_=[];
+  try{var r1=await SB.from('checkouts').select('id,booking_id,fleet_no,customer_name,created_at,return_time,return_date_new,out_notes,handover_by').order('created_at',{ascending:false}).limit(300);co_=(r1&&r1.data)||[];}catch(e){}
+  try{var r2=await SB.from('checkins').select('booking_id');ci_=(r2&&r2.data)||[];}catch(e){}
+  var back={};ci_.forEach(function(x){back[x.booking_id]=1;});
+  var seen={};OUT_ROWS=co_.filter(function(x){if(!x.booking_id||back[x.booking_id]||seen[x.booking_id])return false;seen[x.booking_id]=1;return true;});
+  drawOut();
+}
+function outVeh(row){return FLEET.filter(function(v){return bkKey(v)===row.booking_id;})[0]||FLEET.filter(function(v){return v.fn===row.fleet_no;})[0]||{fn:row.fleet_no,cl:row.customer_name,reg:'',pu:'',rt:''};}
+function outDue(row,v){return row.return_date_new||v.rt||'';}
+function drawOut(){
+  var body=document.getElementById('out-body');if(!body)return;
+  var today=new Date().toISOString().split('T')[0];
+  var fmt=function(d){return d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):'—';};
+  var q=(OUT_FIND||'').toLowerCase();
+  var list=OUT_ROWS.map(function(r,i){return {r:r,i:i,v:outVeh(r)};}).filter(function(o){return !q||(o.v.fn+' '+(o.v.cl||o.r.customer_name||'')+' '+(o.v.reg||'')).toLowerCase().indexOf(q)>=0;})
+    .sort(function(a,b){return outDue(a.r,a.v)>outDue(b.r,b.v)?1:-1;});
+  var cards=list.map(function(o){
+    var r=o.r,v=o.v,due=outDue(r,v),over=due&&due<today,isT=due===today,notes=(r.out_notes||[]).length;
+    var badge=over?'<span style="background:var(--re);color:#fff;font-size:11px;font-weight:900;padding:3px 10px;border-radius:8px;">OVERDUE</span>':isT?'<span style="background:#2a9d5c;color:#fff;font-size:11px;font-weight:900;padding:3px 10px;border-radius:8px;">DUE TODAY</span>':'<span style="background:var(--g2);color:var(--g5);font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">due '+fmt(due)+'</span>';
+    var open=OUT_OPEN===o.i;
+    var h='<div style="background:var(--g1);border:2px solid '+(open?'var(--bl)':over?'var(--re)':'var(--g3)')+';border-radius:12px;margin-bottom:10px;">'
+      +'<div onclick="OUT_OPEN='+(open?'null':o.i)+';drawOut()" style="padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
+      +'<div><div style="font-size:16px;font-weight:900;color:var(--se);">'+_bx(v.fn)+' <span style="font-size:12px;color:var(--g5);font-weight:700;">'+_bx(v.reg||'')+'</span></div>'
+      +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+_bx(v.cl||r.customer_name||'')+'</div>'
+      +'<div style="font-size:12px;color:var(--g5);margin-top:3px;">Out since '+fmt((r.created_at||'').slice(0,10))+' · Return '+fmt(due)+(r.return_time?' <b style="color:#7db8ff;">🕑 '+_bx(r.return_time)+'</b>':'')
+      +(r.return_date_new&&v.rt&&r.return_date_new!==v.rt?' <span style="color:var(--al);font-weight:800;">(moved from '+fmt(v.rt)+')</span>':'')
+      +(notes?' · 📝 '+notes+' note'+(notes>1?'s':''):'')+'</div></div>'
+      +'<div>'+badge+'</div></div>';
+    if(open){
+      h+='<div style="border-top:1px solid var(--g2);padding:14px 16px;">'
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+        +'<div class="fi"><label>Return date'+(v.rt?' (booked: '+fmt(v.rt)+')':'')+'</label><input type="date" id="out-date" value="'+_bx(due)+'" style="color-scheme:dark;"></div>'
+        +'<div class="fi"><label>Expected return time</label><input type="time" id="out-time" value="'+_bx(r.return_time||'')+'" style="color-scheme:dark;"></div></div>'
+        +'<div style="font-size:12px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 6px;">📝 Notes</div>'
+        +((r.out_notes||[]).map(function(n){return '<div style="background:var(--g0);border:1px solid var(--g2);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:14px;"><div style="font-size:11px;color:var(--g5);font-weight:800;">'+_bx(n.by||'')+' · '+_bx(new Date(n.at).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))+'</div>'+_bx(n.text)+'</div>';}).join('')||'<div style="font-size:13px;color:var(--g5);margin-bottom:6px;">No notes yet.</div>')
+        +'<textarea id="out-note" placeholder="Add a note — e.g. client called, extending by 2 days; flat tyre in Sesriem…" style="width:100%;min-height:70px;padding:10px 12px;border-radius:var(--rs);border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:15px;"></textarea>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">'
+        +'<button class="btn g" style="flex:2;min-width:160px;" onclick="saveOut('+o.i+')">💾 Save</button>'
+        +'<button class="btn s" style="flex:1;min-width:120px;" onclick="openRentalFile(\''+_bx(r.booking_id)+'\',\''+_bx(v.fn)+'\',\''+_bx(String(v.cl||r.customer_name||'').replace(/\'/g,''))+'\')">📁 Rental file</button>'
+        +'<button class="btn s" style="flex:1;min-width:120px;" onclick="outCheckIn('+o.i+')">🏠 Check in now</button>'
+        +'</div></div>';
+    }
+    return h+'</div>';
+  }).join('');
+  body.innerHTML='<div style="padding:16px;">'
+    +'<div style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">🚙 Vehicles out on rental ('+OUT_ROWS.length+')</div>'
+    +'<input id="out-find" type="search" value="'+_bx(OUT_FIND||'')+'" placeholder="🔎 Find — fleet no., client or registration" oninput="OUT_FIND=this.value;drawOut();var e=document.getElementById(\'out-find\');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}" style="width:100%;padding:12px 14px;font-size:16px;border-radius:12px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);margin-bottom:12px;">'
+    +(cards||'<div style="padding:30px;text-align:center;color:var(--g5);">No vehicles out — every vehicle handed over on the tablet has been checked in.</div>')
+    +'</div>';
+}
+var OUT_FIND='';
+async function saveOut(i){
+  var r=OUT_ROWS[i];if(!r)return;var v=outVeh(r);
+  var d=(document.getElementById('out-date')||{}).value||'',t=(document.getElementById('out-time')||{}).value||'',note=((document.getElementById('out-note')||{}).value||'').trim();
+  var notes=(r.out_notes||[]).slice();
+  var who=(APP_USER&&APP_USER.name)||'staff',now=new Date().toISOString();
+  if(d&&d!==(r.return_date_new||v.rt))notes.push({at:now,by:who,text:'Return date changed to '+d+(v.rt?' (booked '+v.rt+')':'')});
+  if(t!==(r.return_time||'')&&t)notes.push({at:now,by:who,text:'Expected return time set to '+t});
+  if(note)notes.push({at:now,by:who,text:note});
+  var upd={return_date_new:(d&&d!==v.rt)?d:null,return_time:t||null,out_notes:notes};
+  banner('Saving');
+  try{var res=await SB.from('checkouts').update(upd).eq('id',r.id);hideBanner();if(res&&res.error){toast('Not saved: '+res.error.message,'err');return;}}catch(e){hideBanner();toast('Not saved — check the connection','err');return;}
+  Object.assign(r,upd);toast('Saved ✅','ok');drawOut();
+}
+function outCheckIn(i){var r=OUT_ROWS[i];if(!r)return;var v=outVeh(r);if(v.bid)window._forceBid=v.bid;OUT_OPEN=null;startCI(v.fn);}
 function renderCIPicker(){
   var body=document.getElementById('ci-body');
   if(!body)return;
@@ -952,9 +1026,9 @@ function renderCIPicker(){
   });
   // expected return time given at handover
   try{var keys=returning.concat(outNow).map(function(v){return bkKey(v);});
-    if(keys.length)SB.from('checkouts').select('booking_id,return_time').in('booking_id',keys).then(function(r){
-      (r&&r.data||[]).forEach(function(x){if(!x.return_time)return;returning.concat(outNow).forEach(function(v){if(bkKey(v)!==x.booking_id)return;
-        var el=document.querySelector('#ci-body .picker-row-ci[data-bid="'+(v.bid||'')+'"][data-fn="'+v.fn+'"] .ci-rt');if(el)el.textContent='🕑 expected '+x.return_time;});});
+    if(keys.length)SB.from('checkouts').select('booking_id,return_time,return_date_new').in('booking_id',keys).then(function(r){
+      (r&&r.data||[]).forEach(function(x){if(!x.return_time&&!x.return_date_new)return;returning.concat(outNow).forEach(function(v){if(bkKey(v)!==x.booking_id)return;
+        var el=document.querySelector('#ci-body .picker-row-ci[data-bid="'+(v.bid||'')+'"][data-fn="'+v.fn+'"] .ci-rt');if(el)el.textContent=(x.return_date_new&&x.return_date_new!==v.rt?'📅 moved to '+new Date(x.return_date_new+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' ':'')+(x.return_time?'🕑 expected '+x.return_time:'');});});
     },function(){});}catch(e){}
 }
 function ciFilterPicker(q){
@@ -4466,6 +4540,7 @@ async function openRentalFile(key,fn,client){
       +(window._rfContractHTML?'<button class="btn g" style="margin-top:8px;width:auto;padding:10px 16px;" onclick="rfShowContract()">📄 Open full signed contract</button>':'')):'<div style="font-size:13px;color:var(--g5);">No signed contract saved for this booking yet.</div>');
     h+=sec('🪪 Passport, ID & licence scans',idDocs.length?idDocs.map(function(p){return signed[p]?thumb(signed[p],rfLabel(p)):'';}).join(''):'<div style="font-size:13px;color:var(--g5);">No scans saved for this booking yet.</div>');
     h+=sec('🚗 Check-out',cko?(line('Prepared by',_bx((cko.prep_by_all||[cko.prep_by]).filter(Boolean).join(', ')||'—'))+line('Handed over by',_bx(cko.handover_by||'—'))+line('Manager',_bx(cko.manager_name||'—'))+line('Km out · fuel out',Number(cko.odo_out||0).toLocaleString()+' km · '+_bx(cko.fuel_out||'—'))+line('Date',new Date(cko.created_at).toLocaleString('en-GB'))):'<div style="font-size:13px;color:var(--g5);">Not checked out on the tablet yet.</div>');
+    if(cko&&(cko.out_notes||[]).length)h+=sec('📝 Notes while out',(cko.return_date_new?line('Return date changed to',_bx(cko.return_date_new)):'')+(cko.return_time?line('Expected return time',_bx(cko.return_time)):'')+cko.out_notes.map(function(n){return '<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--g2);"><b>'+_bx(n.by||'')+'</b> · '+_bx(new Date(n.at).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))+' — '+_bx(n.text)+'</div>';}).join(''));
     h+=sec('🏠 Check-in',cki?(line('Received by',_bx(cki.received_by||'—'))+line('Manager sign-off',_bx(cki.manager_name||'—'))+line('Km in · fuel in',Number(cki.odo_in||0).toLocaleString()+' km · '+_bx(cki.fuel_in||'—'))+line('Deposit decision',_bx(cki.deposit_decision||'—'))+line('Return report',cki.report_link?'<a href="'+cki.report_link+'" target="_blank" style="color:var(--se);">📄 Open report</a> · <a href="https://wa.me/?text='+encodeURIComponent('Your Go Rent 4×4 vehicle return report: '+cki.report_link)+'" target="_blank" style="color:#25d366;">📱 Share on WhatsApp</a>':'—')+(cki.report_whatsapp_at?line('Sent on WhatsApp',new Date(cki.report_whatsapp_at).toLocaleString('en-GB')):'')+line('Return report emailed',cki.report_sent_to?_bx(cki.report_sent_to)+' · '+new Date(cki.report_sent_at).toLocaleString('en-GB'):'Not sent')+line('Date',new Date(cki.created_at).toLocaleString('en-GB'))):'<div style="font-size:13px;color:var(--g5);">Not checked in on the tablet yet.</div>');
     h+=sec('📷 Photos & fuel receipts',picUrls.length?picUrls.map(function(x){return thumb(x.url,rfLabel(x.path));}).join(''):'<div style="font-size:13px;color:var(--g5);">No photos saved for this booking yet.</div>');
     h+=sec('✍️ Signatures',sigDocs.length?sigDocs.map(function(p){return signed[p]?thumb(signed[p],rfLabel(p)):'';}).join(''):'<div style="font-size:13px;color:var(--g5);">No signatures saved for this booking yet.</div>');
