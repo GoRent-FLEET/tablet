@@ -557,6 +557,12 @@ const L_CI=(function(){
   var a=L_PREP.slice();
   var k=a.findIndex(function(x){return x[1]==='Wheels & tyres';});
   a.splice(k+1,0,[a[k][0],'Undercarriage','Look under the vehicle: no new damage, leaks, hanging parts or rock/branch strikes']);
+  // Loose items order at check-in: Sleeping bags, then Bedding, then Towels & pillows
+  var bi=a.findIndex(function(x){return x[1]==='Bedding for tent';});var bed=a.splice(bi,1)[0];
+  var ti=a.findIndex(function(x){return x[1]==='Towels';});var tow=a.splice(ti,1)[0];
+  tow=[tow[0],'Towels & pillows','Towels and pillows returned'];
+  var si=a.findIndex(function(x){return x[1]==='__QTY__Sleeping bags';});
+  a.splice(si+1,0,bed,tow);
   return a;
 })();
 const L_MECH=[
