@@ -75,7 +75,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
 
 /* CHECK ITEMS */
 .chk-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
-.ci{display:grid;grid-template-columns:46px 1fr 40px;align-items:center;gap:10px;padding:13px 14px;border-radius:var(--r);border:2px solid var(--g2);background:var(--g1);cursor:pointer;transition:all .12s;-webkit-tap-highlight-color:transparent;}
+.ci{display:grid;grid-template-columns:46px minmax(0,1fr) minmax(40px,auto);align-items:center;gap:10px;padding:13px 14px;border-radius:var(--r);border:2px solid var(--g2);background:var(--g1);cursor:pointer;transition:all .12s;-webkit-tap-highlight-color:transparent;}
 .ci:active{transform:scale(.98);}
 .ci.ok{border-color:var(--se);background:var(--sg);}
 .ci.prob{border-color:var(--re);background:var(--rg);}
@@ -3708,7 +3708,7 @@ function ciStep0_CI(){
         <div class="ci-icon">${ico}</div>
         <div class="ci-text"><div class="ci-lbl">${realLbl}</div><div class="ci-det">${det}${rby?` <span style="font-size:13px;color:var(--se);font-weight:700;margin-left:6px;">✓ ${rby}${rat?" · "+rat:""}</span>`:""}</div></div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-          <select onchange="ci.retItems['${realLbl}']=this.value;if(!r.receivedBy){toast('Select your name first','err');this.value='';return;}const s=document.getElementById('ci-step-body');if(s){s.innerHTML=ciStep0_CI();setTimeout(()=>initSig('ci-ret-sig'),60);}"
+          <select onchange="if(!ci.receivedBy){var _n=document.getElementById('ci-rcv');if(_n&&_n.value)ci.receivedBy=_n.value;}if(!ci.receivedBy){toast('Select your name first','err');this.value='';return;}ci.retItems['${realLbl}']=this.value;const s=document.getElementById('ci-step-body');if(s){s.innerHTML=ciStep0_CI();setTimeout(()=>initSig('ci-ret-sig'),60);}"
             style="color-scheme:dark;padding:8px 10px;border-radius:var(--rs);border:2px solid ${qtyNum>0?'var(--gb)':'var(--g3)'};background:${qtyNum>0?'var(--sg)':'var(--g1)'};color:${qtyNum>0?'var(--se)':'var(--g5)'};font-size:14px;font-weight:700;min-width:70px;">
             <option value="">Qty</option>
             ${Array.from({length:maxQty},(_,k)=>`<option value="${k+1}" ${qtyVal==k+1?'selected':''}>${k+1}</option>`).join('')}
