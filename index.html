@@ -5798,7 +5798,6 @@ function buildContractHTML(c,sigUrl){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
       ${[
         ['Rental period', days?days+' days':'—'],
-        ['Damage deposit', c.deposit_amount?'N$ '+Number(c.deposit_amount).toLocaleString('en-ZA',{minimumFractionDigits:2}):'—'],
         ['Fuel & admin deposit', 'N$ 7,500.00'],
         ['Cross-border deposit', c.cross_border_deposit?'N$ 30,000.00 received':(c.cross_border?'Not received':'N/A')],
         ['Windscreen & Tyre add-on', c.addon_windscreen?'Selected':'Not selected'],
