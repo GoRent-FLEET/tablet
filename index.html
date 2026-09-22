@@ -482,27 +482,24 @@ input[type=file]{display:none;}
 <script>
 const TENT_ICON='<span class="tent-ico"></span>';
 const L_PREP=[
-  ['__SECTION__','🧹 Exterior & Interior','Body, glass, interior, canopy and locks'],
+  ['__SECTION__','🧹 Cleaning','Vehicle, tent and bedding — clean and ready'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M12 2C8 2 5 5 5 9c0 4 7 13 7 13s7-9 7-13c0-4-3-7-7-7z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M9 8s1 3 3 3 3-3 3-3\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Exterior washed','Body, roof, bumpers, canopy — all clean'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"14\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M3 10h18M10 3v14\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Glass & mirrors','All windows inside and out, mirrors clean'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><circle cx=\"12\" cy=\"12\" r=\"9\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><circle cx=\"12\" cy=\"12\" r=\"4\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><circle cx=\"12\" cy=\"12\" r=\"1.5\" stroke=\"#60a5fa\" stroke-width=\"0\"/><circle cx=\"12\" cy=\"12\" r=\"1.5\" fill=\"#60a5fa\"/></svg>','Wheels & tyres','Rims, tyres and wheel arches rinsed'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M3 10h18M7 10v8M17 10v8\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Interior vacuumed','Floors, seats, mats, boot clean'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M5 12h14v7H5V12z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M3 12l9-8 9 8\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Canopy & roof','Canopy exterior wiped'],
-  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"5\" y=\"11\" width=\"14\" height=\"10\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M8 11V7a4 4 0 018 0v4\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"12\" cy=\"16\" r=\"1.5\" fill=\"#60a5fa\"/></svg>','Canopy locks','All canopy locks working and secured'],
-  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><circle cx=\"12\" cy=\"12\" r=\"9\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M8 12l3 3 5-5\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Tailgate & lock','Opens, closes and locks correctly'],  ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><path d=\"M11 5L6 9H2v6h4l5 4V5z\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><path d=\"M15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg>','Hooter','Horn working'],
+  ['__CAMPING__','Tent canvas & flysheet','Canvas, flysheet, poles, zips clean and undamaged — ladder present and pins locked'],
+  ['__CAMPING__','Tent mattress','Clean, no damage'],
+  ['__CAMPING__','Fitted sheet','Clean fitted sheet on mattress — packed'],
   ['__CAMPING__','Bedding for tent','Sleeping bags, pillows, sheets — packed and complete (camping vehicles only)'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M3 10h18M7 10v8M17 10v8\" stroke=\"#60a5fa\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Towels','Correct quantity, clean and dry'],
   ['__SECTION__','🏕 Camping Equipment','Check all equipment is present, clean and packed'],
-  ['__CAMPING__','Tent canvas & flysheet','Canvas, flysheet, poles, zips clean and undamaged — ladder present and pins locked'],
   ['__CAMPING__','Tent straps','All tent straps present, no fraying, buckles working'],
   ['__CAMPING__','Tent hinges & locks','All tent hinges secure, locks functioning correctly'],
   ['__CAMPING__','Tent ladder','Present, rungs intact, hinge pins locked and secure'],
-  ['__CAMPING__','Tent mattress','Clean, no damage'],
-  ['__CAMPING__','Fitted sheet','Clean fitted sheet on mattress — packed'],
   ['__CAMPING__','Tent load bars','Load bars and mounting brackets present, tight and secure'],
   ['__CAMPING__','Tent roof rails','Roof rails secure, all bolts tight, no cracks or movement'],
   ['<svg width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"display:block\"><rect x=\"5\" y=\"2\" width=\"14\" height=\"20\" rx=\"2\" stroke=\"#60a5fa\" stroke-width=\"1.8\"/><path d=\"M5 9h14\" stroke=\"#60a5fa\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>','Fridge','Powers on, correct temp, clean inside'],
-  
   ['__OPTIONAL__','📦 Optional Extras','Only check if included in this booking — tap N/A if not applicable'],
   ['__OPT_ITEM__','Jerrycans (if booked)','Correct quantity, clean and sealed — N/A if not included'],
   ['__OPT_ITEM__','Water can (if booked)','Present, clean and sealed — N/A if not included'],
@@ -558,7 +555,7 @@ const L_CI=(function(){
   var k=a.findIndex(function(x){return x[1]==='Wheels & tyres';});
   a.splice(k+1,0,[a[k][0],'Undercarriage','Look under the vehicle: no new damage, leaks, hanging parts or rock/branch strikes'],['__CAMPING__','Tent damage','Rooftop tent: no tears, broken hinges, poles or zips']);
   // At check-in the first section is the vehicle itself
-  var ex=a.findIndex(function(x){return x[0]==='__SECTION__'&&String(x[1]).indexOf('Exterior')>=0;});
+  var ex=a.findIndex(function(x){return x[0]==='__SECTION__';});
   if(ex>=0)a[ex]=['__SECTION__','🚙 Vehicle Exterior','Glass, wheels, undercarriage and tent'];
   // Loose items order at check-in: Sleeping bags, then Bedding, then Towels & pillows
   var bi=a.findIndex(function(x){return x[1]==='Bedding for tent';});var bed=a.splice(bi,1)[0];
@@ -594,10 +591,13 @@ const L_MECH=[
   ['•','4WD tested','Hi and Lo range engage correctly'],
   ['•','No warnings','Dashboard — zero active warning lights'],
   ['•','Windscreen','No chips or cracks'],
+  ['•','Hooter','Horn working'],
   ['__SECTION__','🚘 Bumpers'],
   ['•','Bumpers','Front and rear secure, no cracks, loose brackets or missing bolts'],
   ['__SECTION__','🛻 Canopy'],
   ['•','Canopy bolts fastened','All canopy mounting bolts checked and tightened'],
+  ['•','Canopy locks','All canopy locks working and secured'],
+  ['•','Tailgate & lock','Opens, closes and locks correctly'],
   ['__SECTION__','🔑 Keys'],
   ['•','Keys & remote','All vehicle keys and remote present and working'],
   ['•','Canopy keys','Canopy keys present and working'],
@@ -1760,7 +1760,7 @@ function coStep0(){
   return `
   <div class="step-intro">
     <div class="step-ico">🚗</div>
-    <div><div class="step-title">Step 1 — Vehicle Checks</div>
+    <div><div class="step-title">Step 1 — Cleaning</div>
     <div class="step-sub">Tap each item: once = ✅ OK · twice = ⚠ Problem · Grey = NOT CHECKED = your liability</div></div>
     <div style="margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:6px;background:var(--g0);border:1px solid var(--am);border-radius:20px;padding:3px 10px 3px 3px;"><div style="width:22px;height:22px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000;">${APP_USER&&APP_USER.name?APP_USER.name.slice(0,2).toUpperCase():'??'}</div><span style="font-size:12px;font-weight:800;color:var(--al);white-space:nowrap;">🔒 ${APP_USER&&APP_USER.name?APP_USER.name:'Unknown'}</span></div>
   </div>
