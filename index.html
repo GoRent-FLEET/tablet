@@ -556,7 +556,10 @@ const L_PREP=[
 const L_CI=(function(){
   var a=L_PREP.slice();
   var k=a.findIndex(function(x){return x[1]==='Wheels & tyres';});
-  a.splice(k+1,0,[a[k][0],'Undercarriage','Look under the vehicle: no new damage, leaks, hanging parts or rock/branch strikes']);
+  a.splice(k+1,0,[a[k][0],'Undercarriage','Look under the vehicle: no new damage, leaks, hanging parts or rock/branch strikes'],['__CAMPING__','Tent damage','Rooftop tent: no tears, broken hinges, poles or zips']);
+  // At check-in the first section is the vehicle itself
+  var ex=a.findIndex(function(x){return x[0]==='__SECTION__'&&String(x[1]).indexOf('Exterior')>=0;});
+  if(ex>=0)a[ex]=['__SECTION__','🚙 Vehicle Exterior','Glass, wheels, undercarriage and tent'];
   // Loose items order at check-in: Sleeping bags, then Bedding, then Towels & pillows
   var bi=a.findIndex(function(x){return x[1]==='Bedding for tent';});var bed=a.splice(bi,1)[0];
   var ti=a.findIndex(function(x){return x[1]==='Towels';});var tow=a.splice(ti,1)[0];
@@ -3585,13 +3588,15 @@ function startCI(fn){
   ciStep=0;
   initIM();
   (v.dmgd||[]).forEach(d=>{(d.cells||[]).forEach(c=>{imarks[d.view]&&imarks[d.view]['M']&&(imarks[d.view]['M'][c.r+','+c.c]='pr');});});
+  for(var _k in retSt)delete retSt[_k];
+  ciBuildRetGroups();
   goPage('ci');drawCI();
   // Km and fuel at departure: take them from this booking's check-out record if it exists
   try{SB.from('checkouts').select('odo_out,fuel_out,prep_checklist').eq('booking_id',bkKey(v)).order('created_at',{ascending:false}).limit(1).then(function(r){
     var row=r&&r.data&&r.data[0];if(!row||!ci||ci.fn!==fn)return;
     if(row.odo_out)ci.odometerOut=row.odo_out;
     if(row.fuel_out)ci.v.fuelOut=row.fuel_out;
-    if(row.prep_checklist&&typeof row.prep_checklist==='object'&&Object.keys(row.prep_checklist).length)ci._coItems=row.prep_checklist;
+    if(row.prep_checklist&&typeof row.prep_checklist==='object'&&Object.keys(row.prep_checklist).length){ci._coItems=row.prep_checklist;ciBuildRetGroups();}
     try{drawCI();}catch(e){}
   },function(){});}catch(e){}
 }
@@ -3685,7 +3690,7 @@ function ciStep0_CI(){
   <div class="step-intro">
     <div class="step-ico">🧹</div>
     <div><div class="step-title">Step 1 — Vehicle Return Check</div>
-    <div class="step-sub">Only check that everything issued at check-out is back · once = ✅ Present · twice = ⚠ Missing / problem · grey = NOT CHECKED = your liability</div></div>
+    <div class="step-sub">Vehicle only: fuel, km, glass, wheels, undercarriage and tent · once = ✅ OK · twice = ⚠ Problem · equipment is checked in Step 3</div></div>
   </div>
   <div class="who-box">
     <div class="who-lbl">👤 Who is receiving this vehicle?</div>
@@ -3729,7 +3734,7 @@ function ciStep0_CI(){
   </div>
 
   <div class="chk-list">${L_CI.map(([ico,lbl,det],i)=>{
-    if(!ciShow(L_CI[i],i)) return '';
+    if(!ciShow(L_CI[i],i)||!ciStep1Item(i)) return '';
     if(CI_DESC[lbl]) det=CI_DESC[lbl];
     else if(ico!=='__SECTION__'&&ico!=='__OPTIONAL__'&&lbl.indexOf('__QTY__')!==0&&ciSection(i).indexOf('Exterior')<0) det='Present — returned';
     if(ico==='__CAMPING__') ico=TENT_ICON;
@@ -3810,7 +3815,21 @@ function ciShow(x,i){
     if(ico==='__OPT_ITEM__'&&!st)return false;}
   return true;
 }
-function ciShowL(l){var k=L_CI.findIndex(function(x){return x[1]===l;});return k>=0&&ciShow(L_CI[k],k);}
+function ciShowL(l){var k=L_CI.findIndex(function(x){return x[1]===l;});return k>=0&&ciShow(L_CI[k],k)&&ciSection(k).indexOf('Exterior')>=0;}
+// Step 1 (vehicle check) only shows the Exterior section; everything else is equipment for Step 3
+function ciStep1Item(i){return ciSection(i).indexOf('Exterior')>=0;}
+function ciBuildRetGroups(){
+  var groups=[],cur=null;
+  L_CI.forEach(function(x,i){
+    if(x[0]==='__SECTION__'||x[0]==='__OPTIONAL__'){cur={g:String(x[1]||''),items:[]};groups.push(cur);return;}
+    if(!cur||cur.g.indexOf('Exterior')>=0||!ciShow(x,i))return;
+    cur.items.push(String(x[1]).replace('__QTY__',''));
+  });
+  groups.push({g:'🔑 Keys & documents',items:['All keys & remote','Vehicle licence & insurance']});
+  groups=groups.filter(function(g){return g.items.length;});
+  RET_GROUPS.length=0;groups.forEach(function(g){RET_GROUPS.push(g);});
+  RET_GROUPS.forEach(function(g){g.items.forEach(function(i){if(retSt[i]===undefined)retSt[i]='';});});
+}
 // What staff check on these items when the vehicle comes back (check-out wording stays as it is)
 var CI_DESC={
   'Glass & mirrors':'Only check nothing is broken or cracked — cleaning is checked at check-out',
@@ -4917,7 +4936,7 @@ function ciItemChecks(){
   var out={};
   L_CI.forEach(function(x,xi){
     var ico=x[0],lbl=x[1];
-    if(ico==='__SECTION__'||ico==='__OPTIONAL__'||!ciShow(x,xi))return;
+    if(ico==='__SECTION__'||ico==='__OPTIONAL__'||!ciShow(x,xi)||!ciStep1Item(xi))return;
     var real=String(lbl).replace('__QTY__','');
     var v=(ci.retItems||{})[real];
     if(v&&typeof v==='object'&&v.st) out[real]=v;
