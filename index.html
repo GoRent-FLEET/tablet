@@ -2845,7 +2845,6 @@ async function signContract(sigData){
   if(error)toast('DB save failed: '+error.message,'err');
   else toast('Contract signed & saved ✅','ok');
   // Show email modal — office staff confirms/types address then sends
-  setTimeout(()=>showEmailModal(co.contract, finalHTML), 400);
   drawCO();
 }
 
@@ -3582,21 +3581,8 @@ async function completeCO(){
 
       <!-- Send handover doc -->
       <div style="background:var(--g1);border:2px solid var(--gb);border-radius:var(--rs);padding:14px 16px;margin:14px 0;">
-        <div style="font-size:15px;font-weight:800;color:var(--se);margin-bottom:10px;">📤 Send Handover Document to Client</div>
-        <div style="font-size:14px;color:var(--g5);margin-bottom:12px;">Includes: equipment list · equipment photos · vehicle condition · damage photos · client signature</div>
-
-        <!-- Email -->
-        <div style="margin-bottom:10px;">
-          <div style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;margin-bottom:5px;">📧 Email</div>
-          <div style="display:flex;gap:8px;">
-            <input id="send-email" type="email" value="${co.clientEmail||''}" placeholder="client@email.com"
-              style="color-scheme:dark;flex:1;padding:9px 12px;border-radius:var(--rs);border:2px solid var(--gb);background:var(--g0);color:var(--tx);font-size:15px;">
-            <button onclick="sendHandoverEmail()" id="btn-email"
-              style="padding:9px 16px;background:var(--sg);border:2px solid var(--gb);border-radius:var(--rs);color:var(--se);font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">
-              📧 Send Email
-            </button>
-          </div>
-        </div>
+        <div style="font-size:15px;font-weight:800;color:var(--se);margin-bottom:10px;">💬 Send Handover Document on WhatsApp</div>
+        <div style="font-size:14px;color:var(--g5);margin-bottom:12px;">Includes: handover checklist · equipment · vehicle condition &amp; damage diagram · photos · client signature · full signed contract</div>
 
         <!-- WhatsApp -->
         <div>
@@ -4616,7 +4602,6 @@ async function completeCI(){
   try{await uploadCISigs();}catch(e){}
   var _mailTo=(ci.v.email||'').trim(), _mail=null;
   banner('Saving return report');ci._reportLink=await saveCIReportLink();hideBanner();
-  if(_mailTo){banner('Emailing return report to '+_mailTo);_mail=await sendCIReport(_mailTo);hideBanner();}
   const newDmg=ci.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
   ci.v.st=newDmg.length?'maintenance':'available';
   const allItems=RET_GROUPS.flatMap(g=>g.items);
@@ -4665,7 +4650,6 @@ async function completeCI(){
       ${ci.v.st==='maintenance'?'⚠ Vehicle flagged for maintenance before next rental':'✓ Vehicle back in available fleet'}
     </div>
     ${ciWaBox(ci.v.phone,ci._reportLink)}
-    ${ciMailBox(_mailTo,_mail)}
     <button class="btn g" style="margin-top:10px" onclick="goPage('ov')">← Back to Overview</button>`;
   renderOV();
 }
