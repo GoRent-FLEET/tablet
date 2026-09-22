@@ -1815,7 +1815,8 @@ function drawCO(){
     '<div id="cos">'+body+'</div>'+
     '<div class="btn-row">'+_backBtn+_nextBtn+'</div>';
   setTimeout(()=>['co-p-sig','co-equip-sig','co-c-sig','co-m-sig'].forEach(initSig),80);
-  if(coStep===3)setTimeout(()=>{VIEWS.forEach(v=>buildIG(v));renderIS();},100);
+  // damage marking grid: build it whenever the diagram is on screen (handover step)
+  setTimeout(()=>{if(document.getElementById('ins-g-lhs')){VIEWS.forEach(v=>buildIG(v));renderIS();}},100);
 }
 
 function coGoStep(t){
