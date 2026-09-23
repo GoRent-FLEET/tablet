@@ -1848,6 +1848,7 @@ function drawCO(){
     '<div class="btn-row">'+_backBtn+_nextBtn+'</div>';
   setTimeout(()=>['co-p-sig','co-equip-sig','co-c-sig','co-m-sig'].forEach(initSig),80);
   if(coStep===5&&!co.contractBy)setTimeout(ctWhoModal,250);
+  if(coStep===6&&!co.mechBy)setTimeout(hoWhoModal,250);
   // damage marking grid: build it whenever the diagram is on screen (handover step)
   setTimeout(()=>{if(document.getElementById('ins-g-lhs')){VIEWS.forEach(v=>buildIG(v));renderIS();}},100);
 }
@@ -3446,6 +3447,22 @@ function coStep5_client(){
 // Management ticks a whole section at once; the items can still be opened one by one
 var HO_OPEN={};
 function toggleHOItems(key){HO_OPEN[key]=!HO_OPEN[key];drawCO();}
+// Ask who is doing the handover as soon as the step opens
+var HANDOVER_STAFF=['Robbie','Joe','Peter','Simon','Nelson'];
+function hoWhoModal(){
+  if(document.getElementById('ho-who-modal'))return;
+  var m=document.createElement('div');m.id='ho-who-modal';
+  m.setAttribute('style','position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px;');
+  m.innerHTML='<div style="background:var(--g1);border:2px solid var(--gb);border-radius:16px;max-width:460px;width:100%;padding:20px;">'
+    +'<div style="font-size:19px;font-weight:900;color:var(--tx);margin-bottom:4px;">🤝 Who is doing the handover?</div>'
+    +'<div style="font-size:14px;color:var(--g5);margin-bottom:14px;">Your name is recorded on the handover document.</div>'
+    +HANDOVER_STAFF.map(function(n){return '<button onclick="hoWhoPick(\''+_bx(n)+'\')" style="width:100%;margin-bottom:8px;padding:14px;border-radius:10px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:17px;font-weight:800;cursor:pointer;">'+_bx(n)+'</button>';}).join('')
+    +'<button onclick="hoWhoClose()" style="width:100%;margin-top:4px;padding:10px;border-radius:10px;border:1px solid var(--g3);background:transparent;color:var(--g5);font-size:14px;font-weight:700;cursor:pointer;">Not now</button>'
+    +'</div>';
+  document.body.appendChild(m);
+}
+function hoWhoClose(){var m=document.getElementById('ho-who-modal');if(m)m.remove();}
+function hoWhoPick(n){co.mechBy=n;saveCOProgress();hoWhoClose();drawCO();toast('Handover by '+n,'ok');}
 function tapHOSection(key){
   var sec=(window._HO_SECTIONS||[]).filter(function(x){return x.key===key;})[0];
   if(!sec)return;
