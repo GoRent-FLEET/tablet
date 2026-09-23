@@ -960,7 +960,7 @@ function drawOut(){
     if(open){
       h+='<div style="border-top:1px solid var(--g2);padding:14px 16px;">'
         +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
-        +'<div class="fi"><label>Return date'+(v.rt?' (booked: '+fmt(v.rt)+')':'')+'</label><input type="date" id="out-date" value="'+_bx(due)+'" style="color-scheme:dark;"></div>'
+        +'<div class="fi"><label>Return date'+(v.rt?' (booked: '+fmt(v.rt)+')':'')+'</label><input type="date" id="out-date" min="'+new Date().toISOString().split('T')[0]+'" value="'+_bx(due)+'" style="color-scheme:dark;"></div>'
         +'<div class="fi"><label>Expected return time</label><input type="time" id="out-time" value="'+_bx(r.return_time||'')+'" style="color-scheme:dark;"></div></div>'
         +'<div style="font-size:12px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 6px;">📝 Notes</div>'
         +((r.out_notes||[]).map(function(n){return '<div style="background:var(--g0);border:1px solid var(--g2);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:14px;"><div style="font-size:11px;color:var(--g5);font-weight:800;">'+_bx(n.by||'')+' · '+_bx(new Date(n.at).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))+'</div>'+_bx(n.text)+'</div>';}).join('')||'<div style="font-size:13px;color:var(--g5);margin-bottom:6px;">No notes yet.</div>')
@@ -5581,6 +5581,7 @@ function discPickValue(id){
 }
 function discPickChange(id,obj,context){
   var val=discPickValue(id);
+  if(val){var today=new Date().toISOString().split('T')[0];if(val<today)toast('That date has already passed — check the disc','err');}
   var o=(obj==='co.v')?(typeof co!=='undefined'&&co.v):(typeof ci!=='undefined'&&ci.v);
   if(o)o._licExpiry=val;
   var b=document.getElementById('lic-banner-'+context);
@@ -5602,7 +5603,7 @@ function discPickers(id,expiry,obj,context){
   var days=[],months=[],years=[];
   for(var i=1;i<=31;i++)days.push([('0'+i).slice(-2),i]);
   for(var j=0;j<12;j++)months.push([('0'+(j+1)).slice(-2),DISC_MONTHS[j]]);
-  for(var k=thisYear-1;k<=thisYear+8;k++)years.push([k,k]);
+  for(var k=thisYear;k<=thisYear+8;k++)years.push([k,k]);   // never older than this year
   return '<div id="'+id+'-box" class="'+(expiry?'':'need-flash')+'" style="display:flex;gap:6px;padding:4px;border:2px solid '+(expiry?'var(--gb)':'var(--re)')+';border-radius:var(--rs);">'
     +sel(id+'-d','Day',days,dd,'1')
     +sel(id+'-m','Month',months,mm,'1.2')
