@@ -5765,7 +5765,32 @@ function iCT(cell,v,r,c){const key=r+','+c;const cur=imarks[v][isize][key]||null
 function iCP(cell,v,r,c){const key=r+','+c;const cur=imarks[v][isize][key]||null;if(cur===itool)return;iundo={v,sz:isize,key,prev:cur};eU();if(cur)cell.classList.remove(cur);cell.classList.add(itool);imarks[v][isize][key]=itool;renderIS();}
 function eU(){const b=document.getElementById('ins-undo');if(b){b.disabled=false;b.style.opacity='1';}}
 function setIT(t,btn){itool=t;document.querySelectorAll('.ins-t').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
-function setIS(s){isize=s;document.querySelectorAll('.ins-szb').forEach(b=>b.classList.remove('on'));var _sz=document.getElementById('isz-'+s);if(_sz)_sz.classList.add('on');VIEWS.forEach(v=>buildIG(v));}
+// Switching brush size keeps the marks: they are carried over to the new grid
+function remapMarks(v,from,to){
+  var g1=(IGR[v]&&IGR[v][from])||null,g2=(IGR[v]&&IGR[v][to])||null;
+  if(!g1||!g2)return;
+  var src=imarks[v][from]||{};
+  if(!Object.keys(src).length)return;
+  var out={};
+  for(var r=0;r<g2[1];r++){
+    for(var c=0;c<g2[0];c++){
+      var fx=(c+0.5)/g2[0], fy=(r+0.5)/g2[1];               // centre of the new cell
+      var oc=Math.min(g1[0]-1,Math.floor(fx*g1[0])), or=Math.min(g1[1]-1,Math.floor(fy*g1[1]));
+      var t=src[or+','+oc];
+      if(t)out[r+','+c]=t;
+    }
+  }
+  imarks[v][to]=out;
+  imarks[v][from]={};
+}
+function setIS(s){
+  if(s!==isize)VIEWS.forEach(function(v){remapMarks(v,isize,s);});
+  isize=s;
+  document.querySelectorAll('.ins-szb').forEach(b=>b.classList.remove('on'));
+  var _sz=document.getElementById('isz-'+s);if(_sz)_sz.classList.add('on');
+  VIEWS.forEach(v=>buildIG(v));
+  if(typeof renderIS==='function')renderIS();
+}
 function insUndo(){if(!iundo)return;const la=iundo;iundo=null;const b=document.getElementById('ins-undo');if(b){b.disabled=true;b.style.opacity='.4';}if(la.prev===null)delete imarks[la.v][la.sz][la.key];else imarks[la.v][la.sz][la.key]=la.prev;if(la.sz===isize){const p=la.key.split(',');const g=document.getElementById('ins-g-'+la.v);if(g){const[c]=IGR[la.v][isize];const cell=g.children[+p[0]*c+ +p[1]];if(cell){cell.classList.remove('sc','de','pr');if(la.prev)cell.classList.add(la.prev);}}}renderIS();}
 function insClearV(v){imarks[v][isize]={};buildIG(v);renderIS();}
 function insClear(){VIEWS.forEach(v=>{imarks[v]={S:{},M:{},L:{}};buildIG(v);});renderIS();}
