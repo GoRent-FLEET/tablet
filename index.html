@@ -961,7 +961,7 @@ function drawOut(){
       h+='<div style="border-top:1px solid var(--g2);padding:14px 16px;">'
         +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
         +'<div class="fi"><label>Return date'+(v.rt?' (booked: '+fmt(v.rt)+')':'')+'</label><input type="date" id="out-date" min="'+new Date().toISOString().split('T')[0]+'" value="'+_bx(due)+'" style="color-scheme:dark;"></div>'
-        +'<div class="fi"><label>Expected return time</label><input type="time" id="out-time" value="'+_bx(r.return_time||'')+'" style="color-scheme:dark;"></div></div>'
+        +'<div class="fi"><label>Expected return time</label>'+timePickers('out-time',r.return_time||'',"")+'</div></div>'
         +'<div style="font-size:12px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 6px;">📝 Notes</div>'
         +((r.out_notes||[]).map(function(n){return '<div style="background:var(--g0);border:1px solid var(--g2);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:14px;"><div style="font-size:11px;color:var(--g5);font-weight:800;">'+_bx(n.by||'')+' · '+_bx(new Date(n.at).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))+'</div>'+_bx(n.text)+'</div>';}).join('')||'<div style="font-size:13px;color:var(--g5);margin-bottom:6px;">No notes yet.</div>')
         +'<textarea id="out-note" placeholder="Add a note — e.g. client called, extending by 2 days; flat tyre in Sesriem…" style="width:100%;min-height:70px;padding:10px 12px;border-radius:var(--rs);border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:15px;"></textarea>'
@@ -982,7 +982,7 @@ function drawOut(){
 var OUT_FIND='';
 async function saveOut(i){
   var r=OUT_ROWS[i];if(!r)return;var v=outVeh(r);
-  var d=(document.getElementById('out-date')||{}).value||'',t=(document.getElementById('out-time')||{}).value||'',note=((document.getElementById('out-note')||{}).value||'').trim();
+  var d=(document.getElementById('out-date')||{}).value||'',t=timePickValue('out-time'),note=((document.getElementById('out-note')||{}).value||'').trim();
   var notes=(r.out_notes||[]).slice();
   var who=(APP_USER&&APP_USER.name)||'staff',now=new Date().toISOString();
   if(d&&d!==(r.return_date_new||v.rt))notes.push({at:now,by:who,text:'Return date changed to '+d+(v.rt?' (booked '+v.rt+')':'')});
@@ -1967,7 +1967,7 @@ function hoTopRow(){
   var ret='<div style="border:2px solid '+(co.returnTime?'var(--gb)':'var(--am)')+';border-radius:10px;padding:8px 10px;background:'+(co.returnTime?'var(--sg)':'var(--ag)')+';">'
     +'<div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:6px;">📅 Return: '+due+'</div>'
     +'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;font-weight:800;color:var(--g5);">Expected time *</span>'
-    +'<input type="time" id="ho-rtime" value="'+_bx(co.returnTime||'')+'" onchange="co.returnTime=this.value;saveCOProgress();drawCO()" style="color-scheme:dark;flex:1;padding:8px 10px;font-size:16px;font-weight:900;border-radius:8px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);"></div>'
+    +timePickers('ho-rtime',co.returnTime||'',"var _t=timePickValue('ho-rtime');if(_t){co.returnTime=_t;saveCOProgress();drawCO();}")+'</div>'
     +fl+'</div>';
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 12px;">'
     +miniBox('📶 WiFi device',d.wifi||'',"coSetDoc('wifi','ok')","coSetDoc('wifi','issue')",'Handed over','Not available')
@@ -5574,6 +5574,25 @@ function licDiscBanner(v, context){
 
 // Day / month / year selectors, so nobody can type a wrong year by hand
 var DISC_MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function timePickValue(id){
+  var h=document.getElementById(id+'-h'),m=document.getElementById(id+'-m');
+  if(!h||!m||h.value===''||m.value==='')return '';
+  return h.value+':'+m.value;
+}
+function timePickers(id,val,onChangeJs,flash){
+  var p=String(val||'').split(':'),hh=p[0]||'',mm=p[1]||'';
+  var hrs=[],mins=[];
+  for(var i=0;i<24;i++)hrs.push(('0'+i).slice(-2));
+  for(var j=0;j<60;j+=5)mins.push(('0'+j).slice(-2));
+  var sel=function(sid,label,opts,v){
+    return '<select id="'+sid+'" onchange="'+onChangeJs+'" style="color-scheme:dark;flex:1;padding:9px 6px;font-size:17px;font-weight:900;text-align:center;background:var(--g0);border:2px solid var(--g3);border-radius:8px;color:var(--tx);">'
+      +'<option value="">'+label+'</option>'
+      +opts.map(function(o){return '<option value="'+o+'"'+(v===o?' selected':'')+'>'+o+'</option>';}).join('')+'</select>';
+  };
+  return '<div style="display:flex;align-items:center;gap:4px;flex:1;">'
+    +sel(id+'-h','hh',hrs,hh)+'<span style="font-size:18px;font-weight:900;color:var(--g5);">:</span>'+sel(id+'-m','mm',mins,mm)
+    +'<span style="font-size:11px;font-weight:800;color:var(--g5);margin-left:2px;">24h</span></div>';
+}
 function discPickValue(id){
   var d=document.getElementById(id+'-d'),m=document.getElementById(id+'-m'),y=document.getElementById(id+'-y');
   if(!d||!m||!y||!d.value||!m.value||!y.value)return '';
