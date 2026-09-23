@@ -3601,6 +3601,15 @@ function coAccRows(uncPrep,uncMech){
   rows+=coAccRow(7,'👔','Manager — '+(co.mgmtBy||'—'),'Cleared at '+(co.mgmtAt||'—'),false);
   return rows;
 }
+// Finish for good: clear the check-out from the tablet and go back to the Dashboard
+function coCloseCheckout(){
+  if(!co._handoverLink&&!confirm('The handover document has not been sent yet.\n\nClose this check-out anyway?'))return;
+  try{localStorage.removeItem(ipKey(co.fn));}catch(e){}
+  try{if(co.v&&co.v.bid&&CO_DRAFTS[co.v.bid])delete CO_DRAFTS[co.v.bid];delete CO_DRAFTS[co.fn];}catch(e){}
+  co={};coStep=0;
+  goPage('ov');renderOV();
+  toast('Check-out closed ✅','ok');
+}
 // Go back into a finished check-out to correct something
 function coReopen(step){
   if(!co||!co.v){toast('Open the vehicle again from the Overview','err');return;}
@@ -3774,7 +3783,10 @@ async function completeCO(){
         ${coAccRows(uncPrep,uncMech)}
       </div>
 
-      <button class="btn g" style="margin-top:14px" onclick="goPage('ov')">← Back to Overview</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+        <button class="btn s" style="flex:1;min-width:180px;" onclick="goPage('ov')">← Overview (keep this open)</button>
+        <button class="btn g" style="flex:2;min-width:220px;" onclick="coCloseCheckout()">✅ Done — close and go to Dashboard</button>
+      </div>
     </div>`;
 
   // Store handover HTML for sending: add checklist, damage diagram and the full signed contract, save it as a link
