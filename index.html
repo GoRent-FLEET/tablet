@@ -658,6 +658,7 @@ const FLEET_DEMO=[
 ];
 const FLEET=[]; // filled from the real bookings table after sign-in
 var OVERRIDES={};  // client names corrected on the tablet, by booking
+var REMOTE_RETURNS=[];  // vehicles that must be collected somewhere other than the office
 // ═══════════════════════════════════════════════════════════════
 //  GO RENT 4×4 — FLEET MANAGEMENT APP
 //  Flow: Prepare → Handover (ID + Contract + Damage) → Trip → Return → Report
@@ -930,7 +931,7 @@ async function renderOut(){
   var body=document.getElementById('out-body');if(!body)return;
   body.innerHTML='<div style="padding:30px;text-align:center;color:var(--g5);">Loading vehicles out…</div>';
   var co_=[],ci_=[];
-  try{var r1=await SB.from('checkouts').select('id,booking_id,fleet_no,customer_name,created_at,return_time,return_date_new,out_notes,handover_by').order('created_at',{ascending:false}).limit(300);co_=(r1&&r1.data)||[];}catch(e){}
+  try{var r1=await SB.from('checkouts').select('id,booking_id,fleet_no,customer_name,created_at,return_time,return_date_new,out_notes,handover_by,return_place,return_address,return_place_time').order('created_at',{ascending:false}).limit(300);co_=(r1&&r1.data)||[];}catch(e){}
   try{var r2=await SB.from('checkins').select('booking_id');ci_=(r2&&r2.data)||[];}catch(e){}
   var back={};ci_.forEach(function(x){back[x.booking_id]=1;});
   var seen={};OUT_ROWS=co_.filter(function(x){if(!x.booking_id||back[x.booking_id]||seen[x.booking_id])return false;seen[x.booking_id]=1;return true;});
@@ -955,7 +956,8 @@ function drawOut(){
       +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+_bx(v.cl||r.customer_name||'')+nameEditBtn(r.booking_id,v.cl||r.customer_name||'','drawOut')+'</div>'
       +'<div style="font-size:12px;color:var(--g5);margin-top:3px;">Out since '+fmt((r.created_at||'').slice(0,10))+' · Return '+fmt(due)+(r.return_time?' <b style="color:#7db8ff;">🕑 '+_bx(r.return_time)+'</b>':'')
       +(r.return_date_new&&v.rt&&r.return_date_new!==v.rt?' <span style="color:var(--al);font-weight:800;">(moved from '+fmt(v.rt)+')</span>':'')
-      +(notes?' · 📝 '+notes+' note'+(notes>1?'s':''):'')+'</div></div>'
+      +(notes?' · 📝 '+notes+' note'+(notes>1?'s':''):'')+'</div>'
+      +remoteFlag(r,true)+'</div>'
       +'<div>'+badge+'</div></div>';
     if(open){
       h+='<div style="border-top:1px solid var(--g2);padding:14px 16px;">'
@@ -1203,6 +1205,16 @@ async function loadBookings(){
       var ov=await SB.from('booking_overrides').select('booking_id,client_name');
       OVERRIDES={};(ov.data||[]).forEach(function(o){if(o.client_name)OVERRIDES[o.booking_id]=o.client_name;});
       FLEET.forEach(function(v){var n=OVERRIDES[bkKey(v)];if(n)v.cl=n;});
+    }catch(e){}
+    // Remote returns (vehicle not coming back to the office)
+    try{
+      var ci_=await SB.from('checkins').select('booking_id');
+      var back={};((ci_&&ci_.data)||[]).forEach(function(x){back[x.booking_id]=1;});
+      var rr=await SB.from('checkouts').select('booking_id,fleet_no,return_place,return_address,return_place_time,return_date_new,created_at').order('created_at',{ascending:false}).limit(300);
+      var seen={};REMOTE_RETURNS=((rr&&rr.data)||[]).filter(function(x){
+        if(!x.booking_id||back[x.booking_id]||seen[x.booking_id])return false;seen[x.booking_id]=1;
+        return x.return_place&&x.return_place!=='Go Rent Office, 6 Diehl Str, Windhoek';
+      }).map(function(x){var v=FLEET.filter(function(f){return bkKey(f)===x.booking_id;})[0];x.rt=v?v.rt:'';return x;});
     }catch(e){}
     BOOKINGS_LOADED=true;
     return true;
@@ -1557,6 +1569,21 @@ function renderOV(){
         +'<span style="font-size:10px;font-weight:900;color:#c07a00;letter-spacing:.3px;white-space:nowrap;">STAFF ACTIVE:</span>'
         +chips+'</div>';
     })():'')
+    // Remote returns due in the next 7 days
+    +(function(){
+      var list=(window.REMOTE_RETURNS||[]).filter(function(x){
+        var due=x.return_date_new||x.rt;if(!due)return false;
+        var d=daysFrom(due);return d>=-1&&d<=7;
+      }).sort(function(a,b){return (a.return_date_new||a.rt)>(b.return_date_new||b.rt)?1:-1;});
+      if(!list.length)return '';
+      var chips=list.map(function(x){
+        var due=x.return_date_new||x.rt;
+        return '<span style="font-size:11px;font-weight:800;padding:3px 9px;border-radius:12px;background:#fff3cd;color:#92400e;border:1px solid #f6ad55;white-space:nowrap;">'
+          +_bx(x.fleet_no)+' · '+_bx(x.return_place)+(x.return_place_time?' · '+_bx(x.return_place_time):'')+' · '+_dmy(due)+'</span>';
+      }).join(' ');
+      return '<div style="background:#fffbeb;border-bottom:1px solid #f6ad55;padding:7px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;">'
+        +'<span style="font-size:11px;font-weight:900;color:#92400e;white-space:nowrap;">🚩 REMOTE COLLECTION:</span>'+chips+'</div>';
+    })()
     // Licence disc alerts (45 days ahead)
     +(function(){
       var list=Object.keys(DISCS).map(function(fn){return {fn:fn,exp:DISCS[fn],d:discDaysLeft(DISCS[fn])};})
@@ -2826,8 +2853,18 @@ function ctDetailsForm(){
       +'<div style="font-size:12px;color:var(--g5);margin-top:3px;">'+(isOffice?'Go Rent office — type over it for a different place':'Not the office — this will show on the contract')
       +' <button onclick="(co.contract=co.contract||{})[\''+k+'\']=\''+OFFICE+'\';drawCO()" style="background:none;border:none;color:var(--bl);font-size:12px;font-weight:800;cursor:pointer;padding:0 4px;">use office</button></div></div>';
   };
+  var remote=(c.return_location||OFFICE)!==OFFICE;
+  var remoteBox=remote?('<div style="border:2px solid var(--am);background:var(--ag);border-radius:10px;padding:10px 12px;margin:0 0 10px;">'
+      +'<div style="font-size:14px;font-weight:900;color:var(--al);margin-bottom:6px;">🚩 Not the office — where exactly is the vehicle collected?</div>'
+      +'<div class="fi"><label>Exact address / directions *</label>'
+      +'<textarea id="ct-raddr" placeholder="Lodge name, street, GPS or directions" oninput="(co.contract=co.contract||{}).return_address=this.value" '
+      +'style="width:100%;min-height:62px;padding:10px 12px;border-radius:var(--rs);border:2px solid '+(c.return_address?'var(--gb)':'var(--re)')+';background:var(--g0);color:var(--tx);font-size:15px;">'+_bx(c.return_address||'')+'</textarea></div>'
+      +'<div class="fi" style="margin-bottom:0;"><label>Time to collect there *</label>'
+      +timePickers('ct-rtime',c.return_place_time||'',"var _t=timePickValue('ct-rtime');if(_t){(co.contract=co.contract||{}).return_place_time=_t;drawCO();}")
+      +'</div></div>'):'';
   var h='<div style="font-size:13px;color:var(--g5);margin-bottom:10px;">Rental period: <b style="color:var(--tx);">'+days+' days</b> · rental rates are on the separate invoice</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'+locBox('pickup_location','📍 Collection place')+locBox('return_location','📍 Return place')+'</div>'
+    +remoteBox
     +insSel
     +'<div style="font-size:12px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin:12px 0 6px;">Optional cover</div>'
     +tick('ct-aws',ws,'🛞 Windscreen &amp; Tyre cover','N$184 per day · 1 windscreen, '+(days>14?'2 tyres':'1 tyre')+' · rims excluded',ws?'N$184 × '+days+' = '+ctMoney(wsT):'N$184/day','opt')
@@ -2937,6 +2974,7 @@ function gatherContract(){
 function previewAndSignContract(){
   gatherContract();
   const c=co.contract;
+  if(c.return_location&&c.return_location!=='Go Rent Office, 6 Diehl Str, Windhoek'&&(!c.return_address||!c.return_place_time)){toast('Remote return: fill in the exact address and the collection time','err');var _ra=document.getElementById('ct-raddr');if(_ra)_ra.scrollIntoView({block:'center'});return;}
   if(!c.insurance_option){toast('Select the insurance option first','err');var _i=document.getElementById('ct-ins');if(_i)_i.scrollIntoView({block:'center'});return;}
   if(!c.fuel_deposit_received){toast('Tick the N$7,500 fuel & admin deposit first','err');var _f=document.getElementById('ct-fdr');if(_f)_f.scrollIntoView({block:'center'});return;}
   if((co.v.xb||c.cross_border)&&c.cross_border_deposit!==true){toast('Cross-border booking: tick the N$30,000 cross-border deposit first','err');var _x=document.getElementById('ct-xbd');if(_x)_x.scrollIntoView({block:'center'});return;}
@@ -3684,7 +3722,8 @@ async function completeCO(){
     customer_signed_at:co.custSig?new Date().toISOString():null,
     manager_name:co.mgmtBy, manager_signed_at:co.mgmtSig?new Date().toISOString():null,
     odo_out:co.odometerOut||co.v.odo, unchecked_prep:uncPrep, unchecked_mech:uncMech,
-    damage_panels:co.dmgd, prep_checklist:co.prepItems||{}, mech_checklist:co.mechItems||{}, mech_by:co.mechCheckBy||null, mech_who:co.mechWho||{}, return_time:co.returnTime||null, doc_checks:co.docItems||{},
+    damage_panels:co.dmgd, prep_checklist:co.prepItems||{}, mech_checklist:co.mechItems||{}, mech_by:co.mechCheckBy||null, mech_who:co.mechWho||{}, return_time:co.returnTime||null,
+    return_place:(co.contract&&co.contract.return_location)||null, return_address:(co.contract&&co.contract.return_address)||null, return_place_time:(co.contract&&co.contract.return_place_time)||null, doc_checks:co.docItems||{},
     created_at:new Date().toISOString(),
   };
   try{
@@ -3921,7 +3960,7 @@ function startCI(fn){
   if(_early){ci.early=true;ci.dueBack=v.rt;ci.notes='EARLY RETURN — was due back '+v.rt+(ci.notes?'. '+ci.notes:'');}
   goPage('ci');drawCI();
   // Km and fuel at departure: take them from this booking's check-out record if it exists
-  try{SB.from('checkouts').select('odo_out,fuel_out,prep_checklist,damage_panels,return_time').eq('booking_id',bkKey(v)).order('created_at',{ascending:false}).limit(1).then(function(r){
+  try{SB.from('checkouts').select('odo_out,fuel_out,prep_checklist,damage_panels,return_time,return_place,return_address,return_place_time').eq('booking_id',bkKey(v)).order('created_at',{ascending:false}).limit(1).then(function(r){
     var row=r&&r.data&&r.data[0];if(!ci||ci.fn!==fn)return;
     ci._coLoaded=!!row;if(!row){try{drawCI();}catch(e){}return;}
     if(Array.isArray(row.damage_panels)&&row.damage_panels.length){
@@ -3932,6 +3971,7 @@ function startCI(fn){
     if(row.odo_out)ci.odometerOut=row.odo_out;
     if(row.fuel_out)ci.v.fuelOut=row.fuel_out;
     if(row.return_time)ci.returnTime=row.return_time;
+    if(row.return_place){ci.remote={return_place:row.return_place,return_address:row.return_address,return_place_time:row.return_place_time};try{drawCI();}catch(e){}}
     if(row.prep_checklist&&typeof row.prep_checklist==='object'&&Object.keys(row.prep_checklist).length){ci._coItems=row.prep_checklist;ciBuildRetGroups();}
     try{drawCI();}catch(e){}
   },function(){});}catch(e){}
@@ -4156,6 +4196,7 @@ function ciTripInfo(v){
   var h='';
   if(ci&&ci.early)h+='<div style="display:flex;align-items:center;gap:6px;background:rgba(245,166,35,.18);border:2px solid var(--am);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:900;color:var(--al);">⏪ EARLY RETURN — was due back '+_bx(new Date(ci.dueBack+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}))+'</div>';
   if(ci&&ci.returnTime)h+=chip('🕑','Expected',_bx(ci.returnTime),'#7db8ff');
+  if(ci&&isRemoteReturn(ci.remote))h+='<div style="background:rgba(245,166,35,.18);border:2px solid var(--am);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:900;color:var(--al);">🚩 REMOTE RETURN — '+_bx(ci.remote.return_place+(ci.remote.return_place_time?' · collect '+ci.remote.return_place_time:''))+'</div>';
   h+=chip('🚐','Transfer',_bx(tr||'None arranged'),tr?trCol:'rgba(255,255,255,.6)');
   if(b.arrival_flight)h+=chip('🛬','Arrived',_bx(b.arrival_flight));
   h+=chip('🛫','Departs',b.departure_flight?_bx(b.departure_flight):'No flight on booking',b.departure_flight?'#7db8ff':'rgba(255,255,255,.6)');
@@ -4544,6 +4585,17 @@ async function editClientName(key,current,after){
   try{if(after)after();}catch(e){}
 }
 function nameEditBtn(key,current,after){return '<button onclick="event.stopPropagation();editClientName(\''+_bx(key)+'\',\''+_bx(String(current||'').replace(/\'/g,''))+'\','+(after||'null')+')" title="Edit client name" style="margin-left:6px;background:none;border:none;color:var(--al);font-size:13px;cursor:pointer;padding:0 2px;">✏️</button>';}
+// Remote return (not the office): flagged everywhere until the vehicle is back
+var OFFICE_PLACE='Go Rent Office, 6 Diehl Str, Windhoek';
+function isRemoteReturn(r){return !!(r&&r.return_place&&r.return_place!==OFFICE_PLACE);}
+function remoteFlag(r,small){
+  if(!isRemoteReturn(r))return '';
+  var t=[r.return_place];
+  if(r.return_place_time)t.push('collect '+r.return_place_time);
+  if(r.return_address)t.push(r.return_address);
+  return '<div style="background:var(--ag);border:2px solid var(--am);border-radius:8px;padding:'+(small?'4px 8px':'8px 10px')+';margin:6px 0;font-size:'+(small?'12px':'14px')+';font-weight:800;color:var(--al);">'
+    +'🚩 REMOTE RETURN — '+_bx(t.join(' · '))+'</div>';
+}
 function bkKey(v){return v?(v.fn+'_'+v.pu):'';}
 function curBkKey(fn){
   if(typeof co!=='undefined'&&co&&co.v&&co.v.fn===fn)return bkKey(co.v);
