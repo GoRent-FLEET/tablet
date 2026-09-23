@@ -679,6 +679,7 @@ const STAFF_ROSTER=[
   {name:'Peter',    code:'7777', role:'admin'},
   {name:'Simon',    code:'8888', role:'prep'},
   {name:'Christina',code:'9090', role:'prep'},
+  {name:'Abia',     code:'1010', role:'prep'},
   {name:'Manager',  code:'9999', role:'manager'},
 ];
 const STAFF_PREP=STAFF_ROSTER.map(s=>s.name);
@@ -864,7 +865,7 @@ function isPrepOnly(){ return !!(APP_USER && PREP_ONLY.includes(APP_USER.name));
 // Which check-out steps each person may do (anyone not listed can do every step)
 // Steps: 0 Prep · 2 Mechanical · 3 Camping · 4 Inspection · 5 Contract · 6 Handover · 7 Management
 var STEP_ACCESS={
-  'Bonga':[0,2,3],'Dixon':[0,2,3],'Vince':[0,2,3],
+  'Bonga':[0,2,3],'Dixon':[0,2,3],'Vince':[0,2,3],'Abia':[0,2,3],
   'Christina':[5,7]
 };
 function allowedSteps(){return (APP_USER&&STEP_ACCESS[APP_USER.name])||null;}
