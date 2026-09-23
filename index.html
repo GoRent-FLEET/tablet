@@ -788,10 +788,7 @@ function pinTap(d) {
       var nl = document.getElementById('nav-logout');
       if (nl) nl.style.display = '';
       // Show/hide Reports tab based on role
-      var nbrp = document.getElementById('nb-rp');
-      if(nbrp) nbrp.style.display = (REPORTS_ALLOWED.includes(matched.name) || matched.name==='Peter') ? '' : 'none';
-      var nbdoc = document.getElementById('nb-doc');
-      if(nbdoc) nbdoc.style.display = (REPORTS_ALLOWED.includes(matched.name) || matched.name==='Peter') ? '' : 'none';
+      applyTabAccess();
       // Switch page immediately
       document.querySelectorAll('.page').forEach(function(e){ e.classList.remove('on'); });
       document.querySelectorAll('.nb').forEach(function(e){ e.classList.remove('on'); });
@@ -868,8 +865,18 @@ function initIM(){VIEWS.forEach(v=>{imarks[v]={S:{},M:{},L:{}};});}
 initIM();
 
 // ── NAV ──────────────────────────────────────────────────────────
-const REPORTS_ALLOWED=['Manager','Simon','Peter','Nelson','Joe','Robbie','Christina'];  // operators + system manager
-function canViewReports(){ return APP_USER && (REPORTS_ALLOWED.includes(APP_USER.name) || isAdmin()); }
+const REPORTS_ALLOWED=['Manager','Simon','Peter','Joe','Robbie','Christina'];  // may see On Rental, Calendar, Documentation and Reports
+const NO_OVERVIEW=['Bonga','Dixon','Vince','Abia','Nelson'];  // check-outs / check-ins only
+function canSeeOverview(){ return !!(APP_USER && NO_OVERVIEW.indexOf(APP_USER.name)<0); }
+function canViewReports(){ return APP_USER && canSeeOverview() && (REPORTS_ALLOWED.includes(APP_USER.name) || isAdmin()); }
+// Show or hide On Rental, Calendar, Documentation and Vehicle Reports for this user
+function applyTabAccess(){
+  var show=canSeeOverview();
+  ['nb-out','nb-cal','nb-doc','nb-rp'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.style.display=show?'':'none';
+  });
+}
 const MANAGEMENT=['Manager','Robbie','Peter','Simon','Joe','Christina'];
 function isManagement(){ return !!(APP_USER && MANAGEMENT.includes(APP_USER.name)); }
 function isAdmin(){ return !!(APP_USER && (APP_USER.name==='Peter' || APP_USER.role==='admin')); }
@@ -921,6 +928,10 @@ function canSeeClientInfo(){ return !!(APP_USER && !PREP_ONLY.includes(APP_USER.
 
 function goPage(p){
   if(!APP_USER){showLogin();return;}
+  if(['out','cal','doc','rp'].indexOf(p)>=0 && !canSeeOverview()){
+    toast('🔒 Not available for '+(APP_USER?APP_USER.name:'you'),'err');
+    return;
+  }
   if(p==='rp' && !canViewReports()){
     toast('🔒 Reports — Management access only','err');
     return;
@@ -1223,10 +1234,7 @@ async function showApp(){
   var nbov=document.getElementById('nb-ov'); if(nbov) nbov.classList.add('on');
   // Reports tab visibility
   if(APP_USER && typeof REPORTS_ALLOWED !== 'undefined'){
-    var nbrp=document.getElementById('nb-rp');
-    if(nbrp) nbrp.style.display=REPORTS_ALLOWED.includes(APP_USER.name)?'':'none';
-    var nbdoc=document.getElementById('nb-doc');
-    if(nbdoc) nbdoc.style.display=canViewReports()?'':'none';
+    applyTabAccess();
   }
   try { renderOV(); } catch(e){ console.warn('renderOV:',e); }
   try { await loadFleetFromDB(); } catch(e){ console.warn('loadFleet:',e); }
@@ -5268,6 +5276,7 @@ function calMax(c){
 function calSet(mode){CAL_MODE=mode;CAL_OFF=0;drawCalendar();}
 function calMove(step){CAL_OFF+=step;drawCalendar();}
 function openCalendar(){
+  if(!canSeeOverview()){toast('🔒 Calendar is not available for '+(APP_USER?APP_USER.name:'you'),'err');return;}
   if(document.getElementById('cal-modal'))return;
   var m=document.createElement('div');m.id='cal-modal';
   m.setAttribute('style','position:fixed;inset:0;z-index:99996;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;');
@@ -6708,9 +6717,7 @@ function lsPin(d) {
       if (nl) nl.style.display = '';
       // Reports tab visibility
       var nbrp = document.getElementById('nb-rp');
-      if (nbrp) nbrp.style.display = (typeof REPORTS_ALLOWED !== 'undefined' && REPORTS_ALLOWED.includes(match.name)) ? '' : 'none';
-      var nbdoc2 = document.getElementById('nb-doc');
-      if (nbdoc2) nbdoc2.style.display = (typeof REPORTS_ALLOWED !== 'undefined' && REPORTS_ALLOWED.includes(match.name)) ? '' : 'none';
+      if(typeof applyTabAccess==='function')applyTabAccess();
       LS_PIN = ''; LS_WHO = '';
       // Same approach as debugGo which is confirmed working
       var ls = document.getElementById('login-screen');
