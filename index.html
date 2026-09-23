@@ -1637,6 +1637,28 @@ function coChangeVehicle(){
   renderCOPicker();
   var b=document.getElementById('co-body');if(b&&b.scrollIntoView)b.scrollIntoView();
 }
+// Damage already on the vehicle: from the last check-in of this vehicle, else the last check-out
+async function loadPrevDamage(fn){
+  try{
+    var panels=null,src='';
+    var a=await SB.from('checkins').select('damage_panels,created_at').eq('fleet_no',fn).order('created_at',{ascending:false}).limit(1);
+    var ra=a&&a.data&&a.data[0];
+    if(ra&&Array.isArray(ra.damage_panels)&&ra.damage_panels.length){panels=ra.damage_panels;src='last return';}
+    if(!panels){
+      var b=await SB.from('checkouts').select('damage_panels,created_at').eq('fleet_no',fn).order('created_at',{ascending:false}).limit(1);
+      var rb=b&&b.data&&b.data[0];
+      if(rb&&Array.isArray(rb.damage_panels)&&rb.damage_panels.length){panels=rb.damage_panels;src='last hand-over';}
+    }
+    if(!panels||!co||co.fn!==fn)return;
+    panels.forEach(function(d){
+      var sz=d.size||'M';if(!imarks[d.view]||!imarks[d.view][sz])return;
+      (d.cells||[]).forEach(function(c){imarks[d.view][sz][c.r+','+c.c]='pr';});   // everything already there counts as pre-existing
+    });
+    if(panels[0]&&panels[0].size)isize=panels[0].size;
+    co._prevDmgSrc=src;co.dmgd=getDmgData();
+    try{drawCO();}catch(e){}
+  }catch(e){}
+}
 function startCO(fn){
   const v=pickVeh(fn,'out');
   if(!v){toast('Vehicle '+fn+' not found','err');return;}
@@ -1678,6 +1700,7 @@ function startCO(fn){
     mgmtBy:'',mgmtSig:null,mgmtAt:'',
   };
   initIM();coStep=firstAllowedStep();goPage('co');
+  loadPrevDamage(fn);
   try{ drawCO(); } catch(err){ 
     toast('drawCO error: '+err.message,'err');
     console.error('drawCO error:',err);
@@ -3225,6 +3248,9 @@ function coStep5_client(){
   const dmgSectionHTML=`
   <div style="background:var(--g1);border:2px solid var(--g2);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;">
     <div style="font-size:15px;font-weight:800;margin-bottom:8px;">🔍 Damage Inspection</div>
+    ${(function(){var pr=(co.dmgd||[]).reduce(function(a,d){return a+((d.cells||[]).filter(function(c){return c.t==='pr';}).length);},0);
+      return pr?'<div class="al warn" style="margin-bottom:10px;font-size:13px;">⭐ '+pr+' yellow block'+(pr===1?'':'s')+' = damage already on this vehicle'+(co._prevDmgSrc?' (from the '+co._prevDmgSrc+')':'')+'. Check it with the client: tap a yellow block with <b>Pre-existing</b> selected to remove it if it is no longer there, or add more with <b>Pre-existing</b>.</div>'
+        :'<div class="al info" style="margin-bottom:10px;font-size:13px;">No damage on record for this vehicle. Mark anything you find: blue = scratch · red = dent · yellow = pre-existing.</div>';})()}
     <div class="al info" style="margin-bottom:10px;font-size:13px;">Blue = Scratch · Red = Dent · Yellow = Pre-existing</div>
     ${insHTML()}
     ${photoHTML('co.dmgPhotos','📷 Damage Photos','Photograph all damage — these protect the company.',8)}
