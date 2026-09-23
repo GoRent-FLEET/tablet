@@ -2818,7 +2818,18 @@ function ctDetailsForm(){
     +'</select>'
     +(c.insurance_option&&CT_INS[c.insurance_option]?'<div style="font-size:13px;color:var(--se);margin-top:4px;font-weight:700;">Security deposit: '+(CT_INS[c.insurance_option].dep?ctMoney(CT_INS[c.insurance_option].dep):'none (zero excess)')+'</div>':'')
     +'</div>';
+  var OFFICE='Go Rent Office, 6 Diehl Str, Windhoek';
+  if(c.pickup_location===undefined)c.pickup_location=OFFICE;
+  if(c.return_location===undefined)c.return_location=OFFICE;
+  var locBox=function(k,lbl){
+    var val=c[k]||OFFICE,isOffice=val===OFFICE;
+    return '<div class="fi"><label>'+lbl+'</label>'
+      +'<input value="'+_bx(val)+'" placeholder="'+_bx(OFFICE)+'" oninput="(co.contract=co.contract||{})[\''+k+'\']=this.value" style="border-color:'+(isOffice?'var(--g3)':'var(--am)')+';">'
+      +'<div style="font-size:12px;color:var(--g5);margin-top:3px;">'+(isOffice?'Go Rent office — type over it for a different place':'Not the office — this will show on the contract')
+      +' <button onclick="(co.contract=co.contract||{})[\''+k+'\']=\''+OFFICE+'\';drawCO()" style="background:none;border:none;color:var(--bl);font-size:12px;font-weight:800;cursor:pointer;padding:0 4px;">use office</button></div></div>';
+  };
   var h='<div style="font-size:13px;color:var(--g5);margin-bottom:10px;">Rental period: <b style="color:var(--tx);">'+days+' days</b> · rental rates are on the separate invoice</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'+locBox('pickup_location','📍 Collection place')+locBox('return_location','📍 Return place')+'</div>'
     +insSel
     +'<div style="font-size:12px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin:12px 0 6px;">Optional cover</div>'
     +tick('ct-aws',ws,'🛞 Windscreen &amp; Tyre cover','N$184 per day · 1 windscreen, '+(days>14?'2 tyres':'1 tyre')+' · rims excluded',ws?'N$184 × '+days+' = '+ctMoney(wsT):'N$184/day','opt')
@@ -2905,8 +2916,8 @@ function gatherContract(){
   if(co.returnTime)co.contract.return_time=co.returnTime;
   co.contract.odo_out=co.v.odo;
   co.contract.fuel_out=co.fuelOut;
-  co.contract.pickup_location=(function(){var _e=document.getElementById('ct-ploc');return _e?_e.value:undefined;})()||'Go Rent 4×4 Workshop, Windhoek';
-  co.contract.return_location=(function(){var _e=document.getElementById('ct-rloc');return _e?_e.value:undefined;})()||'Go Rent 4×4 Workshop, Windhoek';
+  co.contract.pickup_location=co.contract.pickup_location||'Go Rent Office, 6 Diehl Str, Windhoek';
+  co.contract.return_location=co.contract.return_location||'Go Rent Office, 6 Diehl Str, Windhoek';
   co.contract.deposit_method=(function(){var _e=document.getElementById('ct-dmethod');return _e?_e.value:undefined;})()||co.contract.deposit_method;
   co.contract.deposit_amount=+(function(){var _e=document.getElementById('ct-dep');return _e?_e.value:undefined;})()||co.contract.deposit_amount;
   co.contract.quote_number=(function(){var _e=document.getElementById('ct-quote');return _e?_e.value:undefined;})()||co.contract.quote_number||co.v.quote||'';
@@ -5856,12 +5867,12 @@ function buildContractHTML(c,sigUrl){
       ).join('')}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #ccc;">
-      ${[['Rental FROM Date',fD(c.pickup_date)],['Time',c.pickup_time||'08:00'],['Location',c.pickup_location||'Windhoek, 6 Diehl Str']].map(([l,v],i)=>
+      ${[['Rental FROM Date',fD(c.pickup_date)],['Time',c.pickup_time||'08:00'],['Location',c.pickup_location||'Go Rent Office, 6 Diehl Str, Windhoek']].map(([l,v],i)=>
         `<div style="padding:7px 8px;${i<2?'border-right:1px solid #ccc;':''}"><div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div><div style="font-size:14px;font-weight:600;min-height:18px;">${v||''}</div></div>`
       ).join('')}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;">
-      ${[['Rental TO Date',fD(c.return_date)],['Time',c.return_time||'08:00'],['Location',c.return_location||'Windhoek, 6 Diehl Str']].map(([l,v],i)=>
+      ${[['Rental TO Date',fD(c.return_date)],['Time',c.return_time||'08:00'],['Location',c.return_location||'Go Rent Office, 6 Diehl Str, Windhoek']].map(([l,v],i)=>
         `<div style="padding:7px 8px;${i<2?'border-right:1px solid #ccc;':''}"><div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px;">${l}</div><div style="font-size:14px;font-weight:600;min-height:18px;">${v||''}</div></div>`
       ).join('')}
     </div>
@@ -6044,7 +6055,7 @@ function buildContractHTML(c,sigUrl){
     </div>
     <div style="padding:8px 10px;">
       <div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Place Signed</div>
-      <div style="font-size:14px;font-weight:700;min-height:20px;">Windhoek, 6 Diehl Str</div>
+      <div style="font-size:14px;font-weight:700;min-height:20px;">${c.pickup_location||'Go Rent Office, 6 Diehl Str, Windhoek'}</div>
     </div>
   </div>
 
