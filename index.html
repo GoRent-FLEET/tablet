@@ -1848,7 +1848,7 @@ function drawCO(){
     '<div class="stg-bar s7">'+bar+'</div>'+
     '<div id="cos">'+body+'</div>'+
     '<div class="btn-row">'+_backBtn+_nextBtn+'</div>';
-  setTimeout(()=>['co-p-sig','co-equip-sig','co-c-sig','co-m-sig'].forEach(initSig),80);
+  setTimeout(()=>['co-p-sig','co-c-sig','co-m-sig'].forEach(initSig),80);
   if(coStep===5&&!co.contractBy)setTimeout(ctWhoModal,250);
   if(coStep===6&&!co.mechBy)setTimeout(hoWhoModal,250);
   // damage marking grid: build it whenever the diagram is on screen (handover step)
@@ -2236,7 +2236,7 @@ function coStep1_equip(){
         <div class="ci-icon">${ico}</div>
         <div class="ci-text"><div class="ci-lbl">${realLbl}</div><div class="ci-det">${det}</div></div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-          <select onchange="co.prepItems['${realLbl}']=this.value;if(!co.prepBy){toast('Select your name first','err');this.value='';return;}const s=document.getElementById('cos');if(s){const sig=hasSig('co-p-sig')?getSig('co-p-sig'):null;s.innerHTML=coStep1_equip();setTimeout(()=>{initSig('co-equip-sig');if(sig&&sigs['co-equip-sig']){const cv=document.getElementById('co-equip-sig');if(cv){const img=new Image();img.onload=()=>{sigs['co-equip-sig'].ctx.drawImage(img,0,0,cv.offsetWidth,cv.offsetHeight);sigs['co-equip-sig'].hasData=true;};img.src=sig;}}},60);}"
+          <select onchange="co.prepItems['${realLbl}']=this.value;if(!co.prepBy){toast('Select your name first','err');this.value='';return;}const s=document.getElementById('cos');if(s)s.innerHTML=coStep1_equip();"
             style="color-scheme:dark;padding:8px 10px;border-radius:var(--rs);border:2px solid ${qtyNum>0?'var(--gb)':'var(--g3)'};background:${qtyNum>0?'var(--sg)':'var(--g1)'};color:${qtyNum>0?'var(--se)':'var(--g5)'};font-size:14px;font-weight:700;min-width:70px;">
             <option value="">Qty</option>
             ${Array.from({length:maxQty},function(_,k){return '<option value="'+(k+1)+'" '+(qtyVal==k+1?'selected':'')+'>'+  (k+1)+'</option>';}).join('')}
@@ -2259,10 +2259,9 @@ function coStep1_equip(){
   ${(function(){if(equipStaff.length<=1)return '';var chips=equipStaff.map(function(n){var cnt=(co.prepLog?co.prepLog.filter(function(e){return e.by===n;}).length:0)||0;return '<div style="background:var(--g0);border:1px solid var(--am);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;">'+n.slice(0,2).toUpperCase()+'</div><div><div style="font-size:14px;font-weight:700;color:var(--al);">'+n+'</div><div style="font-size:13px;color:var(--g5);">'+cnt+' item'+(cnt!==1?'s':'')+' packed</div></div></div>';}).join('');return '<div style="background:var(--g1);border:2px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;"><div style="font-size:13px;font-weight:700;color:var(--al);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px;">👥 Multiple staff on this step</div><div style="display:flex;flex-wrap:wrap;gap:6px;">'+chips+'</div></div>';})()}
   ${photoHTML('co.prepPhotos','📷 Equipment Photos','Photograph all packed equipment — tent, boxes, loose items. Client sees these at handover.',6)}
   ${co.equipSig?
-    '<div class="signed">✅<div class="signed-name">'+co.prepBy+' — Equipment check signed</div><div class="signed-time">'+co.equipAt+' — Equipment check signed</div></div>':
-    '<div class="liab">⚠️ By signing, <strong>'+(co.prepBy||'[prep staff]')+'</strong> confirms all ✅ green items are packed and loaded.<br>Every ⬜ grey = <strong>NOT CHECKED = personal liability.</strong></div>'
-    +'<div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">Your signature</span><span class="sig-clr" onclick="clrSig(\'co-equip-sig\')">Clear</span></div><canvas class="sig-cv" id="co-equip-sig"></canvas></div>'
-    +'<button class="btn g" onclick="signEquip()">✓ Sign & Confirm — Equipment Packed</button>'}`;
+    '<div class="signed">✅<div class="signed-name">'+co.prepBy+' — Equipment confirmed packed</div><div class="signed-time">'+co.equipAt+'</div></div>':
+    '<div class="liab">⚠️ <strong>'+(co.prepBy||'[prep staff]')+'</strong> confirms all ✅ green items are packed and loaded.<br>Every ⬜ grey = <strong>NOT CHECKED = personal liability.</strong> Every tick is recorded with your name.</div>'
+    +'<button class="btn g" onclick="signEquip()">✓ Confirm — Equipment Packed</button>'}`;
 }
 
 function tapPrepIdx(i){
@@ -2285,24 +2284,14 @@ function tapPrepIdx(i){
   if(newSt) co.prepLog.push({lbl,st:newSt,by:co.prepBy,at:ts});
   co.prepCheckedBy[co.prepBy]=(co.prepCheckedBy[co.prepBy]||0)+1;
   const s=document.getElementById('cos');
-  if(s){
-    const existingSig=hasSig('co-equip-sig')?getSig('co-equip-sig'):null;
-    s.innerHTML=coStep1_equip();
-    setTimeout(()=>{
-      initSig('co-equip-sig');
-      if(existingSig&&sigs['co-equip-sig']){
-        const cv=document.getElementById('co-equip-sig');
-        if(cv){const img=new Image();img.onload=()=>{sigs['co-equip-sig'].ctx.drawImage(img,0,0,cv.offsetWidth,cv.offsetHeight);sigs['co-equip-sig'].hasData=true;};img.src=existingSig;}
-      }
-    },60);
-  }
+  if(s)s.innerHTML=coStep1_equip();
 }
 
 function signEquip(){
-  const domVal=(function(){var _e=document.getElementById('co-p-nm');return _e?_e.value:undefined;})();if(domVal)co.prepBy=domVal;
+  const who=(APP_USER&&APP_USER.name)||(function(){var _e=document.getElementById('co-p-nm');return _e?_e.value:'';})()||co.prepBy;
+  if(who)co.prepBy=who;
   if(!co.prepBy){toast('Select your name first','err');return;}
-  if(!hasSig('co-equip-sig')){toast('Sign below to confirm','err');return;}
-  co.equipSig=getSig('co-equip-sig');co.equipAt=now();
+  co.equipSig='confirmed';co.equipAt=now();
   const allStaff=Object.keys(co.prepCheckedBy||{});
   if(!allStaff.includes(co.prepBy)) allStaff.push(co.prepBy);
   co.equipByAll=allStaff;
