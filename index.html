@@ -2485,13 +2485,13 @@ function coStep1(){
 
       <!-- Status -->
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;">
-        <span style="font-size:13px;padding:2px 8px;border-radius:10px;font-weight:700;${d.name?'background:var(--sg);color:var(--se)':'background:var(--rg);color:var(--rl)'}">
+        <span class="${d.name?'':'insp-flash'}" style="font-size:13px;padding:3px 9px;border-radius:10px;font-weight:800;${d.name?'background:var(--sg);color:var(--se)':'background:var(--rg);color:var(--rl);border:1px solid var(--re)'}">
           ${d.name?'✓ '+d.name:'⚠ Name missing'}
         </span>
-        <span style="font-size:13px;padding:2px 8px;border-radius:10px;font-weight:700;${d.passportImg?'background:var(--sg);color:var(--se)':'background:var(--rg);color:var(--rl)'}">
+        <span class="${d.passportImg?'':'insp-flash'}" style="font-size:13px;padding:3px 9px;border-radius:10px;font-weight:800;${d.passportImg?'background:var(--sg);color:var(--se)':'background:var(--rg);color:var(--rl);border:1px solid var(--re)'}">
           ${d.passportImg?'✓ Passport'+(d.passport?' · '+d.passport:''):'⚠ No passport'}
         </span>
-        <span style="font-size:13px;padding:2px 8px;border-radius:10px;font-weight:700;${d.licFront?'background:var(--sg);color:var(--se)':'background:var(--rg);color:var(--rl)'}">
+        <span class="${d.licFront?'':'insp-flash'}" style="font-size:13px;padding:3px 9px;border-radius:10px;font-weight:800;${d.licFront?'background:var(--sg);color:var(--se)':'background:var(--rg);color:var(--rl);border:1px solid var(--re)'}">
           ${d.licFront?'✓ Licence'+(d.licNo?' · '+d.licNo:'')+(d.licExpiry?' exp '+d.licExpiry:''):'⚠ No licence'}
         </span>
       </div>
