@@ -868,7 +868,7 @@ function initIM(){VIEWS.forEach(v=>{imarks[v]={S:{},M:{},L:{}};});}
 initIM();
 
 // ── NAV ──────────────────────────────────────────────────────────
-const REPORTS_ALLOWED=['Manager','Simon','Peter','Nelson','Joe','Vince','Robbie'];
+const REPORTS_ALLOWED=['Manager','Simon','Peter','Nelson','Joe','Robbie','Christina'];  // operators + system manager
 function canViewReports(){ return APP_USER && (REPORTS_ALLOWED.includes(APP_USER.name) || isAdmin()); }
 const MANAGEMENT=['Manager','Robbie','Peter','Simon','Joe','Christina'];
 function isManagement(){ return !!(APP_USER && MANAGEMENT.includes(APP_USER.name)); }
@@ -903,13 +903,13 @@ function canDelete(what){
   toast('🔒 Only Peter can delete '+(what||'data'),'err');
   return false;
 }
-const PREP_ONLY=['Bonga','Dixon','Vince']; // prep staff - no contracts or management
+const PREP_ONLY=['Bonga','Dixon','Vince','Abia']; // prep staff — steps 1–4 only, no contracts, handover, documents or reports
 function isPrepOnly(){ return !!(APP_USER && PREP_ONLY.includes(APP_USER.name)); }
 // Which check-out steps each person may do (anyone not listed can do every step)
 // Steps: 0 Prep · 2 Mechanical · 3 Camping · 4 Inspection · 5 Contract · 6 Handover · 7 Management
 var STEP_ACCESS={
-  'Bonga':[0,2,3],'Dixon':[0,2,3],'Vince':[0,2,3],'Abia':[0,2,3],
-  'Christina':[5,7]
+  // prep staff: Cleaning, Equipment, Mechanical, Pre-handover inspection
+  'Bonga':[0,2,3,4],'Dixon':[0,2,3,4],'Vince':[0,2,3,4],'Abia':[0,2,3,4]
 };
 function allowedSteps(){return (APP_USER&&STEP_ACCESS[APP_USER.name])||null;}
 function canDoStep(n){var a=allowedSteps();return !a||a.indexOf(n)>=0;}
@@ -917,7 +917,7 @@ function firstAllowedStep(){var a=allowedSteps();return a?a[0]:0;}
 function canCheckIn(){return !allowedSteps();}
 function canSeeContracts(){ return !!(APP_USER && !PREP_ONLY.includes(APP_USER.name)); }
 // Admin overrides: Peter sees everything management + reports + all client info
-function canSeeClientInfo(){ return !!(APP_USER && (['Manager','Christina','Simon','Nelson','Joe','Robbie','Peter'].includes(APP_USER.name) || isAdmin())); }
+function canSeeClientInfo(){ return !!(APP_USER && !PREP_ONLY.includes(APP_USER.name)); }
 
 function goPage(p){
   if(!APP_USER){showLogin();return;}
@@ -993,7 +993,7 @@ function renderCOPicker(){
 // Staff can add notes and change the return date / expected time at any time.
 var OUT_ROWS=[],OUT_OPEN=null;
 // ── 📁 Documentation: every completed hand-over, by vehicle or client ──
-var DOC_ROWS=[], DOC_FIND='';
+var DOC_ROWS=[], DOC_FIND='', DOC_FN='';
 async function renderDoc(){
   var body=document.getElementById('doc-body');if(!body)return;
   if(!canViewReports()){body.innerHTML='<div style="padding:40px;text-align:center;color:var(--g5);">🔒 Documentation is not available for '+(APP_USER?_bx(APP_USER.name):'you')+'</div>';return;}
@@ -1018,6 +1018,7 @@ function drawDoc(){
   var body=document.getElementById('doc-body');if(!body)return;
   var q=(DOC_FIND||'').toLowerCase().trim();
   var list=DOC_ROWS.filter(function(r){
+    if(DOC_FN&&r.fn!==DOC_FN)return false;
     if(!q)return true;
     return (r.fn+' '+r.cl+' '+(r.pu||'')+' '+(r.rt||'')).toLowerCase().indexOf(q)>=0;
   });
@@ -1035,14 +1036,24 @@ function drawDoc(){
   }).join('');
   body.innerHTML='<div style="padding:16px;">'
     +'<div style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📁 Rental documents — '+list.length+' hand-over'+(list.length===1?'':'s')+'</div>'
-    +'<input class="search-bar" id="doc-find" placeholder="🔎 Find — vehicle number or client name" value="'+_bx(DOC_FIND)+'" oninput="DOC_FIND=this.value;drawDoc();document.getElementById(\'doc-find\').focus();">'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
+    +'<select id="doc-fn" onchange="DOC_FN=this.value;drawDoc();" style="color-scheme:dark;padding:12px;font-size:15px;font-weight:800;border-radius:var(--rs);border:2px solid var(--g3);background:var(--g0);color:var(--tx);min-width:190px;">'
+      +'<option value="">🚗 All vehicles</option>'
+      +DOC_ROWS.map(function(r){return r.fn;}).filter(function(v,i,a){return v&&a.indexOf(v)===i;}).sort(function(a,b){return fnNum(a)-fnNum(b);})
+        .map(function(fn){return '<option'+(DOC_FN===fn?' selected':'')+'>'+_bx(fn)+'</option>';}).join('')
+    +'</select>'
+    +'<input class="search-bar" id="doc-find" style="flex:1;min-width:220px;margin:0;" placeholder="🔎 Search client name" value="'+_bx(DOC_FIND)+'" oninput="DOC_FIND=this.value;drawDoc();document.getElementById(\'doc-find\').focus();">'
+    +'</div>'
     +'<div style="font-size:12px;color:var(--g5);margin:8px 0 12px;">Contract, booking details, passports, photos, damage, handover and return report — with print.</div>'
     +(rows||'<div style="padding:40px;text-align:center;color:var(--g5);font-size:13px;">Nothing found</div>')
     +'</div>';
 }
 function docOpen(i){
   var q=(DOC_FIND||'').toLowerCase().trim();
-  var list=DOC_ROWS.filter(function(r){return !q||(r.fn+' '+r.cl+' '+(r.pu||'')+' '+(r.rt||'')).toLowerCase().indexOf(q)>=0;});
+  var list=DOC_ROWS.filter(function(r){
+    if(DOC_FN&&r.fn!==DOC_FN)return false;
+    return !q||(r.fn+' '+r.cl+' '+(r.pu||'')+' '+(r.rt||'')).toLowerCase().indexOf(q)>=0;
+  });
   var r=list[i];if(!r)return;
   openRentalFile(r.bid,r.fn,r.cl);
 }
@@ -5248,6 +5259,12 @@ function calRange(){
   var e2=new Date(s2.getFullYear(),s2.getMonth()+1,0);
   return {start:s2,end:e2,title:s2.toLocaleDateString('en-GB',{month:'long',year:'numeric'})};
 }
+function calMax(c){
+  var mx=1;
+  Object.keys(c.out).forEach(function(k){mx=Math.max(mx,c.out[k].length);});
+  Object.keys(c.back).forEach(function(k){mx=Math.max(mx,c.back[k].length);});
+  return mx;
+}
 function calSet(mode){CAL_MODE=mode;CAL_OFF=0;drawCalendar();}
 function calMove(step){CAL_OFF+=step;drawCalendar();}
 function openCalendar(){
@@ -5275,8 +5292,16 @@ function drawCalendar(){
     var isToday=k===today;
     cells+='<div style="border:2px solid '+(isToday?'var(--am)':'var(--g2)')+';border-radius:10px;padding:6px;min-height:74px;background:'+(isToday?'var(--ag)':'var(--g1)')+';">'
       +'<div style="font-size:12px;font-weight:900;color:'+(isToday?'var(--al)':'var(--g5)')+';">'+x.getDate()+' <span style="font-weight:700;">'+x.toLocaleDateString('en-GB',{weekday:'short'})+'</span></div>'
-      +(o.length?'<div style="margin-top:4px;font-size:12px;font-weight:900;color:#1d4ed8;">↗ '+o.length+' out</div>':'')
-      +(b.length?'<div style="margin-top:2px;font-size:12px;font-weight:900;color:var(--se);">↙ '+b.length+' back</div>':'')
+      +(function(){
+        var mx=Math.max(1,calMax(c));
+        var bar=function(n,col){
+          if(!n)return '';
+          return '<div style="display:flex;align-items:center;gap:5px;margin-top:4px;">'
+            +'<div style="flex:1;height:6px;border-radius:3px;background:var(--g2);overflow:hidden;"><div style="width:'+Math.round(Math.min(1,n/mx)*100)+'%;height:100%;background:'+col+';"></div></div>'
+            +'<span style="font-size:12px;font-weight:900;color:'+col+';">'+n+'</span></div>';
+        };
+        return bar(o.length,'#1d4ed8')+bar(b.length,'#12803c');
+      })()
       +((!o.length&&!b.length)?'<div style="margin-top:6px;font-size:11px;color:var(--g4);">—</div>':'')
       +((o.length||b.length)?'<div style="margin-top:4px;font-size:10px;color:var(--g5);line-height:1.35;">'+o.concat(b).slice(0,3).map(function(v){return _bx(v.fn);}).join(', ')+(o.length+b.length>3?' +'+(o.length+b.length-3):'')+'</div>':'')
       +'</div>';
