@@ -864,6 +864,12 @@ function canViewReports(){ return APP_USER && (REPORTS_ALLOWED.includes(APP_USER
 const MANAGEMENT=['Manager','Robbie','Peter','Simon','Joe','Christina'];
 function isManagement(){ return !!(APP_USER && MANAGEMENT.includes(APP_USER.name)); }
 function isAdmin(){ return !!(APP_USER && (APP_USER.name==='Peter' || APP_USER.role==='admin')); }
+// Deleting anything (photos, damage marks, records) is for the admin only
+function canDelete(what){
+  if(isAdmin())return true;
+  toast('🔒 Only Peter can delete '+(what||'data'),'err');
+  return false;
+}
 const PREP_ONLY=['Bonga','Dixon','Vince']; // prep staff - no contracts or management
 function isPrepOnly(){ return !!(APP_USER && PREP_ONLY.includes(APP_USER.name)); }
 // Which check-out steps each person may do (anyone not listed can do every step)
@@ -5745,7 +5751,7 @@ function handlePhotos(e,key){
   const toAdd=Math.min(files.length,8-arr.length);let loaded=0;
   for(let i=0;i<toAdd;i++){const r=new FileReader();r.onload=ev=>{arr.push(ev.target.result);loaded++;if(loaded===toAdd)redraw();};r.readAsDataURL(files[i]);}
 }
-function delPhoto(key,i){const arr=getPA(key);arr.splice(i,1);redraw();}
+function delPhoto(key,i){if(!canDelete('photos'))return;const arr=getPA(key);arr.splice(i,1);redraw();}
 function redraw(){
   if(document.getElementById('page-co').classList.contains('on'))drawCO();
   else drawCI();
@@ -5792,7 +5798,7 @@ function insHTML(ciMode){
       <div class="ins-t${itool==='pr'?' on':''}" id="itb-pr" onclick="setIT('pr',this)"><div class="ins-sw" style="background:#f5a623"></div><div class="ins-tn">${ciMode?'Existing (check-out)':'Pre-existing'}</div></div>
       <div class="ins-sp"></div>
       <button class="ins-ab" id="ins-undo" onclick="insUndo()" disabled style="opacity:.4">↶ Undo</button>
-      <button class="ins-ab" onclick="insClear()">Clear all</button>
+      <button class="ins-ab" onclick="insClear()" style="${isAdmin()?'':'opacity:.55;'}">${isAdmin()?'':'🔒 '}Clear all</button>
     </div>
     <div class="ins-szr">
       <span class="ins-szl">Size:</span>
@@ -5863,8 +5869,8 @@ function setIS(s){
   if(typeof renderIS==='function')renderIS();
 }
 function insUndo(){if(!iundo)return;const la=iundo;iundo=null;const b=document.getElementById('ins-undo');if(b){b.disabled=true;b.style.opacity='.4';}if(la.prev===null)delete imarks[la.v][la.sz][la.key];else imarks[la.v][la.sz][la.key]=la.prev;if(la.sz===isize){const p=la.key.split(',');const g=document.getElementById('ins-g-'+la.v);if(g){const[c]=IGR[la.v][isize];const cell=g.children[+p[0]*c+ +p[1]];if(cell){cell.classList.remove('sc','de','pr');if(la.prev)cell.classList.add(la.prev);}}}renderIS();}
-function insClearV(v){imarks[v][isize]={};buildIG(v);renderIS();}
-function insClear(){VIEWS.forEach(v=>{imarks[v]={S:{},M:{},L:{}};buildIG(v);});renderIS();}
+function insClearV(v){if(!canDelete('damage marks'))return;imarks[v][isize]={};buildIG(v);renderIS();}
+function insClear(){if(!canDelete('damage marks'))return;VIEWS.forEach(v=>{imarks[v]={S:{},M:{},L:{}};buildIG(v);});renderIS();}
 function renderIS(){const byVT={};let tot=0;VIEWS.forEach(v=>{const m=imarks[v][isize];const tp={};Object.values(m).forEach(t=>{tp[t]=true;});if(Object.keys(tp).length)byVT[v]=Object.keys(tp);tot+=Object.keys(m).length;});const cnt=document.getElementById('ins-cnt');if(cnt)cnt.textContent=tot+' block'+(tot!==1?'s':'');const tg=document.getElementById('ins-tags');if(!tg)return;if(!Object.keys(byVT).length){tg.innerHTML='<span class="ins-emsg">Tap vehicle photos above to mark damage</span>';return;}let h='';Object.keys(byVT).forEach(v=>{byVT[v].forEach(t=>{const c=Object.values(imarks[v][isize]).filter(x=>x===t).length;h+=`<div class="ins-tag ${t}">${VNAMES[v]} — ${ILBL[t]} (${c})</div>`;});});tg.innerHTML=h;}
 function getDmgData(){const out=[];VIEWS.forEach(v=>{const m=imarks[v][isize];if(!Object.keys(m).length)return;const cells=Object.keys(m).map(k=>{const[r,c]=k.split(',');return{r:+r,c:+c,t:m[k]};});out.push({view:v,view_name:VNAMES[v],size:isize,cells,types:[...new Set(cells.map(c=>c.t))]});});return out;}
 
