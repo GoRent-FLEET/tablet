@@ -1940,8 +1940,8 @@ function drawCO(){
             return '<button onclick="co.fuelOut=\''+f+'\';drawCO();" style="padding:5px 9px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;border:1px solid '+(on?'var(--se)':'rgba(255,255,255,.15)')+';background:'+(on?'rgba(61,220,132,.18)':'rgba(255,255,255,.05)')+';color:'+(on?'var(--se)':'rgba(255,255,255,.6)')+';">'+f+'</button>';
           }).join('');
           return '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 14px 10px;border-top:1px solid rgba(255,255,255,.1);">'
-            +'<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:rgba(255,255,255,.6);">🛣 CURRENT KM READING'
-            +'<input type="number" inputmode="numeric" pattern="[0-9]*" id="co-odo-out" class="'+(km?'':'need-flash')+'" value="'+km+'" placeholder="Enter current km" onfocus="this.select()" oninput="co.odometerOut=+this.value" '
+            +'<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:rgba(255,255,255,.6);">🛣 CURRENT ODO READING'
+            +'<input type="number" inputmode="numeric" pattern="[0-9]*" id="co-odo-out" class="'+(km?'':'need-flash')+'" value="'+km+'" placeholder="Enter odo reading" onfocus="this.select()" oninput="co.odometerOut=+this.value" '
             +'style="width:110px;padding:5px 8px;font-size:14px;font-weight:800;background:rgba(0,0,0,.35);border:2px solid '+(km?'var(--gb)':'var(--re)')+';border-radius:6px;color:#fff;"></label>'
             +'<span style="font-size:10px;color:rgba(255,255,255,.45);">'+src+'</span>'
             +'<div style="display:flex;align-items:center;gap:4px;margin-left:auto;"><span style="font-size:11px;font-weight:800;color:rgba(255,255,255,.6);margin-right:2px;">⛽ FUEL OUT</span>'+fb+'</div>'
