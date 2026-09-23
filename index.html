@@ -682,8 +682,9 @@ const STAFF_ROSTER=[
   {name:'Abia',     code:'1010', role:'prep'},
   {name:'Manager',  code:'9999', role:'manager'},
 ];
-const STAFF_PREP=STAFF_ROSTER.map(s=>s.name);
-const STAFF_HO  =STAFF_ROSTER.map(s=>s.name);
+// 'Manager' is a login only — it is not offered in the name lists
+const STAFF_PREP=STAFF_ROSTER.map(s=>s.name).filter(n=>n!=='Manager');
+const STAFF_HO  =STAFF_ROSTER.map(s=>s.name).filter(n=>n!=='Manager');
 
 // ── CURRENT LOGIN ──────────────────────────────────────────────
 let APP_USER = null; // {name, code, role} - set on login
