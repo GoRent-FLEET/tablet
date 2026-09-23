@@ -1513,38 +1513,47 @@ function renderOV(){
   var todayArrCount=(arrGroups[TODAY]||[]).length;
   var todayDepCount=(depGroups[TODAY]||[]).length;
 
-  var movHTML=''; var dates=Object.keys(movGroups).sort((a,b)=>daysFrom(a)>daysFrom(b)?1:-1);
-  dates.forEach(d=>{
-    var items=movGroups[d]; var lbl=dateLabel(d); var isToday=lbl==='TODAY';
-    movHTML+='<div style="margin-bottom:14px;">'
-      +'<div style="font-size:11px;font-weight:900;color:'+(isToday?'#c07a00':'#666')+';letter-spacing:.6px;padding-bottom:6px;margin-bottom:8px;border-bottom:2px solid '+(isToday?'#f6ad55':'#e0e0e0')+';">'
-      +lbl+' · '+items.length+(items.length===1?' MOVEMENT':' MOVEMENTS')+'</div>';
-    items.forEach(item=>{ movHTML+=movCard(item.v,item.isOut); });
+  // Every day of the window gets a heading — days with nothing show "none"
+  function windowDays(groups){
+    var out=[],base=new Date(TODAY+'T00:00:00');
+    if(view==='week'){for(var i=0;i<8;i++){var d=new Date(base);d.setDate(d.getDate()+i);out.push(d.toISOString().split('T')[0]);}}
+    else{for(var j=7;j>=0;j--){var e=new Date(base);e.setDate(e.getDate()-j);out.push(e.toISOString().split('T')[0]);}}
+    Object.keys(groups||{}).forEach(function(d){if(out.indexOf(d)<0)out.push(d);});
+    return out.sort(function(a,b){return daysFrom(a)>daysFrom(b)?1:-1;});
+  }
+  function dayHead(d,n,one,many){
+    var lbl=dateLabel(d),isToday=lbl==='TODAY';
+    var full=new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'}).toUpperCase();
+    return '<div style="font-size:11px;font-weight:900;color:'+(isToday?'#c07a00':n?'#666':'#aaa')+';letter-spacing:.6px;padding-bottom:6px;margin-bottom:8px;border-bottom:2px solid '+(isToday?'#f6ad55':'#e8e8e8')+';">'
+      +(isToday?'TODAY · '+full:full)+' · '+(n?n+(n===1?' '+one:' '+many):'none')+'</div>';
+  }
+  function emptyRow(txt){return '<div style="padding:10px;text-align:center;color:#bbb;font-size:12px;border:1px dashed #e0e0e0;border-radius:8px;">'+txt+'</div>';}
+  var movHTML=''; var movDates=windowDays(movGroups);
+  movDates.forEach(function(d){
+    var items=movGroups[d]||[];
+    movHTML+='<div style="margin-bottom:14px;">'+dayHead(d,items.length,'MOVEMENT','MOVEMENTS');
+    if(items.length)items.forEach(function(x){ movHTML+=movCard(x.v,x.isOut); });
+    else movHTML+=emptyRow('No vehicles out or back');
     movHTML+='</div>';
   });
-  if(!movHTML) movHTML='<div style="padding:30px 10px;text-align:center;color:#999;font-size:12px;">No movements</div>';
 
-  var arrHTML=''; var arrDates=Object.keys(arrGroups).sort((a,b)=>daysFrom(a)>daysFrom(b)?1:-1);
-  arrDates.forEach(d=>{
-    var items=arrGroups[d]; var lbl=dateLabel(d); var isToday=lbl==='TODAY';
-    arrHTML+='<div style="margin-bottom:14px;">'
-      +'<div style="font-size:11px;font-weight:900;color:'+(isToday?'#c07a00':'#666')+';letter-spacing:.6px;padding-bottom:6px;margin-bottom:8px;border-bottom:2px solid '+(isToday?'#f6ad55':'#e0e0e0')+';">'
-      +lbl+' · '+items.length+(items.length===1?' ARRIVAL':' ARRIVALS')+'</div>';
-    items.forEach(v=>{ arrHTML+=flightCard(v,true); });
+  var arrHTML=''; var arrDates=windowDays(arrGroups);
+  arrDates.forEach(function(d){
+    var items=arrGroups[d]||[];
+    arrHTML+='<div style="margin-bottom:14px;">'+dayHead(d,items.length,'ARRIVAL','ARRIVALS');
+    if(items.length)items.forEach(function(x){ arrHTML+=flightCard(x,true); });
+    else arrHTML+=emptyRow('No arrivals');
     arrHTML+='</div>';
   });
-  if(!arrHTML) arrHTML='<div style="padding:30px 10px;text-align:center;color:#999;font-size:12px;">No arrivals</div>';
 
-  var depHTML=''; var depDates=Object.keys(depGroups).sort((a,b)=>daysFrom(a)>daysFrom(b)?1:-1);
-  depDates.forEach(d=>{
-    var items=depGroups[d]; var lbl=dateLabel(d); var isToday=lbl==='TODAY';
-    depHTML+='<div style="margin-bottom:14px;">'
-      +'<div style="font-size:11px;font-weight:900;color:'+(isToday?'#c07a00':'#666')+';letter-spacing:.6px;padding-bottom:6px;margin-bottom:8px;border-bottom:2px solid '+(isToday?'#f6ad55':'#e0e0e0')+';">'
-      +lbl+' · '+items.length+(items.length===1?' DEPARTURE':' DEPARTURES')+'</div>';
-    items.forEach(v=>{ depHTML+=flightCard(v,false); });
+  var depHTML=''; var depDates=windowDays(depGroups);
+  depDates.forEach(function(d){
+    var items=depGroups[d]||[];
+    depHTML+='<div style="margin-bottom:14px;">'+dayHead(d,items.length,'DEPARTURE','DEPARTURES');
+    if(items.length)items.forEach(function(x){ depHTML+=flightCard(x,false); });
+    else depHTML+=emptyRow('No departures');
     depHTML+='</div>';
   });
-  if(!depHTML) depHTML='<div style="padding:30px 10px;text-align:center;color:#999;font-size:12px;">No departures</div>';
 
   const body=document.getElementById('ov-body');
   if(!body) return;
