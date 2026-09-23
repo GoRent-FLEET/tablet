@@ -3369,13 +3369,17 @@ function coStep5_client(){
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
       <div style="background:var(--g0);border-radius:7px;padding:8px;text-align:center;">
         <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">Fuel level</div>
-        <div style="font-size:16px;font-weight:800;color:var(--se);">${co.fuelOut||'Full'}</div>
-        <div style="font-size:13px;color:var(--g5);">must return same</div>
+        <select onchange="co.fuelOut=this.value;saveCOProgress();drawCO()" style="color-scheme:dark;width:100%;padding:6px;font-size:15px;font-weight:800;text-align:center;border-radius:6px;border:2px solid var(--gb);background:var(--g1);color:var(--se);">
+          ${['Empty','1/4','1/2','3/4','Full'].map(f=>`<option${(co.fuelOut||'Full')===f?' selected':''}>${f}</option>`).join('')}
+        </select>
+        <div style="font-size:13px;color:var(--g5);margin-top:3px;">must return same</div>
       </div>
       <div style="background:var(--g0);border-radius:7px;padding:8px;text-align:center;">
         <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">ODO out</div>
-        <div style="font-size:16px;font-weight:800;color:var(--tx);">${(co.odometerOut||v.odo||0).toLocaleString()}</div>
-        <div style="font-size:13px;color:var(--g5);">km</div>
+        <input type="number" inputmode="numeric" pattern="[0-9]*" value="${co.odometerOut||v.odo||''}" placeholder="km on the dashboard"
+          onchange="co.odometerOut=+this.value||0;saveCOProgress();drawCO()"
+          style="width:100%;padding:6px;font-size:15px;font-weight:800;text-align:center;border-radius:6px;border:2px solid ${(co.odometerOut||v.odo)?'var(--g3)':'var(--am)'};background:var(--g1);color:var(--tx);">
+        <div style="font-size:13px;color:var(--g5);margin-top:3px;">km — tap to correct</div>
       </div>
       <div style="background:var(--g0);border-radius:7px;padding:8px;text-align:center;">
         <div style="font-size:13px;color:var(--g5);text-transform:uppercase;margin-bottom:3px;">Equipment</div>
