@@ -867,6 +867,30 @@ const MANAGEMENT=['Manager','Robbie','Peter','Simon','Joe','Christina'];
 function isManagement(){ return !!(APP_USER && MANAGEMENT.includes(APP_USER.name)); }
 function isAdmin(){ return !!(APP_USER && (APP_USER.name==='Peter' || APP_USER.role==='admin')); }
 // Deleting anything (photos, damage marks, records) is for the admin only
+// Admin only: throw away a started check-out or check-in on this tablet and begin again
+function resetProcess(fn,ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  if(!canDelete('a started check-out'))return;
+  if(!confirm('RESET '+fn+'\n\nEverything captured so far on this tablet (ticks, photos, signatures, damage marks) is thrown away and the vehicle starts from the beginning.\n\nSaved check-outs already finished are NOT affected.\n\nReset now?'))return;
+  var removed=0;
+  try{
+    var keys=[];
+    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf('ip_')===0&&k.endsWith('_'+fn))keys.push(k);}
+    keys.forEach(function(k){localStorage.removeItem(k);removed++;});
+  }catch(e){}
+  try{if(co&&co.fn===fn){co={};coStep=0;}}catch(e){}
+  try{if(ci&&ci.fn===fn){ci={};ciStep=0;}}catch(e){}
+  try{if(typeof CO_DRAFTS==='object'){delete CO_DRAFTS[fn];}}catch(e){}
+  toast(removed?('Reset '+fn+' — start again from the beginning'):'Nothing in progress for '+fn,'ok');
+  try{renderOV();}catch(e){}
+  try{if(document.getElementById('page-co'))renderCOPicker();}catch(e){}
+  try{if(document.getElementById('page-ci'))renderCIPicker();}catch(e){}
+  goPage(document.getElementById('page-co')&&co&&co.fn?'co':'ov');
+}
+function resetBtn(fn){
+  if(!isAdmin())return '';
+  return '<button onclick="resetProcess(\''+_bx(fn)+'\',event)" style="margin-left:8px;background:var(--rg);border:1px solid var(--re);color:var(--rl);border-radius:8px;font-size:11px;font-weight:900;padding:4px 9px;cursor:pointer;">🗑 Reset</button>';
+}
 function canDelete(what){
   if(isAdmin())return true;
   toast('🔒 Only Peter can delete '+(what||'data'),'err');
@@ -942,7 +966,7 @@ function renderCOPicker(){
       +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+v.cl+'</div>'
       +'<div style="font-size:11px;color:var(--g5);margin-top:3px;">'+v.reg+' &middot; '+dt+'</div>'
       +(ip?'<div style="margin-top:6px;font-size:12px;font-weight:800;color:var(--al);">⏳ '+_bx(ip.stepName||'Started')+(ip._name?' · '+_bx(ip._name):'')+(ip.done?' · '+ip.done+' items done':'')
-          +(ip.updated?' · last touched '+new Date(ip.updated).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'')+'</div>'
+          +(ip.updated?' · last touched '+new Date(ip.updated).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'')+resetBtn(v.fn)+'</div>'
         +(ip.who?'<div style="margin-top:3px;font-size:11px;color:var(--g5);">'
           +['cleaning','equipment','mechanical','inspection','contract','handover'].filter(function(k){return ip.who[k];})
              .map(function(k){return k.charAt(0).toUpperCase()+k.slice(1)+': '+_bx(ip.who[k]);}).join(' · ')+'</div>':'')
@@ -1864,7 +1888,7 @@ function drawCO(){
       '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
         '<div>'+
           '<div class="fhdr-fn">'+co.fn+' <span>'+_cov.reg+'</span></div>'+
-          '<div class="fhdr-cl">'+(co.clientName||_cov.cl||'No booking')+nameEditBtn(bkKey(_cov),co.clientName||_cov.cl,'drawCO')+(waChip(_cov)?' · '+waChip(_cov):'')+'</div>'+
+          '<div class="fhdr-cl">'+(co.clientName||_cov.cl||'No booking')+nameEditBtn(bkKey(_cov),co.clientName||_cov.cl,'drawCO')+(waChip(_cov)?' · '+waChip(_cov):'')+resetBtn(co.fn)+'</div>'+
           '<div class="fhdr-cl" style="font-size:13px;opacity:.7;margin-top:1px">📅 '+(_cov.pu||'?')+' → '+(_cov.rt||'?')+'</div>'+
           ((co.contract&&placeChips(co.contract.pickup_location,co.contract.return_location))?'<div style="margin-top:4px;">'+placeChips(co.contract.pickup_location,co.contract.return_location)+'</div>':'')+
           '<div style="margin-top:4px;display:flex;align-items:center;gap:6px;">'+'<span style="font-size:10px;font-weight:800;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.3px;">Prepared by</span>'+'<span style="font-size:11px;font-weight:900;color:var(--am);padding:1px 8px;background:rgba(245,166,35,.15);border-radius:4px;">'+(co.prepBy||APP_USER&&APP_USER.name||'—')+'</span></div>'+
