@@ -2324,6 +2324,7 @@ function coStep1(){
             ${d.licFront?`<button onclick="extractLicenceData(co.drivers[${i}].licFront,${i})" style="background:var(--ps);border:1px solid var(--pu);border-radius:6px;color:#c4b5fd;font-size:13px;font-weight:700;padding:5px 10px;cursor:pointer;">🔍 Re-read licence</button>`:''}
           </div>
         </div>
+        ${d._readMsg?`<div style="font-size:13px;font-weight:700;padding:8px 10px;border-radius:8px;margin-bottom:8px;background:${d._readOk?'var(--sg)':'var(--rg)'};color:${d._readOk?'var(--se)':'var(--rl)'};border:1px solid ${d._readOk?'var(--gb)':'var(--re)'};">${_bx(d._readMsg)}</div>`:''}
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
           ${driverDocSlot(i,'passportImg','🛂','Passport',d.passportImg)}
           ${driverDocSlot(i,'licFront','🚗','Licence front',d.licFront)}
@@ -2542,9 +2543,11 @@ async function mrzFromImage(dataUrl){
   var r=await Tesseract.recognize(cv.toDataURL('image/png'),'eng',{tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'});
   return parseMRZ(r&&r.data&&r.data.text);
 }
+function setRead(i,ok,msg){var d=co.drivers&&co.drivers[i];if(!d)return;d._readOk=ok;d._readMsg=msg;var s=document.getElementById('cos');if(s)s.innerHTML=coStep1();}
 async function extractPassportData(b64DataUrl, driverIdx){
   // Show subtle loading indicator on the card
   toast('📷 Reading passport…','');
+  setRead(driverIdx,true,'📷 Reading the passport…');
 
   try {
     // Strip the data URL prefix to get raw base64
@@ -2606,10 +2609,13 @@ If a field is not visible or unclear, use an empty string. Return only the JSON.
 
     if(changed.length){
       toast(`✅ Read from passport: ${changed.join(', ')}`,'ok');
+      d._readOk=true; d._readMsg='✅ Read from the passport: '+changed.join(', ')+' — please check';
     } else if(d.name) {
       toast('Passport read — details already filled','ok');
+      d._readOk=true; d._readMsg='Passport read — the fields were already filled in';
     } else {
       toast('⚠ Could not read passport — fill in manually','err');
+      d._readOk=false; d._readMsg='⚠ The reader returned nothing — type the details in';
     }
 
     // Redraw the step to show filled fields
@@ -2635,9 +2641,11 @@ If a field is not visible or unclear, use an empty string. Return only the JSON.
         return;
       }
       toast('⚠ Could not read the passport — type the details in','err');
+      setRead(driverIdx,false,'⚠ Could not read the code lines at the bottom of the passport. Photograph the whole page straight on, in good light, including the two lines of <<<< at the bottom. (Reader: '+String(err&&err.message||err).slice(0,80)+')');
     }catch(e2){
       console.error('MRZ fallback failed:',e2);
       toast('⚠ Could not read the passport — type the details in','err');
+      setRead(driverIdx,false,'⚠ Passport reader not available: '+String(err&&err.message||err).slice(0,60)+' · code-line reader: '+String(e2&&e2.message||e2).slice(0,60));
     }
   }
 }
@@ -2647,6 +2655,7 @@ If a field is not visible or unclear, use an empty string. Return only the JSON.
 //  LICENCE OCR — reads name, licence number, expiry from photo
 // ═══════════════════════════════════════════════════════════════
 async function extractLicenceData(b64DataUrl, driverIdx){
+  setRead(driverIdx,true,'📷 Reading the licence…');
   toast('📷 Reading licence…','');
   try {
     const base64 = b64DataUrl.split(',')[1];
