@@ -2543,7 +2543,7 @@ async function mrzFromImage(dataUrl){
   var r=await Tesseract.recognize(cv.toDataURL('image/png'),'eng',{tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'});
   return parseMRZ(r&&r.data&&r.data.text);
 }
-function setRead(i,ok,msg){var d=co.drivers&&co.drivers[i];if(!d)return;d._readOk=ok;d._readMsg=msg;var s=document.getElementById('cos');if(s)s.innerHTML=coStep1();}
+function setRead(i,ok,msg){var d=co.drivers&&co.drivers[i];if(!d)return;d._readOk=ok;d._readMsg=msg;try{drawCO();}catch(e){}}
 async function extractPassportData(b64DataUrl, driverIdx){
   // Show subtle loading indicator on the card
   toast('📷 Reading passport…','');
@@ -2597,19 +2597,19 @@ If a field is not visible or unclear, use an empty string. Return only the JSON.
 
     let changed = [];
 
-    if(parsed.full_name && !d.name){
+    if(parsed.full_name){
       d.name = parsed.full_name;
       if(driverIdx === 0) co.clientName = parsed.full_name;
       changed.push('name');
     }
-    if(parsed.dob && !d.dob){ d.dob = parsed.dob; changed.push('DOB'); }
-    if(parsed.nationality && !d.nationality){ d.nationality = parsed.nationality; changed.push('nationality'); }
-    if(parsed.passport_number && !d.passport){ d.passport = parsed.passport_number; changed.push('passport #'); }
-    if(parsed.expiry && !d.ppExpiry){ d.ppExpiry = parsed.expiry; changed.push('passport expiry'); }
+    if(parsed.dob){ d.dob = parsed.dob; changed.push('DOB'); }
+    if(parsed.nationality){ d.nationality = parsed.nationality; changed.push('nationality'); }
+    if(parsed.passport_number){ d.passport = parsed.passport_number; changed.push('passport #'); }
+    if(parsed.expiry){ d.ppExpiry = parsed.expiry; changed.push('passport expiry'); }
 
     if(changed.length){
       toast(`✅ Read from passport: ${changed.join(', ')}`,'ok');
-      d._readOk=true; d._readMsg='✅ Read from the passport: '+changed.join(', ')+' — please check';
+      d._readOk=true; d._readMsg='✅ Read from the passport: '+[parsed.full_name,parsed.passport_number,parsed.dob,parsed.nationality,parsed.expiry].filter(Boolean).join(' · ')+' — please check the boxes below';
     } else if(d.name) {
       toast('Passport read — details already filled','ok');
       d._readOk=true; d._readMsg='Passport read — the fields were already filled in';
@@ -2619,8 +2619,7 @@ If a field is not visible or unclear, use an empty string. Return only the JSON.
     }
 
     // Redraw the step to show filled fields
-    const s = document.getElementById('cos');
-    if(s) s.innerHTML = coStep1();
+    saveCOProgress(); drawCO();
 
   } catch(err){
     console.error('Passport OCR error:', err);
@@ -2695,15 +2694,15 @@ If a field is not visible, use an empty string. Return only the JSON.` }
 
     let changed = [];
     if(parsed.full_name && !d.name){ d.name=parsed.full_name; if(driverIdx===0) co.clientName=parsed.full_name; changed.push('name'); }
-    if(parsed.licence_number && !d.licNo){ d.licNo=parsed.licence_number; changed.push('licence #'); }
-    if(parsed.expiry && !d.licExpiry){ d.licExpiry=parsed.expiry; changed.push('expiry'); }
+    if(parsed.licence_number){ d.licNo=parsed.licence_number; changed.push('licence #'); }
+    if(parsed.expiry){ d.licExpiry=parsed.expiry; changed.push('expiry'); }
     if(parsed.date_of_birth && !d.dob){ d.dob=parsed.date_of_birth; changed.push('DOB'); }
     if(parsed.nationality && !d.nationality){ d.nationality=parsed.nationality; changed.push('nationality'); }
 
     if(changed.length) toast(`✅ Read from licence: ${changed.join(', ')}`,'ok');
     else toast('Licence read — details already filled','ok');
 
-    const s=document.getElementById('cos'); if(s) s.innerHTML=coStep1();
+    saveCOProgress(); drawCO();
   } catch(err){
     console.error('Licence OCR error:', err);
     toast('⚠ Could not read licence — fill in manually','err');
