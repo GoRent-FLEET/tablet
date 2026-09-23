@@ -3430,7 +3430,7 @@ function coStep5_client(){
             <span class="sig-lbl" style="color:var(--se)">${v.cl} — sign here</span>
             <span class="sig-clr" onclick="clrSig('co-c-sig')">Clear</span>
           </div>
-          <canvas class="sig-cv" id="co-c-sig" style="height:165px"></canvas>
+          <canvas class="sig-cv" id="co-c-sig" style="height:248px"></canvas>
         </div>
         <button class="btn g" style="margin-top:10px;font-size:15px;padding:16px" onclick="signHandover()">
           ✍️ Client Signs — Handover Complete
@@ -4369,7 +4369,7 @@ function ciStep3_CI(){
             <span class="sig-lbl" style="color:${hasIssues?'var(--rl)':'var(--se)'}">${v.cl} — sign to confirm return</span>
             <span class="sig-clr" onclick="clrSig('ci-c-sig')">Clear</span>
           </div>
-          <canvas class="sig-cv" id="ci-c-sig" style="height:165px"></canvas>
+          <canvas class="sig-cv" id="ci-c-sig" style="height:248px"></canvas>
         </div>
         <button class="btn ${hasIssues?'r':'g'}" style="margin-top:10px;font-size:15px;padding:18px;${hasIssues?'background:#c0392b;color:#fff':''}" onclick="signCustCI()">
           ✍️ ${hasIssues?'I acknowledge the issues —':''} Sign & Confirm Return
@@ -4476,7 +4476,7 @@ function ciReturnView(v,r,newDmg,fuelShort,missing,damaged){
           <span class="sig-lbl" style="color:${hasIssues?'var(--rl)':'var(--se)'}">${v.cl} — sign to confirm return</span>
           <span class="sig-clr" onclick="clrSig('ci-c-sig')">Clear</span>
         </div>
-        <canvas class="sig-cv" id="ci-c-sig" style="height:165px"></canvas>
+        <canvas class="sig-cv" id="ci-c-sig" style="height:248px"></canvas>
       </div>
       <button class="btn ${hasIssues?'r':'g'}" style="margin-top:10px;font-size:15px;padding:18px;${hasIssues?'background:#c0392b;color:#fff':''}" onclick="signCustCI()">
         ✍️ ${hasIssues?'I acknowledge the issues —':''} Sign & Confirm Return
