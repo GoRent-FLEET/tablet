@@ -3529,7 +3529,7 @@ function coStep6_mgmt(){
     ${hasIssues&&!allResolved?`<div style="background:var(--ag);border:1px solid var(--am);border-radius:var(--rs);padding:8px 12px;margin-bottom:8px;font-size:14px;color:var(--al);">
       ⚠ Signing with unresolved items — you take responsibility for these gaps
     </div>`:''}
-    <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">Manager — sign to clear vehicle</span><span class="sig-clr" onclick="clrSig('co-m-sig')">Clear</span></div><canvas class="sig-cv" id="co-m-sig"></canvas></div>
+    <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl">Manager — sign to clear vehicle</span><span class="sig-clr" onclick="clrSig('co-m-sig')">Clear</span></div><canvas class="sig-cv" id="co-m-sig" style="height:135px"></canvas></div>
     <button class="btn g" onclick="signMgmt()">✅ Clear Vehicle for Departure</button>`}`;
 }
 
@@ -4340,7 +4340,7 @@ function ciStep4_CI(){
         <div class="fi"><label>Manager name *</label>${ciMgrSelect(r.mgmtName)}</div>
       </div>
       <div class="fi"><label>Notes</label><textarea id="ci-mnotes" oninput="ci.mgmtNotes=this.value" placeholder="Deposit decision notes..." style="min-height:50px">${r.mgmtNotes||''}</textarea></div>
-      <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl" id="ci-m-lbl">${r.mgmtName?r.mgmtName+' — ':'Manager — '}sign to close rental</span><span class="sig-clr" onclick="clrSig('ci-m-sig')">Clear</span></div><canvas class="sig-cv" id="ci-m-sig"></canvas></div>
+      <div class="sig-area"><div class="sig-hdr"><span class="sig-lbl" id="ci-m-lbl">${r.mgmtName?r.mgmtName+' — ':'Manager — '}sign to close rental</span><span class="sig-clr" onclick="clrSig('ci-m-sig')">Clear</span></div><canvas class="sig-cv" id="ci-m-sig" style="height:135px"></canvas></div>
       <button class="btn ${hasIssues?'r':'g'}" style="${hasIssues?'background:#c0392b;color:#fff':''}" onclick="signMgmtCI()">✅ Close Rental &amp; Sign Off</button>
     </div>`}`;
 }
