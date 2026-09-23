@@ -1822,6 +1822,7 @@ function drawCO(){
     '<div id="cos">'+body+'</div>'+
     '<div class="btn-row">'+_backBtn+_nextBtn+'</div>';
   setTimeout(()=>['co-p-sig','co-equip-sig','co-c-sig','co-m-sig'].forEach(initSig),80);
+  if(coStep===5&&!co.contractBy)setTimeout(ctWhoModal,250);
   // damage marking grid: build it whenever the diagram is on screen (handover step)
   setTimeout(()=>{if(document.getElementById('ins-g-lhs')){VIEWS.forEach(v=>buildIG(v));renderIS();}},100);
 }
@@ -2286,6 +2287,21 @@ function signEquip(){
 
 // Contract step: who is doing it (mainly Christina; Simon, Nelson, Joe and Robbie can also do it)
 var CONTRACT_STAFF=['Christina','Simon','Nelson','Joe','Robbie'];
+// Ask who is doing the contract as soon as Step 5 opens — before any photos are taken
+function ctWhoModal(){
+  if(document.getElementById('ct-who-modal'))return;
+  var m=document.createElement('div');m.id='ct-who-modal';
+  m.setAttribute('style','position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px;');
+  m.innerHTML='<div style="background:var(--g1);border:2px solid var(--gb);border-radius:16px;max-width:460px;width:100%;padding:20px;">'
+    +'<div style="font-size:19px;font-weight:900;color:var(--tx);margin-bottom:4px;">👤 Who is doing this contract?</div>'
+    +'<div style="font-size:14px;color:var(--g5);margin-bottom:14px;">Your name goes on the signed rental contract.</div>'
+    +CONTRACT_STAFF.map(function(n){return '<button onclick="ctWhoPick(\''+_bx(n)+'\')" style="width:100%;margin-bottom:8px;padding:14px;border-radius:10px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:17px;font-weight:800;cursor:pointer;">'+_bx(n)+'</button>';}).join('')
+    +'<button onclick="ctWhoClose()" style="width:100%;margin-top:4px;padding:10px;border-radius:10px;border:1px solid var(--g3);background:transparent;color:var(--g5);font-size:14px;font-weight:700;cursor:pointer;">Not now</button>'
+    +'</div>';
+  document.body.appendChild(m);
+}
+function ctWhoClose(){var m=document.getElementById('ct-who-modal');if(m)m.remove();}
+function ctWhoPick(n){(co.contract=co.contract||{});co.contractBy=n;saveCOProgress();ctWhoClose();drawCO();toast('Contract by '+n,'ok');}
 function coContractWho(){
   if(!co.contractBy&&APP_USER&&CONTRACT_STAFF.indexOf(APP_USER.name)>=0)co.contractBy=APP_USER.name;
   return '<div class="who-box"><div class="who-lbl">👤 Who is doing the contract?</div>'
