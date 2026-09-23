@@ -5561,13 +5561,9 @@ function licDiscBanner(v, context){
     +'<div style="display:flex;align-items:center;gap:8px;">'
       +'<div style="flex:1;">'
         +'<label style="font-size:13px;font-weight:700;color:var(--g5);text-transform:uppercase;display:block;margin-bottom:4px;">Expiry Date</label>'
-        +'<input type="date" id="'+inputId+'" class="'+(expiry?'':'need-flash')+'" value="'+(expiry||'')+'"'
-          +' oninput="'+obj+'._licExpiry=this.value;'
-            +'const b=document.getElementById(\'lic-banner-'+context+'\');'
-            +'if(b)b.innerHTML=licDiscBanner('+obj+',\''+context+'\');"'
-          +' style="color-scheme:dark;padding:10px 12px;font-size:14px;font-weight:700;background:var(--g0);border:2px solid '+(expiry?'var(--gb)':'var(--re)')+';border-radius:var(--rs);color:var(--tx);width:100%;">'
+        +discPickers(inputId,expiry,obj,context)
       +'</div>'
-      +'<button onclick="saveLicExpiry(\''+fnRef+'\',document.getElementById(\''+inputId+'\').value,\''+context+'\')" '
+      +'<button onclick="saveLicExpiry(\''+fnRef+'\',discPickValue(\''+inputId+'\'),\''+context+'\')" '
         +'style="padding:10px 14px;background:var(--sg);border:2px solid var(--gb);border-radius:var(--rs);color:var(--se);font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">'
         +'💾 Save'
       +'</button>'
@@ -5576,6 +5572,43 @@ function licDiscBanner(v, context){
   +'</div>';
 }
 
+// Day / month / year selectors, so nobody can type a wrong year by hand
+var DISC_MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function discPickValue(id){
+  var d=document.getElementById(id+'-d'),m=document.getElementById(id+'-m'),y=document.getElementById(id+'-y');
+  if(!d||!m||!y||!d.value||!m.value||!y.value)return '';
+  return y.value+'-'+m.value+'-'+d.value;
+}
+function discPickChange(id,obj,context){
+  var val=discPickValue(id);
+  var o=(obj==='co.v')?(typeof co!=='undefined'&&co.v):(typeof ci!=='undefined'&&ci.v);
+  if(o)o._licExpiry=val;
+  var b=document.getElementById('lic-banner-'+context);
+  if(b&&val)b.innerHTML=licDiscBanner(o,context);
+  var box=document.getElementById(id+'-box');
+  if(box)box.style.borderColor=val?'var(--gb)':'var(--re)';
+}
+function discPickers(id,expiry,obj,context){
+  var parts=String(expiry||'').split('-');
+  var yy=parts[0]||'',mm=parts[1]||'',dd=parts[2]||'';
+  var thisYear=new Date().getFullYear();
+  var sel=function(sid,label,opts,val,w){
+    return '<select id="'+sid+'" onchange="discPickChange(\''+id+'\',\''+obj+'\',\''+context+'\')" '
+      +'style="color-scheme:dark;flex:'+w+';padding:11px 8px;font-size:16px;font-weight:800;background:var(--g0);border:2px solid var(--g3);border-radius:var(--rs);color:var(--tx);">'
+      +'<option value="">'+label+'</option>'
+      +opts.map(function(o){return '<option value="'+o[0]+'"'+(String(val)===String(o[0])?' selected':'')+'>'+o[1]+'</option>';}).join('')
+      +'</select>';
+  };
+  var days=[],months=[],years=[];
+  for(var i=1;i<=31;i++)days.push([('0'+i).slice(-2),i]);
+  for(var j=0;j<12;j++)months.push([('0'+(j+1)).slice(-2),DISC_MONTHS[j]]);
+  for(var k=thisYear-1;k<=thisYear+8;k++)years.push([k,k]);
+  return '<div id="'+id+'-box" class="'+(expiry?'':'need-flash')+'" style="display:flex;gap:6px;padding:4px;border:2px solid '+(expiry?'var(--gb)':'var(--re)')+';border-radius:var(--rs);">'
+    +sel(id+'-d','Day',days,dd,'1')
+    +sel(id+'-m','Month',months,mm,'1.2')
+    +sel(id+'-y','Year',years,yy,'1.1')
+    +'</div>';
+}
 async function saveLicExpiry(fn, expiry, context){
   if(!expiry){toast('Enter expiry date first','err');return;}
   var v=(context==='out'?co.v:ci.v);
