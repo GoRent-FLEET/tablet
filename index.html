@@ -953,7 +953,7 @@ function drawOut(){
     var h='<div style="background:var(--g1);border:2px solid '+(open?'var(--bl)':over?'var(--re)':'var(--g3)')+';border-radius:12px;margin-bottom:10px;">'
       +'<div onclick="OUT_OPEN='+(open?'null':o.i)+';drawOut()" style="padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
       +'<div><div style="font-size:16px;font-weight:900;color:var(--se);">'+_bx(v.fn)+' <span style="font-size:12px;color:var(--g5);font-weight:700;">'+_bx(v.reg||'')+'</span></div>'
-      +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+_bx(v.cl||r.customer_name||'')+nameEditBtn(r.booking_id,v.cl||r.customer_name||'','drawOut')+'</div>'
+      +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+_bx(v.cl||r.customer_name||'')+nameEditBtn(r.booking_id,v.cl||r.customer_name||'','drawOut')+(waChip(v)?' · '+waChip(v):'')+'</div>'
       +'<div style="font-size:12px;color:var(--g5);margin-top:3px;">Out since '+fmt((r.created_at||'').slice(0,10))+' · Return '+fmt(due)+(r.return_time?' <b style="color:#7db8ff;">🕑 '+_bx(r.return_time)+'</b>':'')
       +(r.return_date_new&&v.rt&&r.return_date_new!==v.rt?' <span style="color:var(--al);font-weight:800;">(moved from '+fmt(v.rt)+')</span>':'')
       +(notes?' · 📝 '+notes+' note'+(notes>1?'s':''):'')+'</div>'
@@ -1822,8 +1822,9 @@ function drawCO(){
       '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
         '<div>'+
           '<div class="fhdr-fn">'+co.fn+' <span>'+_cov.reg+'</span></div>'+
-          '<div class="fhdr-cl">'+(co.clientName||_cov.cl||'No booking')+nameEditBtn(bkKey(_cov),co.clientName||_cov.cl,'drawCO')+'</div>'+
+          '<div class="fhdr-cl">'+(co.clientName||_cov.cl||'No booking')+nameEditBtn(bkKey(_cov),co.clientName||_cov.cl,'drawCO')+(waChip(_cov)?' · '+waChip(_cov):'')+'</div>'+
           '<div class="fhdr-cl" style="font-size:13px;opacity:.7;margin-top:1px">📅 '+(_cov.pu||'?')+' → '+(_cov.rt||'?')+'</div>'+
+          ((co.contract&&placeChips(co.contract.pickup_location,co.contract.return_location))?'<div style="margin-top:4px;">'+placeChips(co.contract.pickup_location,co.contract.return_location)+'</div>':'')+
           '<div style="margin-top:4px;display:flex;align-items:center;gap:6px;">'+'<span style="font-size:10px;font-weight:800;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.3px;">Prepared by</span>'+'<span style="font-size:11px;font-weight:900;color:var(--am);padding:1px 8px;background:rgba(245,166,35,.15);border-radius:4px;">'+(co.prepBy||APP_USER&&APP_USER.name||'—')+'</span></div>'+
         '</div>'+
         '<div style="text-align:right">'+
@@ -4015,7 +4016,8 @@ function drawCI(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
           <div class="fhdr-fn">${r.fn} <span>${v.reg}</span></div>
-          <div class="fhdr-cl">${v.cl}${nameEditBtn(bkKey(v),v.cl,'drawCI')} · Return: ${v.rt}</div>
+          <div class="fhdr-cl">${v.cl}${nameEditBtn(bkKey(v),v.cl,'drawCI')}${waChip(v)?' · '+waChip(v):''}</div>
+          <div class="fhdr-cl" style="font-size:13px;opacity:.75;margin-top:1px">📅 ${v.pu||'?'} → ${v.rt||'?'}</div>
           <div style="margin-top:5px;font-size:11px;font-weight:800;color:rgba(255,255,255,.5);">👤 ${ci.receivedBy||APP_USER&&APP_USER.name||"—"}</div>
         </div>
         <div style="text-align:right">
@@ -4196,7 +4198,7 @@ function ciTripInfo(v){
   var h='';
   if(ci&&ci.early)h+='<div style="display:flex;align-items:center;gap:6px;background:rgba(245,166,35,.18);border:2px solid var(--am);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:900;color:var(--al);">⏪ EARLY RETURN — was due back '+_bx(new Date(ci.dueBack+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}))+'</div>';
   if(ci&&ci.returnTime)h+=chip('🕑','Expected',_bx(ci.returnTime),'#7db8ff');
-  if(ci&&isRemoteReturn(ci.remote))h+='<div style="background:rgba(245,166,35,.18);border:2px solid var(--am);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:900;color:var(--al);">🚩 REMOTE RETURN — '+_bx(ci.remote.return_place+(ci.remote.return_place_time?' · collect '+ci.remote.return_place_time:''))+'</div>';
+  if(ci&&isRemoteReturn(ci.remote))h+='<div class="insp-flash" style="background:var(--rg);border:2px solid var(--re);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:900;color:var(--rl);">🚩 REMOTE RETURN — '+_bx(ci.remote.return_place+(ci.remote.return_place_time?' · collect '+ci.remote.return_place_time:''))+'</div>';
   h+=chip('🚐','Transfer',_bx(tr||'None arranged'),tr?trCol:'rgba(255,255,255,.6)');
   if(b.arrival_flight)h+=chip('🛬','Arrived',_bx(b.arrival_flight));
   h+=chip('🛫','Departs',b.departure_flight?_bx(b.departure_flight):'No flight on booking',b.departure_flight?'#7db8ff':'rgba(255,255,255,.6)');
@@ -4593,8 +4595,19 @@ function remoteFlag(r,small){
   var t=[r.return_place];
   if(r.return_place_time)t.push('collect '+r.return_place_time);
   if(r.return_address)t.push(r.return_address);
-  return '<div style="background:var(--ag);border:2px solid var(--am);border-radius:8px;padding:'+(small?'4px 8px':'8px 10px')+';margin:6px 0;font-size:'+(small?'12px':'14px')+';font-weight:800;color:var(--al);">'
+  return '<div class="insp-flash" style="background:var(--rg);border:2px solid var(--re);border-radius:8px;padding:'+(small?'4px 8px':'8px 10px')+';margin:6px 0;font-size:'+(small?'12px':'14px')+';font-weight:900;color:var(--rl);">'
     +'🚩 REMOTE RETURN — '+_bx(t.join(' · '))+'</div>';
+}
+function waChip(v){
+  var ph=(v&&(v.phone||v.wa))||'';
+  if(!ph)return '';
+  return '<a href="https://wa.me/'+waNumber(ph)+'" target="_blank" style="color:#25d366;text-decoration:none;font-weight:800;">📱 '+_bx(ph)+'</a>';
+}
+function placeChips(pickup,ret){
+  var out='';
+  if(pickup&&pickup!==OFFICE_PLACE)out+='<span class="insp-flash" style="display:inline-block;background:var(--rg);border:1px solid var(--re);color:var(--rl);border-radius:8px;padding:2px 8px;font-size:12px;font-weight:900;margin-right:6px;">📍 COLLECT: '+_bx(pickup)+'</span>';
+  if(ret&&ret!==OFFICE_PLACE)out+='<span class="insp-flash" style="display:inline-block;background:var(--rg);border:1px solid var(--re);color:var(--rl);border-radius:8px;padding:2px 8px;font-size:12px;font-weight:900;">🚩 RETURN: '+_bx(ret)+'</span>';
+  return out;
 }
 function bkKey(v){return v?(v.fn+'_'+v.pu):'';}
 function curBkKey(fn){
@@ -5035,6 +5048,7 @@ function rpFleet(){
         <div>
           <div class="rpt-fn">${v.fn} <span style="font-size:14px;font-weight:400;color:var(--g5)">${v.reg}</span></div>
           <div class="rpt-cl">${onRoad?'👤 '+(v.cl||'client')+' · on road · back '+(v.rt||'—'):(v.pu&&v.pu>_today&&v.cl?'Available · next out '+v.pu+' ('+v.cl+')':'Available')}</div>
+          ${v.cl?`<div class="rpt-meta">📅 ${v.pu||'?'} → ${v.rt||'?'}${waChip(v)?' · '+waChip(v):''}</div>`:''}
           <div class="rpt-meta">Odo: ${v.odo.toLocaleString()} km</div>
         </div>
         <span class="bdg ${onRoad?'b':v.blocked?'r':'g'}">${onRoad?'Out':v.blocked?'Blocked':'OK'}</span>
