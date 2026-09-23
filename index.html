@@ -354,56 +354,57 @@ input[type=file]{display:none;}
 <body>
 
 <!-- DEVICE SIGN-IN — one time per tablet, unlocks real bookings -->
-<div id="device-login" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:1000;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
-  <div style="font-size:28px;font-weight:900;color:#fff;margin-bottom:4px;">TABLET <span style="color:#3ddc84;">APP</span></div><div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:4px;">Go Rent 4×4</div>
-  <div style="font-size:12px;color:#888;margin-bottom:22px;text-transform:uppercase;letter-spacing:1px;">Tablet setup — manager only</div>
+<div id="device-login" style="display:none;position:fixed;inset:0;background:#ffffff;z-index:1000;flex-direction:column;align-items:center;justify-content:center;padding:20px;">
+  <div style="font-size:28px;font-weight:900;color:#0f172a;margin-bottom:4px;">TABLET <span style="color:#12803c;">APP</span></div><div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:4px;">Go Rent 4×4</div>
+  <div style="font-size:12px;color:#64748b;margin-bottom:22px;text-transform:uppercase;letter-spacing:1px;">Tablet setup — manager only</div>
   <div style="width:100%;max-width:340px;">
-    <input id="dl-email" type="email" autocomplete="username" placeholder="Tablet email" style="width:100%;padding:14px;border-radius:10px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:16px;margin-bottom:10px;">
-    <input id="dl-pass" type="password" autocomplete="current-password" placeholder="Password" style="width:100%;padding:14px;border-radius:10px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:16px;margin-bottom:14px;">
-    <button id="dl-btn" onclick="deviceSignIn()" style="width:100%;padding:15px;border-radius:10px;border:none;background:#3ddc84;color:#062;font-size:16px;font-weight:900;cursor:pointer;">Sign in this tablet</button>
-    <div id="dl-msg" style="color:#f05050;font-size:13px;text-align:center;margin-top:12px;min-height:18px;"></div>
-    <div style="color:#666;font-size:11px;text-align:center;margin-top:8px;">Only needed once per tablet. Staff then log in with their PIN as usual.</div>
+    <input id="dl-email" type="email" autocomplete="username" placeholder="Tablet email" style="width:100%;padding:14px;border-radius:10px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:16px;margin-bottom:10px;">
+    <input id="dl-pass" type="password" autocomplete="current-password" placeholder="Password" style="width:100%;padding:14px;border-radius:10px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:16px;margin-bottom:14px;">
+    <button id="dl-btn" onclick="deviceSignIn()" style="width:100%;padding:15px;border-radius:10px;border:none;background:#12803c;color:#ffffff;font-size:16px;font-weight:900;cursor:pointer;">Sign in this tablet</button>
+    <div id="dl-msg" style="color:#b91c1c;font-size:13px;text-align:center;margin-top:12px;min-height:18px;"></div>
+    <div style="color:#64748b;font-size:11px;text-align:center;margin-top:8px;">Only needed once per tablet. Staff then log in with their PIN as usual.</div>
   </div>
 </div>
 
 <!-- LOGIN — bypassed for now -->
-<div id="login-screen" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:999;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-y:auto;">
+<div id="login-screen" style="display:none;position:fixed;inset:0;background:#ffffff;z-index:999;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-y:auto;">
   <div style="text-align:center;margin-bottom:20px;">
-    <div style="font-size:28px;font-weight:900;color:#fff;">TABLET <span style="color:#3ddc84;">APP</span></div><div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.5);margin-top:2px;">Go Rent 4×4</div>
-    <div style="font-size:11px;color:#666;margin-top:3px;text-transform:uppercase;letter-spacing:1px;">Check App</div>
+    <div style="font-size:28px;font-weight:900;color:#0f172a;">TABLET <span style="color:#12803c;">APP</span></div><div style="font-size:12px;font-weight:700;color:#64748b;margin-top:2px;">Go Rent 4×4</div>
+    <div style="font-size:11px;color:#64748b;margin-top:3px;text-transform:uppercase;letter-spacing:1px;">Check App</div>
   </div>
   <div id="ls-names" style="width:100%;max-width:340px;">
-    <div style="font-size:12px;font-weight:700;color:#666;text-align:center;margin-bottom:14px;text-transform:uppercase;letter-spacing:1px;">Who are you?</div>
+    <div style="font-size:12px;font-weight:700;color:#64748b;text-align:center;margin-bottom:14px;text-transform:uppercase;letter-spacing:1px;">Who are you?</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <button ontouchstart="event.preventDefault();lsPick('Bonga');" onclick="lsPick('Bonga')" style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Bonga</button>
-      <button ontouchstart="event.preventDefault();lsPick('Dixon');" onclick="lsPick('Dixon')" style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Dixon</button>
-      <button ontouchstart="event.preventDefault();lsPick('Vince');" onclick="lsPick('Vince')" style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Vince</button>
-      <button ontouchstart="event.preventDefault();lsPick('Joe');" onclick="lsPick('Joe')" style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Joe</button>
-      <button ontouchstart="event.preventDefault();lsPick('Nelson');" onclick="lsPick('Nelson')" style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Nelson</button>
-      <button ontouchstart="event.preventDefault();lsPick('Robbie');" onclick="lsPick('Robbie')" style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Robbie</button>
-      <button ontouchstart="event.preventDefault();lsPick('Peter');" onclick="lsPick('Peter')" style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Peter</button>
-      <button ontouchstart="event.preventDefault();lsPick('Simon');" onclick="lsPick('Simon')" style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Simon</button>
-      <button ontouchstart="event.preventDefault();lsPick('Christina');" onclick="lsPick('Christina')" style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Christina</button>
-      <button ontouchstart="event.preventDefault();lsPick('Manager');" onclick="lsPick('Manager')" style="padding:18px;border-radius:12px;border:2px solid #5a3e00;background:#2a1e00;color:#f5a623;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">👔 Manager</button>
+      <button ontouchstart="event.preventDefault();lsPick('Bonga');" onclick="lsPick('Bonga')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Bonga</button>
+      <button ontouchstart="event.preventDefault();lsPick('Dixon');" onclick="lsPick('Dixon')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Dixon</button>
+      <button ontouchstart="event.preventDefault();lsPick('Vince');" onclick="lsPick('Vince')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Vince</button>
+      <button ontouchstart="event.preventDefault();lsPick('Joe');" onclick="lsPick('Joe')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Joe</button>
+      <button ontouchstart="event.preventDefault();lsPick('Nelson');" onclick="lsPick('Nelson')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Nelson</button>
+      <button ontouchstart="event.preventDefault();lsPick('Robbie');" onclick="lsPick('Robbie')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Robbie</button>
+      <button ontouchstart="event.preventDefault();lsPick('Peter');" onclick="lsPick('Peter')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Peter</button>
+      <button ontouchstart="event.preventDefault();lsPick('Simon');" onclick="lsPick('Simon')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Simon</button>
+      <button ontouchstart="event.preventDefault();lsPick('Christina');" onclick="lsPick('Christina')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Christina</button>
+      <button ontouchstart="event.preventDefault();lsPick('Abia');" onclick="lsPick('Abia')" style="padding:18px;border-radius:12px;border:2px solid #5a3e00;background:#2a1e00;color:#f5a623;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Abia</button>
+      <button ontouchstart="event.preventDefault();lsPick('Manager');" onclick="lsPick('Manager')" style="padding:18px;border-radius:12px;border:2px solid #f0c27a;background:#fff6e5;color:#a35a00;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">👔 Manager</button>
     </div>
   </div>
   <div id="ls-pin" style="display:none;width:100%;max-width:300px;text-align:center;">
-    <button ontouchstart="event.preventDefault();lsBack();" onclick="lsBack()" style="background:#1e3a5f;border:2px solid #3ddc84;color:#3ddc84;font-size:15px;font-weight:800;cursor:pointer;display:block;margin-bottom:16px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:12px 24px;border-radius:10px;width:100%;">◀ Wrong name? Go back</button>
-    <div id="ls-who" style="font-size:24px;font-weight:900;color:#3ddc84;margin-bottom:4px;"></div>
-    <div style="font-size:12px;color:#666;margin-bottom:16px;">Enter your PIN</div>
-    <div id="ls-dots" style="font-size:40px;letter-spacing:14px;color:#3ddc84;margin-bottom:22px;min-height:48px;">_ _ _ _</div>
+    <button ontouchstart="event.preventDefault();lsBack();" onclick="lsBack()" style="background:#ffffff;border:2px solid #12803c;color:#12803c;font-size:15px;font-weight:800;cursor:pointer;display:block;margin-bottom:16px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:12px 24px;border-radius:10px;width:100%;">◀ Wrong name? Go back</button>
+    <div id="ls-who" style="font-size:24px;font-weight:900;color:#12803c;margin-bottom:4px;"></div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:16px;">Enter your PIN</div>
+    <div id="ls-dots" style="font-size:40px;letter-spacing:14px;color:#12803c;margin-bottom:22px;min-height:48px;">_ _ _ _</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:260px;margin:0 auto;">
-      <button ontouchstart="event.preventDefault();lsPin('1');" onclick="lsPin('1')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">1</button>
-      <button ontouchstart="event.preventDefault();lsPin('2');" onclick="lsPin('2')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">2</button>
-      <button ontouchstart="event.preventDefault();lsPin('3');" onclick="lsPin('3')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">3</button>
-      <button ontouchstart="event.preventDefault();lsPin('4');" onclick="lsPin('4')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">4</button>
-      <button ontouchstart="event.preventDefault();lsPin('5');" onclick="lsPin('5')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">5</button>
-      <button ontouchstart="event.preventDefault();lsPin('6');" onclick="lsPin('6')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">6</button>
-      <button ontouchstart="event.preventDefault();lsPin('7');" onclick="lsPin('7')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">7</button>
-      <button ontouchstart="event.preventDefault();lsPin('8');" onclick="lsPin('8')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">8</button>
-      <button ontouchstart="event.preventDefault();lsPin('9');" onclick="lsPin('9')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">9</button>
-      <button ontouchstart="event.preventDefault();lsDel();" onclick="lsDel()" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:20px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">⌫</button>
-      <button ontouchstart="event.preventDefault();lsPin('0');" onclick="lsPin('0')" style="height:76px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">0</button>
+      <button ontouchstart="event.preventDefault();lsPin('1');" onclick="lsPin('1')" style="height:76px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">1</button>
+      <button ontouchstart="event.preventDefault();lsPin('2');" onclick="lsPin('2')" style="height:76px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">2</button>
+      <button ontouchstart="event.preventDefault();lsPin('3');" onclick="lsPin('3')" style="height:76px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">3</button>
+      <button ontouchstart="event.preventDefault();lsPin('4');" onclick="lsPin('4')" style="height:76px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">4</button>
+      <button ontouchstart="event.preventDefault();lsPin('5');" onclick="lsPin('5')" style="height:76px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">5</button>
+      <button ontouchstart="event.preventDefault();lsPin('6');" onclick="lsPin('6')" style="height:76px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">6</button>
+      <button ontouchstart="event.preventDefault();lsPin('7');" onclick="lsPin('7')" style="height:76px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">7</button>
+      <button ontouchstart="event.preventDefault();lsPin('8');" onclick="lsPin('8')" style="height:76px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">8</button>
+      <button ontouchstart="event.preventDefault();lsPin('9');" onclick="lsPin('9')" style="height:76px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">9</button>
+      <button ontouchstart="event.preventDefault();lsDel();" onclick="lsDel()" style="height:76px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:20px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">⌫</button>
+      <button ontouchstart="event.preventDefault();lsPin('0');" onclick="lsPin('0')" style="height:76px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:24px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">0</button>
       <div></div>
     </div>
     <div id="ls-msg" style="margin-top:16px;font-size:15px;font-weight:700;min-height:22px;"></div>
@@ -430,49 +431,49 @@ input[type=file]{display:none;}
   <div class="toast" id="toast"></div>
   <div id="upload-banner"></div>
   <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
-    <div class="page" id="page-login" style="align-items:center;justify-content:center;flex-direction:column;background:#0d1117;">
+    <div class="page" id="page-login" style="align-items:center;justify-content:center;flex-direction:column;background:#ffffff;">
 
   <!-- LOGO -->
   <div style="text-align:center;margin-bottom:24px;">
-    <div style="font-size:28px;font-weight:900;color:#fff;">TABLET <span style="color:#3ddc84;">APP</span></div><div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.5);margin-top:2px;">Go Rent 4×4</div>
-    <div style="font-size:11px;color:#666;margin-top:3px;text-transform:uppercase;letter-spacing:1px;">Check App</div>
+    <div style="font-size:28px;font-weight:900;color:#0f172a;">TABLET <span style="color:#12803c;">APP</span></div><div style="font-size:12px;font-weight:700;color:#64748b;margin-top:2px;">Go Rent 4×4</div>
+    <div style="font-size:11px;color:#64748b;margin-top:3px;text-transform:uppercase;letter-spacing:1px;">Check App</div>
   </div>
 
   <!-- SCREEN 1: NAMES -->
   <div id="s1" style="width:100%;max-width:340px;">
-    <div style="font-size:12px;font-weight:700;color:#666;text-align:center;margin-bottom:14px;text-transform:uppercase;letter-spacing:1px;">Who are you?</div>
+    <div style="font-size:12px;font-weight:700;color:#64748b;text-align:center;margin-bottom:14px;text-transform:uppercase;letter-spacing:1px;">Who are you?</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <button onclick="pickName('Bonga')"    style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Bonga</button>
-      <button onclick="pickName('Dixon')"    style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Dixon</button>
-      <button onclick="pickName('Vince')"    style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Vince</button>
-      <button onclick="pickName('Joe')"      style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Joe</button>
-      <button onclick="pickName('Nelson')"   style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Nelson</button>
-      <button onclick="pickName('Robbie')"   style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Robbie</button>
-      <button onclick="pickName('Peter')"    style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Peter</button>
-      <button onclick="pickName('Simon')"    style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Simon</button>
-      <button onclick="pickName('Christina')" style="padding:18px;border-radius:12px;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Christina</button>
+      <button onclick="pickName('Bonga')"    style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Bonga</button>
+      <button onclick="pickName('Dixon')"    style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Dixon</button>
+      <button onclick="pickName('Vince')"    style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Vince</button>
+      <button onclick="pickName('Joe')"      style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Joe</button>
+      <button onclick="pickName('Nelson')"   style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Nelson</button>
+      <button onclick="pickName('Robbie')"   style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Robbie</button>
+      <button onclick="pickName('Peter')"    style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Peter</button>
+      <button onclick="pickName('Simon')"    style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Simon</button>
+      <button onclick="pickName('Christina')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Christina</button>
       <button onclick="pickName('Manager')"  style="padding:18px;border-radius:12px;border:2px solid #5a3e00;background:#2a1e00;color:#f5a623;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">👔 Manager</button>
     </div>
   </div>
 
   <!-- SCREEN 2: PIN PAD -->
   <div id="s2" style="display:none;width:100%;max-width:300px;text-align:center;">
-    <button onclick="backToS1()" style="background:none;border:none;color:#666;font-size:13px;cursor:pointer;display:block;margin-bottom:12px;touch-action:manipulation;">◀ Back</button>
-    <div id="s2name" style="font-size:24px;font-weight:900;color:#3ddc84;margin-bottom:6px;"></div>
-    <div style="font-size:12px;color:#666;margin-bottom:18px;">Enter your PIN</div>
-    <div id="s2dots" style="font-size:36px;letter-spacing:12px;color:#3ddc84;margin-bottom:20px;min-height:44px;">_ _ _ _</div>
+    <button onclick="backToS1()" style="background:none;border:none;color:#64748b;font-size:13px;cursor:pointer;display:block;margin-bottom:12px;touch-action:manipulation;">◀ Back</button>
+    <div id="s2name" style="font-size:24px;font-weight:900;color:#12803c;margin-bottom:6px;"></div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:18px;">Enter your PIN</div>
+    <div id="s2dots" style="font-size:36px;letter-spacing:12px;color:#12803c;margin-bottom:20px;min-height:44px;">_ _ _ _</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-      <button onclick="pinTap('1')" style="height:72px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">1</button>
-      <button onclick="pinTap('2')" style="height:72px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">2</button>
-      <button onclick="pinTap('3')" style="height:72px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">3</button>
-      <button onclick="pinTap('4')" style="height:72px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">4</button>
-      <button onclick="pinTap('5')" style="height:72px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">5</button>
-      <button onclick="pinTap('6')" style="height:72px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">6</button>
-      <button onclick="pinTap('7')" style="height:72px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">7</button>
-      <button onclick="pinTap('8')" style="height:72px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">8</button>
-      <button onclick="pinTap('9')" style="height:72px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">9</button>
-      <button onclick="pinDel()"    style="height:72px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:18px;font-weight:700;cursor:pointer;touch-action:manipulation;">⌫</button>
-      <button onclick="pinTap('0')" style="height:72px;border-radius:50%;border:2px solid #1e3a5f;background:#112233;color:#fff;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">0</button>
+      <button onclick="pinTap('1')" style="height:72px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">1</button>
+      <button onclick="pinTap('2')" style="height:72px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">2</button>
+      <button onclick="pinTap('3')" style="height:72px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">3</button>
+      <button onclick="pinTap('4')" style="height:72px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">4</button>
+      <button onclick="pinTap('5')" style="height:72px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">5</button>
+      <button onclick="pinTap('6')" style="height:72px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">6</button>
+      <button onclick="pinTap('7')" style="height:72px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">7</button>
+      <button onclick="pinTap('8')" style="height:72px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">8</button>
+      <button onclick="pinTap('9')" style="height:72px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">9</button>
+      <button onclick="pinDel()"    style="height:72px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:18px;font-weight:700;cursor:pointer;touch-action:manipulation;">⌫</button>
+      <button onclick="pinTap('0')" style="height:72px;border-radius:50%;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:22px;font-weight:700;cursor:pointer;touch-action:manipulation;">0</button>
       <div></div>
     </div>
     <div id="s2msg" style="margin-top:14px;font-size:14px;font-weight:700;min-height:20px;"></div>
