@@ -1741,8 +1741,10 @@ function drawCO(){
     const restricted=!canDoStep(s.n);
     return `<div class="stg ${active?'active':done?'done':restricted?'restricted':''}" onclick="coGoStep(${s.n})" style="position:relative;overflow:hidden;${restricted?'opacity:.4;cursor:not-allowed;':''}">
       ${done&&!active&&stepBy?`<div style="font-size:7px;font-weight:900;color:var(--se);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 2px;background:var(--sg);line-height:11px;letter-spacing:-.2px;">${stepBy}</div>`:'<div style="line-height:3px;">&nbsp;</div>'}
-      <div style="font-size:13px;line-height:1.2;">${done&&!active?'✅':s.ico}</div>
-      <div style="font-size:8px;font-weight:800;margin-top:1px;line-height:1.1;">${s.lbl}</div>
+      ${done?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;">
+        <span style="font-size:42px;line-height:1;color:#3ddc84;font-weight:900;opacity:.9;text-shadow:0 2px 6px rgba(0,0,0,.9);">✓</span></div>`:''}
+      <div style="font-size:13px;line-height:1.2;position:relative;z-index:1;${done?'opacity:.25;':''}">${s.ico}</div>
+      <div style="font-size:8px;font-weight:800;margin-top:1px;line-height:1.1;position:relative;z-index:1;${done?'opacity:.6;':''}">${s.lbl}</div>
     </div>`;
   }).join('');
 
@@ -3927,9 +3929,11 @@ function drawCI(){
   const bar=CI_STEPS.map(s=>{
     const done=(s.n===0&&!!r.retSig)||(s.n===1&&!!(r.dmgPhotos&&r.dmgPhotos.length))||(s.n===2&&allItems.every(i=>retSt[i]&&retSt[i]!==''))||(s.n===3&&!!r.custSig)||(s.n===4&&!!r.mgmtSig);
     const active=s.n===ciStep;
-    return `<div class="stg ${active?'active':done?'done':''}" onclick="ciStep=${s.n};drawCI()">
-      <div style="font-size:16px">${done&&!active?'✅':s.ico}</div>
-      <div style="font-size:13px;margin-top:2px">${s.lbl}</div>
+    return `<div class="stg ${active?'active':done?'done':''}" onclick="ciStep=${s.n};drawCI()" style="position:relative;overflow:hidden;">
+      ${done?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;">
+        <span style="font-size:56px;line-height:1;color:#3ddc84;font-weight:900;opacity:.9;text-shadow:0 2px 6px rgba(0,0,0,.9);">✓</span></div>`:''}
+      <div style="font-size:16px;position:relative;z-index:1;${done?'opacity:.25;':''}">${s.ico}</div>
+      <div style="font-size:13px;margin-top:2px;position:relative;z-index:1;${done?'opacity:.6;':''}">${s.lbl}</div>
     </div>`;
   }).join('');
 
