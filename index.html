@@ -1891,7 +1891,14 @@ function drawCO(){
       var tyreTxt=tyreKm!==null?(tyreKm<=0?'⚠ Tyres DUE':'Tyres in '+tyreKm+' km'):'';
       var tyreCol=tyreKm!==null&&tyreKm<=0?'var(--rl)':tyreKm!==null&&tyreKm<2000?'var(--al)':'rgba(255,255,255,.5)';
       return '<div style="display:flex;flex-wrap:wrap;gap:5px;padding:6px 14px 8px;border-top:1px solid rgba(255,255,255,.1);">'
-        +'<button onclick="co._discEdit=!co._discEdit;drawCO();" class="'+(licExp&&licDiff<=DISC_WARN_DAYS?'disc-flash':'')+'" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+licCol+';border:1px dashed '+licCol+';cursor:pointer;"><span class="disc-ico"></span> '+licTxt+' ✎</button>'
+        +(function(){
+          var missing=!licExp, bad=licExp&&licDiff<0, soon=licExp&&licDiff<=DISC_WARN_DAYS;
+          var bg=missing||bad?'#d13636':soon?'#e08a00':'rgba(255,255,255,.12)';
+          var fg='#fff';
+          return '<button onclick="co._discEdit=!co._discEdit;drawCO();" class="'+((missing||soon||bad)?'disc-flash':'')+'" '
+            +'style="font-size:13px;font-weight:900;padding:7px 14px;border-radius:8px;background:'+bg+';color:'+fg+';border:2px solid '+(missing||bad?'#ff8a8a':soon?'#f0c27a':'rgba(255,255,255,.35)')+';cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3);">'
+            +'<span class="disc-ico"></span> '+(missing?'＋ ADD LICENCE DISC DATE':licTxt)+' ✎</button>';
+        })()
         +(svcTxt?'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+svcCol+';">'+svcTxt+'</span>':'')
         +(tyreTxt?'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+tyreCol+';">'+tyreTxt+'</span>':'')
         +'</div>'
