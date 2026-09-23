@@ -1595,7 +1595,7 @@ function renderOV(){
       if(!list.length)return '';
       var chips=list.map(function(x){
         var due=x.return_date_new||x.rt;
-        return '<span style="font-size:11px;font-weight:800;padding:3px 9px;border-radius:12px;background:#fff3cd;color:#92400e;border:1px solid #f6ad55;white-space:nowrap;">'
+        return '<span onclick="openVehReport(\''+_bx(x.fleet_no)+'\')" style="cursor:pointer;font-size:11px;font-weight:800;padding:3px 9px;border-radius:12px;background:#fff3cd;color:#92400e;border:1px solid #f6ad55;white-space:nowrap;">'
           +_bx(x.fleet_no)+' · '+_bx(x.return_place)+(x.return_place_time?' · '+_bx(x.return_place_time):'')+' · '+_dmy(due)+'</span>';
       }).join(' ');
       return '<div style="background:#fffbeb;border-bottom:1px solid #f6ad55;padding:7px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;">'
@@ -1608,7 +1608,7 @@ function renderOV(){
       if(!list.length) return '';
       var chips=list.map(function(x){
         var exp=x.d<0;
-        return '<span class="disc-flash-lt" style="font-size:11px;font-weight:800;padding:3px 9px;border-radius:12px;white-space:nowrap;background:'+(exp?'#fde2e2':'#fff3d6')+';color:'+(exp?'#b91c1c':'#92400e')+';border:1px solid '+(exp?'#f5a3a3':'#f6cf7a')+';">'
+        return '<span class="disc-flash-lt" onclick="openVehReport(\''+_bx(x.fn)+'\')" style="cursor:pointer;font-size:11px;font-weight:800;padding:3px 9px;border-radius:12px;white-space:nowrap;background:'+(exp?'#fde2e2':'#fff3d6')+';color:'+(exp?'#b91c1c':'#92400e')+';border:1px solid '+(exp?'#f5a3a3':'#f6cf7a')+';">'
           +x.fn+' · '+(exp?'EXPIRED':x.d===0?'expires today':x.d+' day'+(x.d===1?'':'s'))+' ('+new Date(x.exp+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})+')</span>';
       }).join('');
       return '<div style="background:#fffbeb;border-bottom:1px solid #f6cf7a;padding:7px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;">'
@@ -5055,6 +5055,16 @@ function rpTab(btn,id){
 }
 // Fleet tab: numbers first, then the report for the one you tap
 function fnNum(fn){var m=/(\d+)/.exec(String(fn||''));return m?+m[1]:9999;}
+// Open one vehicle's report straight from an alert chip
+function openVehReport(fn){
+  if(!canViewReports()){toast('🔒 Vehicle reports are not available for '+(APP_USER?APP_USER.name:'you'),'err');return;}
+  goPage('rp');
+  setTimeout(function(){
+    var tabs=document.querySelectorAll('#rp-body .tab-btn');
+    if(tabs[0])tabs[0].click();
+    setTimeout(function(){rpPickVeh(fn);},120);
+  },120);
+}
 function rpPickVeh(fn){window._rpVeh=fn||null;var b=document.getElementById('rp-vehicles');if(b)b.innerHTML=rpFleet();window.scrollTo(0,0);}
 function rpVehGrid(){
   var _today=new Date().toISOString().split('T')[0];
