@@ -1649,7 +1649,7 @@ async function loadPrevDamage(fn){
       var rb=b&&b.data&&b.data[0];
       if(rb&&Array.isArray(rb.damage_panels)&&rb.damage_panels.length){panels=rb.damage_panels;src='last hand-over';}
     }
-    if(!panels||!co||co.fn!==fn)return;
+    if(!panels||!co||co.fn!==fn||co._done)return;
     panels.forEach(function(d){
       var sz=d.size||'M';if(!imarks[d.view]||!imarks[d.view][sz])return;
       (d.cells||[]).forEach(function(c){imarks[d.view][sz][c.r+','+c.c]='pr';});   // everything already there counts as pre-existing
@@ -3558,7 +3558,48 @@ function signMgmt(){
   toast('Vehicle cleared ✅','ok');drawCO();
 }
 
+// Accountability lines on the finish screen — each one opens that step again
+function coAccRow(step,ico,name,detail,bad){
+  return '<div class="acc-row '+(bad?'bad':'good')+'" onclick="coReopen('+step+')" style="cursor:pointer;">'
+    +'<div class="acc-ico">'+ico+'</div>'
+    +'<div><div class="acc-name">'+name+'</div><div class="acc-detail">'+detail+'</div></div>'
+    +'<span class="acc-badge '+(bad?'warn':'ok')+'">'+(bad?'Fix ✏️':'OK ✏️')+'</span></div>';
+}
+function accList(a){a=a||[];return a.length>6?(a.slice(0,6).join(', ')+' +'+(a.length-6)+' more'):a.join(', ');}
+function coAccRows(uncPrep,uncMech){
+  var d=co.docItems||{},hc=co.handoverChecks||{};
+  var clean=coCleanItems().filter(function(l){return !coPst(l);});
+  var equip=(uncPrep||[]).filter(function(l){return clean.indexOf(l)<0;});
+  var hoOpen=(window._HO_SECTIONS||[]).reduce(function(a,sec){return a+sec.items.filter(function(it){return hc[it.k]!=='ok'&&!(it.k==='xb'&&!co.v.xb);}).length;},0);
+  var rows='';
+  rows+=coAccRow(0,'🧹','Cleaning — '+((co.prepByAll&&co.prepByAll.join(' + '))||co.prepBy||'—'),
+    (co.prepAt||'')+(clean.length?' · ❌ Not done ('+clean.length+'): '+accList(clean):' · ✅ All done'),clean.length>0);
+  rows+=coAccRow(2,'📦','Equipment — '+(co.equipBy||co.prepBy||'—'),
+    equip.length?'❌ Not checked ('+equip.length+'): '+accList(equip):'✅ Everything checked and signed',equip.length>0);
+  rows+=coAccRow(3,'🔩','Mechanical — '+(co.mechCheckBy||'—'),
+    (uncMech&&uncMech.length)?'❌ Not checked ('+uncMech.length+'): '+accList(uncMech):'✅ All mechanical checks done',!!(uncMech&&uncMech.length));
+  rows+=coAccRow(4,'🔍','Inspection — '+(co.inspBy||'—'),
+    coInspDone()?'✅ Spot checks and documents done':'❌ Inspection not finished',!coInspDone());
+  rows+=coAccRow(5,'📋','Contract — '+(co.contractBy||'—'),
+    co.contractSigned?'✅ Signed by '+(co.clientName||co.v.cl||'client')+' at '+(co.contractAt||''):'❌ Contract not signed',!co.contractSigned);
+  rows+=coAccRow(6,'🤝','Handover — '+(co.mechBy||co.inspBy||'—'),
+    '📶 WiFi: '+(d.wifi==='ok'?'handed over':'NOT handed over')+(co.v.xb?' · 🌍 Cross-border docs: '+(d.xb==='ok'?'handed over':'MISSING'):'')
+      +' · 📅 Return '+(co.v.rt||'—')+(co.returnTime?' at '+co.returnTime:'')+' · ⛽ '+(co.fuelOut||'Full')+' · '+((co.odometerOut||co.v.odo||0).toLocaleString())+' km'
+      +(hoOpen?' · ⚠ '+hoOpen+' handover point'+(hoOpen===1?'':'s')+' not ticked':''),
+    d.wifi!=='ok'||(co.v.xb&&d.xb!=='ok')||!co.custSig);
+  rows+=coAccRow(7,'👔','Manager — '+(co.mgmtBy||'—'),'Cleared at '+(co.mgmtAt||'—'),false);
+  return rows;
+}
+// Go back into a finished check-out to correct something
+function coReopen(step){
+  if(!co||!co.v){toast('Open the vehicle again from the Overview','err');return;}
+  co._done=false;
+  if(!canDoStep(step)){toast('You do not have access to that step','err');return;}
+  coStep=step;goPage('co');drawCO();
+  toast('Correct what is needed, then finish again at Step 7 — Management','ok');
+}
 async function completeCO(){
+  co._done=true;
   try{localStorage.removeItem(ipKey(co.fn));}catch(e){}
   co.prepByAll=coCleanStaff();if(!co.prepBy)co.prepBy=co.prepByAll[0]||'';
   try{uploadPhotos(co.prepPhotos,co.fn,co.clientName||co.v.cl,'prep');}catch(e){}
@@ -3581,8 +3622,8 @@ async function completeCO(){
     if(st&&st!=='na') equipLines.push({lbl:realLbl,st,qty:typeof qty==='object'?'':qty||''});
   }
 
-  // Save checkout record
-  await SB.from('checkouts').insert({
+  // Save the check-out record (first time), or update it if something was corrected afterwards
+  const _coRec={
     booking_id:co.fn+'_'+co.v.pu, fleet_no:co.fn, client:co.clientName,
     prep_by:co.prepBy, prep_by_all:co.prepByAll||[co.prepBy], prep_log:co.prepLog||[],
     prep_signed_at:coCleanDone()?new Date().toISOString():null, fuel_out:co.fuelOut,
@@ -3592,7 +3633,14 @@ async function completeCO(){
     odo_out:co.odometerOut||co.v.odo, unchecked_prep:uncPrep, unchecked_mech:uncMech,
     damage_panels:co.dmgd, prep_checklist:co.prepItems||{}, mech_checklist:co.mechItems||{}, mech_by:co.mechCheckBy||null, mech_who:co.mechWho||{}, return_time:co.returnTime||null, doc_checks:co.docItems||{},
     created_at:new Date().toISOString(),
-  }).then(function(r){if(r&&r.error)toast('Check-out not saved: '+r.error.message,'err');},function(){});
+  };
+  try{
+    var _res=co._coRowId
+      ? await SB.from('checkouts').update(_coRec).eq('id',co._coRowId).select('id')
+      : await SB.from('checkouts').insert(_coRec).select('id');
+    if(_res&&_res.error)toast('Check-out not saved: '+_res.error.message,'err');
+    else if(_res&&_res.data&&_res.data[0]&&_res.data[0].id)co._coRowId=_res.data[0].id;
+  }catch(e){toast('Check-out not saved — check the connection','err');}
   // Read-only tablet: Fleet Manager data (vehicles/bookings) is never changed from here
 
   // Build handover HTML document for client
@@ -3709,21 +3757,10 @@ async function completeCO(){
         <div id="send-status" style="margin-top:10px;"></div>
       </div>
 
-      <!-- Accountability summary -->
+      <!-- Accountability summary: tap any line to go back and correct it -->
       <div class="acc">
-        <div class="acc-hdr">Accountability Record</div>
-        <div class="acc-row ${!uncPrep.length?'good':'bad'}">
-          <div class="acc-ico">🧹</div>
-          <div><div class="acc-name">Prep & Pack — ${(co.prepByAll&&co.prepByAll.join(' + '))||co.prepBy||'—'}</div>
-          <div class="acc-detail">${co.prepAt||''}${uncPrep.length?' · ❌ Not checked: '+uncPrep.join(', '):'  · ✅ All checked'}</div></div>
-          <span class="acc-badge ${!uncPrep.length?'ok':'warn'}">${!uncPrep.length?'OK':'Issues'}</span>
-        </div>
-        <div class="acc-row good">
-          <div class="acc-ico">👔</div>
-          <div><div class="acc-name">Manager — ${co.mgmtBy||'—'}</div>
-          <div class="acc-detail">Cleared at ${co.mgmtAt||'—'}</div></div>
-          <span class="acc-badge ok">Cleared</span>
-        </div>
+        <div class="acc-hdr">Accountability Record — tap a line to correct it</div>
+        ${coAccRows(uncPrep,uncMech)}
       </div>
 
       <button class="btn g" style="margin-top:14px" onclick="goPage('ov')">← Back to Overview</button>
