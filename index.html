@@ -2496,6 +2496,52 @@ async function aiFetch(opts){
   if(!r.ok){var e=await r.json().catch(function(){return {};});var m=(e&&(e.error&&(e.error.message||e.error)))||('Error '+r.status);toast('⚠ Auto-read not available: '+m+' — type the details in','err');throw new Error('ai '+m);}
   return r;
 }
+// ── Passport fallback: read the two machine-readable lines (MRZ) at the bottom of the page ──
+// Works on the tablet without the AI service. Gives name, passport number, nationality, DOB and expiry.
+function mrzDate(s,future){
+  if(!/^\d{6}$/.test(s))return '';
+  var y=+s.slice(0,2),m=s.slice(2,4),d=s.slice(4,6),now=new Date().getFullYear()%100;
+  var year=future?(2000+y):(y>now?1900+y:2000+y);
+  return d+'/'+m+'/'+year;
+}
+function parseMRZ(text){
+  var lines=String(text||'').toUpperCase().split(/\r?\n/).map(function(l){return l.replace(/\s+/g,'').replace(/[^A-Z0-9<]/g,'');}).filter(function(l){return l.length>=30&&l.indexOf('<')>=0;});
+  var l1='',l2='';
+  for(var i=0;i<lines.length;i++){
+    if(!l1&&/^P[<A-Z0-9]/.test(lines[i])){l1=lines[i];if(lines[i+1])l2=lines[i+1];}
+  }
+  if(!l1&&lines.length>=2){l1=lines[lines.length-2];l2=lines[lines.length-1];}
+  if(!l1||!l2)return null;
+  var out={};
+  var nm=l1.slice(5).split('<<');
+  if(nm.length){
+    var sur=(nm[0]||'').replace(/</g,' ').trim(),giv=(nm[1]||'').replace(/</g,' ').trim();
+    var full=(giv+' '+sur).replace(/\s+/g,' ').trim();
+    if(full.length>3)out.full_name=full;
+  }
+  var pno=l2.slice(0,9).replace(/</g,'').trim();
+  if(pno.length>=6)out.passport_number=pno;
+  var nat=l2.slice(10,13).replace(/</g,'');
+  if(/^[A-Z]{3}$/.test(nat))out.nationality=nat;
+  out.dob=mrzDate(l2.slice(13,19),false);
+  out.expiry=mrzDate(l2.slice(21,27),true);
+  return (out.passport_number||out.full_name)?out:null;
+}
+async function mrzFromImage(dataUrl){
+  if(!window.Tesseract){
+    await new Promise(function(res,rej){var sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js';sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});
+  }
+  // crop the bottom third (where the MRZ is), enlarge and sharpen it for the reader
+  var img=await new Promise(function(res,rej){var i=new Image();i.onload=function(){res(i);};i.onerror=rej;i.src=dataUrl;});
+  var sh=Math.round(img.height*0.34),sy=img.height-sh,w=1600,h=Math.round(sh*(w/img.width));
+  var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  var cx=cv.getContext('2d');cx.drawImage(img,0,sy,img.width,sh,0,0,w,h);
+  var im=cx.getImageData(0,0,w,h),D=im.data;
+  for(var i=0;i<D.length;i+=4){var g=(D[i]*0.3+D[i+1]*0.59+D[i+2]*0.11);g=g<135?0:255;D[i]=D[i+1]=D[i+2]=g;}
+  cx.putImageData(im,0,0);
+  var r=await Tesseract.recognize(cv.toDataURL('image/png'),'eng',{tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'});
+  return parseMRZ(r&&r.data&&r.data.text);
+}
 async function extractPassportData(b64DataUrl, driverIdx){
   // Show subtle loading indicator on the card
   toast('📷 Reading passport…','');
@@ -2572,11 +2618,26 @@ If a field is not visible or unclear, use an empty string. Return only the JSON.
 
   } catch(err){
     console.error('Passport OCR error:', err);
-    // Silently fail — staff can fill in manually
-    if(err.message && err.message.includes('JSON')){
-      toast('⚠ Passport unclear — fill in manually','err');
-    } else {
-      toast('⚠ Could not read passport — fill in manually','err');
+    // Fall back to reading the machine-readable lines on the tablet itself
+    try{
+      toast('📷 Reading the passport code lines…','');
+      var m=await mrzFromImage(b64DataUrl);
+      var d2=co.drivers[driverIdx];
+      if(m&&d2){
+        var ch=[];
+        if(m.full_name&&!d2.name){d2.name=m.full_name;if(driverIdx===0)co.clientName=m.full_name;ch.push('name');}
+        if(m.dob&&!d2.dob){d2.dob=m.dob;ch.push('DOB');}
+        if(m.nationality&&!d2.nationality){d2.nationality=m.nationality;ch.push('nationality');}
+        if(m.passport_number&&!d2.passport){d2.passport=m.passport_number;ch.push('passport #');}
+        if(m.expiry&&!d2.ppExpiry){d2.ppExpiry=m.expiry;ch.push('passport expiry');}
+        var s2=document.getElementById('cos');if(s2)s2.innerHTML=coStep1();
+        toast(ch.length?('✅ Read from the passport code lines: '+ch.join(', ')+' — please check'):'Passport read — details already filled','ok');
+        return;
+      }
+      toast('⚠ Could not read the passport — type the details in','err');
+    }catch(e2){
+      console.error('MRZ fallback failed:',e2);
+      toast('⚠ Could not read the passport — type the details in','err');
     }
   }
 }
