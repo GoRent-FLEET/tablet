@@ -5044,9 +5044,37 @@ function rpTab(btn,id){
   document.querySelectorAll('#rp-vehicles,#rp-history,#rp-alerts,#rp-who,#rp-files').forEach(e=>e.style.display='none');
   document.getElementById(id).style.display='';
 }
+// Fleet tab: numbers first, then the report for the one you tap
+function fnNum(fn){var m=/(\d+)/.exec(String(fn||''));return m?+m[1]:9999;}
+function rpPickVeh(fn){window._rpVeh=fn||null;var b=document.getElementById('rp-vehicles');if(b)b.innerHTML=rpFleet();window.scrollTo(0,0);}
+function rpVehGrid(){
+  var _today=new Date().toISOString().split('T')[0];
+  var seen={},list=[];
+  FLEET.slice().sort(function(a,b){return fnNum(a.fn)-fnNum(b.fn);}).forEach(function(v){if(seen[v.fn])return;seen[v.fn]=1;list.push(v);});
+  var tiles=list.map(function(v){
+    var onRoad=v.st==='rented'||!!(v.pu&&v.rt&&v.pu<=_today&&_today<=v.rt);
+    var licDays=(v._licExpiry||(v.lic&&v.lic.expiry))?Math.round((new Date(v._licExpiry||(v.lic&&v.lic.expiry))-new Date())/86400000):null;
+    var svcLeft=v.svc?(v.svc.lastKm+v.svc.intKm)-v.odo:null;
+    var tyrLeft=v.tyres?(v.tyres.lastKm+v.tyres.intKm)-v.odo:null;
+    var crit=(svcLeft!==null&&svcLeft<=0)||(licDays!==null&&licDays<=30)||(tyrLeft!==null&&tyrLeft<=0);
+    var warn=!crit&&((svcLeft!==null&&svcLeft<=1500)||(licDays!==null&&licDays<=90)||(tyrLeft!==null&&tyrLeft<=3000));
+    var bd=crit?'var(--re)':warn?'var(--am)':v.blocked?'var(--re)':'var(--g3)';
+    var bg=crit?'var(--rg)':warn?'var(--ag)':'var(--g0)';
+    return '<button onclick="rpPickVeh(\''+_bx(v.fn)+'\')" style="padding:14px 6px;border-radius:12px;border:2px solid '+bd+';background:'+bg+';cursor:pointer;text-align:center;">'
+      +'<div style="font-size:18px;font-weight:900;color:var(--tx);">'+_bx(v.fn)+'</div>'
+      +'<div style="font-size:11px;font-weight:800;margin-top:3px;color:'+(onRoad?'var(--bl)':'var(--se)')+';">'+(onRoad?'OUT':v.blocked?'BLOCKED':'IN')+'</div>'
+      +(crit||warn?'<div style="font-size:11px;font-weight:800;margin-top:2px;color:'+(crit?'var(--rl)':'var(--al)')+';">'+(crit?'⚠ due':'⚠ soon')+'</div>':'')
+      +'</button>';
+  }).join('');
+  return '<div style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">🚗 Tap a vehicle for its report ('+list.length+')</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;">'+tiles+'</div>';
+}
 function rpFleet(){
   const _today=new Date().toISOString().split('T')[0];
-  return FLEET.map(v=>{
+  if(!window._rpVeh)return rpVehGrid();
+  const _pick=window._rpVeh;
+  return '<button class="btn s" style="margin-bottom:10px;" onclick="rpPickVeh(null)">← All vehicles</button>'
+   +FLEET.filter(v=>v.fn===_pick).map(v=>{
     const onRoad=v.st==='rented'||!!(v.pu&&v.rt&&v.pu<=_today&&_today<=v.rt);
     const svcLeft=v.svc?(v.svc.lastKm+v.svc.intKm)-v.odo:null;
     const licDays=v._licExpiry||(v.lic&&v.lic.expiry) ? Math.round((new Date(v._licExpiry||(v.lic&&v.lic.expiry))-new Date())/86400000) : null;
@@ -5433,7 +5461,20 @@ async function loadAlerts(){
     <button onclick="openInsurancePack('','${(a.client||'').replace(/'/g,"\\x27")}','${a.fleet_no||''}');event.stopPropagation()" style="margin-top:8px;margin-left:6px;padding:6px 14px;border-radius:6px;border:1px solid #c0392b;background:#c0392b;color:#fff;font-size:14px;font-weight:700;cursor:pointer">🚨 Insurance Pack</button>
   </div>`).join('');
 }
-function searchReports(q){/* filter locally */}
+function searchReports(q){
+  // Fleet tab: filter the number tiles (and the rental-file list if that tab is open)
+  q=String(q||'').toLowerCase().trim();
+  var box=document.getElementById('rp-vehicles');
+  if(box&&box.offsetParent){
+    if(window._rpVeh&&q){window._rpVeh=null;box.innerHTML=rpFleet();}
+    box.querySelectorAll('button[onclick^="rpPickVeh"]').forEach(function(b){
+      var fn=(b.textContent||'').toLowerCase();
+      var v=FLEET.filter(function(x){return (b.textContent||'').indexOf(x.fn)===0;})[0];
+      var hay=fn+' '+((v&&v.cl)||'').toLowerCase()+' '+((v&&v.reg)||'').toLowerCase();
+      b.style.display=(!q||hay.indexOf(q)>=0)?'':'none';
+    });
+  }
+}
 
 // ── HELPERS ───────────────────────────────────────────────────────
 function selStaff(id, list, val) {
