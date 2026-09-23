@@ -423,6 +423,7 @@ input[type=file]{display:none;}
     <button class="nb" id="nb-co" onclick="goPage('co')"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;background:#4a6fa5;color:#fff;font-size:13px;font-weight:900;margin-right:5px;vertical-align:-4px;">↗</span>Check-Out</button>
     <button class="nb" id="nb-ci" onclick="goPage('ci')"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;background:#2a9d5c;color:#fff;font-size:13px;font-weight:900;margin-right:5px;vertical-align:-4px;">↙</span>Check-In</button>
     <button class="nb" id="nb-out" onclick="goPage('out')">🚙 On Rental</button>
+    <button class="nb" id="nb-doc" onclick="goPage('doc')">📁 Documentation</button>
     <button class="nb" id="nb-rp" onclick="goPage('rp')">🔧 Vehicle Reports</button>
     <div style="margin-left:auto;display:flex;align-items:center;gap:6px;padding-right:6px;">
       <span id="nav-user" style="font-size:11px;font-weight:700;color:var(--se);white-space:nowrap;"></span>
@@ -490,6 +491,7 @@ input[type=file]{display:none;}
     <div class="page" id="page-ci"><div class="scroll" id="ci-body"><div style="padding:40px;text-align:center;color:var(--g5)">Select a returning vehicle from Overview</div></div></div>
     <div class="page" id="page-rp"><div class="scroll" id="rp-body"></div></div>
     <div class="page" id="page-out"><div class="scroll" id="out-body"></div></div>
+    <div class="page" id="page-doc"><div class="scroll" id="doc-body"></div></div>
   </div>
 </div>
 
@@ -787,6 +789,8 @@ function pinTap(d) {
       // Show/hide Reports tab based on role
       var nbrp = document.getElementById('nb-rp');
       if(nbrp) nbrp.style.display = (REPORTS_ALLOWED.includes(matched.name) || matched.name==='Peter') ? '' : 'none';
+      var nbdoc = document.getElementById('nb-doc');
+      if(nbdoc) nbdoc.style.display = (REPORTS_ALLOWED.includes(matched.name) || matched.name==='Peter') ? '' : 'none';
       // Switch page immediately
       document.querySelectorAll('.page').forEach(function(e){ e.classList.remove('on'); });
       document.querySelectorAll('.nb').forEach(function(e){ e.classList.remove('on'); });
@@ -929,6 +933,7 @@ function goPage(p){
   else if(p==='co')renderCOPicker();
   else if(p==='ci')renderCIPicker();
   else if(p==='out')renderOut();
+  else if(p==='doc')renderDoc();
 }
 
 function renderCOPicker(){
@@ -986,6 +991,60 @@ function renderCOPicker(){
 // ── 🚙 Vehicles out: every vehicle handed over on the tablet and not yet checked in ─────────────
 // Staff can add notes and change the return date / expected time at any time.
 var OUT_ROWS=[],OUT_OPEN=null;
+// ── 📁 Documentation: every completed hand-over, by vehicle or client ──
+var DOC_ROWS=[], DOC_FIND='';
+async function renderDoc(){
+  var body=document.getElementById('doc-body');if(!body)return;
+  if(!canViewReports()){body.innerHTML='<div style="padding:40px;text-align:center;color:var(--g5);">🔒 Documentation is not available for '+(APP_USER?_bx(APP_USER.name):'you')+'</div>';return;}
+  body.innerHTML='<div style="padding:30px;text-align:center;color:var(--g5);">Loading rental documents…</div>';
+  var co_=[],ci_=[],ct_=[];
+  try{var r1=await SB.from('checkouts').select('booking_id,fleet_no,client,customer_name,created_at,odo_out,fuel_out,handover_by,manager_name').order('created_at',{ascending:false}).limit(400);co_=(r1&&r1.data)||[];}catch(e){}
+  try{var r2=await SB.from('checkins').select('booking_id,created_at');ci_=(r2&&r2.data)||[];}catch(e){}
+  try{var r3=await SB.from('rental_contracts').select('booking_id,client_name,created_at');ct_=(r3&&r3.data)||[];}catch(e){}
+  var back={};ci_.forEach(function(x){back[x.booking_id]=x.created_at||1;});
+  var signed={};ct_.forEach(function(x){signed[x.booking_id]=x.client_name||1;});
+  var seen={};
+  DOC_ROWS=co_.filter(function(x){if(!x.booking_id||seen[x.booking_id])return false;seen[x.booking_id]=1;return true;})
+    .map(function(x){
+      var v=FLEET.filter(function(f){return bkKey(f)===x.booking_id;})[0]||{};
+      return {bid:x.booking_id,fn:x.fleet_no,cl:x.client||x.customer_name||signed[x.booking_id]||v.cl||'',
+              out:x.created_at,back:back[x.booking_id]||null,contract:!!signed[x.booking_id],
+              pu:v.pu||'',rt:v.rt||'',by:x.handover_by||'',mgr:x.manager_name||''};
+    });
+  drawDoc();
+}
+function drawDoc(){
+  var body=document.getElementById('doc-body');if(!body)return;
+  var q=(DOC_FIND||'').toLowerCase().trim();
+  var list=DOC_ROWS.filter(function(r){
+    if(!q)return true;
+    return (r.fn+' '+r.cl+' '+(r.pu||'')+' '+(r.rt||'')).toLowerCase().indexOf(q)>=0;
+  });
+  var fmt=function(d){return d?new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';};
+  var rows=list.map(function(r,i){
+    return '<div onclick="docOpen('+i+')" style="cursor:pointer;background:var(--g0);border:2px solid '+(r.back?'var(--g3)':'var(--gb)')+';border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
+      +'<div style="min-width:0;">'
+      +'<div style="font-size:16px;font-weight:900;color:var(--se);">'+_bx(r.fn)+' <span style="font-size:13px;color:var(--g5);font-weight:700;">'+_bx(r.cl||'—')+'</span></div>'
+      +'<div style="font-size:12px;color:var(--g5);margin-top:3px;">📅 '+(r.pu||fmt(r.out))+' → '+(r.rt||'—')+' · handed over by '+_bx(r.by||'—')+'</div>'
+      +'<div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap;">'
+      +'<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;background:'+(r.contract?'var(--sg)':'var(--rg)')+';color:'+(r.contract?'var(--se)':'var(--rl)')+';">'+(r.contract?'📋 Contract signed':'📋 No contract')+'</span>'
+      +'<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;background:'+(r.back?'var(--g2)':'var(--ag)')+';color:'+(r.back?'var(--g5)':'var(--al)')+';">'+(r.back?'🏠 Returned '+fmt(r.back):'🚙 Still out')+'</span>'
+      +'</div></div>'
+      +'<div style="font-size:13px;font-weight:900;color:var(--bl);white-space:nowrap;">Open 📁</div></div>';
+  }).join('');
+  body.innerHTML='<div style="padding:16px;">'
+    +'<div style="font-size:13px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📁 Rental documents — '+list.length+' hand-over'+(list.length===1?'':'s')+'</div>'
+    +'<input class="search-bar" id="doc-find" placeholder="🔎 Find — vehicle number or client name" value="'+_bx(DOC_FIND)+'" oninput="DOC_FIND=this.value;drawDoc();document.getElementById(\'doc-find\').focus();">'
+    +'<div style="font-size:12px;color:var(--g5);margin:8px 0 12px;">Contract, booking details, passports, photos, damage, handover and return report — with print.</div>'
+    +(rows||'<div style="padding:40px;text-align:center;color:var(--g5);font-size:13px;">Nothing found</div>')
+    +'</div>';
+}
+function docOpen(i){
+  var q=(DOC_FIND||'').toLowerCase().trim();
+  var list=DOC_ROWS.filter(function(r){return !q||(r.fn+' '+r.cl+' '+(r.pu||'')+' '+(r.rt||'')).toLowerCase().indexOf(q)>=0;});
+  var r=list[i];if(!r)return;
+  openRentalFile(r.bid,r.fn,r.cl);
+}
 async function renderOut(){
   var body=document.getElementById('out-body');if(!body)return;
   body.innerHTML='<div style="padding:30px;text-align:center;color:var(--g5);">Loading vehicles out…</div>';
@@ -1154,6 +1213,8 @@ async function showApp(){
   if(APP_USER && typeof REPORTS_ALLOWED !== 'undefined'){
     var nbrp=document.getElementById('nb-rp');
     if(nbrp) nbrp.style.display=REPORTS_ALLOWED.includes(APP_USER.name)?'':'none';
+    var nbdoc=document.getElementById('nb-doc');
+    if(nbdoc) nbdoc.style.display=canViewReports()?'':'none';
   }
   try { renderOV(); } catch(e){ console.warn('renderOV:',e); }
   try { await loadFleetFromDB(); } catch(e){ console.warn('loadFleet:',e); }
@@ -6550,6 +6611,8 @@ function lsPin(d) {
       // Reports tab visibility
       var nbrp = document.getElementById('nb-rp');
       if (nbrp) nbrp.style.display = (typeof REPORTS_ALLOWED !== 'undefined' && REPORTS_ALLOWED.includes(match.name)) ? '' : 'none';
+      var nbdoc2 = document.getElementById('nb-doc');
+      if (nbdoc2) nbdoc2.style.display = (typeof REPORTS_ALLOWED !== 'undefined' && REPORTS_ALLOWED.includes(match.name)) ? '' : 'none';
       LS_PIN = ''; LS_WHO = '';
       // Same approach as debugGo which is confirmed working
       var ls = document.getElementById('login-screen');
