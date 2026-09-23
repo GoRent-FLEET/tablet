@@ -414,7 +414,7 @@ input[type=file]{display:none;}
     <button class="nb" id="nb-co" onclick="goPage('co')">🚗 Check-Out</button>
     <button class="nb" id="nb-ci" onclick="goPage('ci')">🏠 Check-In</button>
     <button class="nb" id="nb-out" onclick="goPage('out')">🚙 Out</button>
-    <button class="nb" id="nb-rp" onclick="goPage('rp')">📋 Reports</button>
+    <button class="nb" id="nb-rp" onclick="goPage('rp')">🚙 Vehicle Reports</button>
     <div style="margin-left:auto;display:flex;align-items:center;gap:6px;padding-right:6px;">
       <span id="nav-user" style="font-size:11px;font-weight:700;color:var(--se);white-space:nowrap;"></span>
       <button id="nav-logout" onclick="logoutUser()" style="display:none;font-size:12px;font-weight:800;padding:7px 14px;border-radius:8px;border:2px solid var(--re);background:var(--rg);color:var(--rl);cursor:pointer;white-space:nowrap;line-height:1.3;text-align:center;">
@@ -4889,7 +4889,9 @@ function rpTab(btn,id){
   document.getElementById(id).style.display='';
 }
 function rpFleet(){
+  const _today=new Date().toISOString().split('T')[0];
   return FLEET.map(v=>{
+    const onRoad=v.st==='rented'||!!(v.pu&&v.rt&&v.pu<=_today&&_today<=v.rt);
     const svcLeft=v.svc?(v.svc.lastKm+v.svc.intKm)-v.odo:null;
     const licDays=v._licExpiry||(v.lic&&v.lic.expiry) ? Math.round((new Date(v._licExpiry||(v.lic&&v.lic.expiry))-new Date())/86400000) : null;
     const tyrLeft=v.tyres?(v.tyres.lastKm+v.tyres.intKm)-v.odo:null;
@@ -4900,10 +4902,10 @@ function rpFleet(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
           <div class="rpt-fn">${v.fn} <span style="font-size:14px;font-weight:400;color:var(--g5)">${v.reg}</span></div>
-          <div class="rpt-cl">${v.st==='rented'?'On road with '+(v.cl||'')+' · back '+(v.rt||''):'Available'}</div>
+          <div class="rpt-cl">${onRoad?'👤 '+(v.cl||'client')+' · on road · back '+(v.rt||'—'):(v.pu&&v.pu>_today&&v.cl?'Available · next out '+v.pu+' ('+v.cl+')':'Available')}</div>
           <div class="rpt-meta">Odo: ${v.odo.toLocaleString()} km</div>
         </div>
-        <span class="bdg ${v.st==='rented'?'b':v.blocked?'r':'g'}">${v.st==='rented'?'Out':v.blocked?'Blocked':'OK'}</span>
+        <span class="bdg ${onRoad?'b':v.blocked?'r':'g'}">${onRoad?'Out':v.blocked?'Blocked':'OK'}</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
         ${[['🔧','Service',svcLeft!==null?svcLeft<=0?`OVERDUE ${Math.abs(svcLeft).toLocaleString()}km`:'+'+svcLeft.toLocaleString()+'km':'—',svcLeft<=0?'crit':svcLeft<=1500?'warn':'ok'],
