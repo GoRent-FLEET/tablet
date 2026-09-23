@@ -655,6 +655,7 @@ const FLEET_DEMO=[
    svc:{lastKm:47000,intKm:10000,date:'2026-03-22'},lic:{expiry:'2027-01-31'},tyres:{lastKm:35000,intKm:22000}},
 ];
 const FLEET=[]; // filled from the real bookings table after sign-in
+var OVERRIDES={};  // client names corrected on the tablet, by booking
 // ═══════════════════════════════════════════════════════════════
 //  GO RENT 4×4 — FLEET MANAGEMENT APP
 //  Flow: Prepare → Handover (ID + Contract + Damage) → Trip → Return → Report
@@ -947,7 +948,7 @@ function drawOut(){
     var h='<div style="background:var(--g1);border:2px solid '+(open?'var(--bl)':over?'var(--re)':'var(--g3)')+';border-radius:12px;margin-bottom:10px;">'
       +'<div onclick="OUT_OPEN='+(open?'null':o.i)+';drawOut()" style="padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
       +'<div><div style="font-size:16px;font-weight:900;color:var(--se);">'+_bx(v.fn)+' <span style="font-size:12px;color:var(--g5);font-weight:700;">'+_bx(v.reg||'')+'</span></div>'
-      +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+_bx(v.cl||r.customer_name||'')+'</div>'
+      +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+_bx(v.cl||r.customer_name||'')+nameEditBtn(r.booking_id,v.cl||r.customer_name||'','drawOut')+'</div>'
       +'<div style="font-size:12px;color:var(--g5);margin-top:3px;">Out since '+fmt((r.created_at||'').slice(0,10))+' · Return '+fmt(due)+(r.return_time?' <b style="color:#7db8ff;">🕑 '+_bx(r.return_time)+'</b>':'')
       +(r.return_date_new&&v.rt&&r.return_date_new!==v.rt?' <span style="color:var(--al);font-weight:800;">(moved from '+fmt(v.rt)+')</span>':'')
       +(notes?' · 📝 '+notes+' note'+(notes>1?'s':''):'')+'</div></div>'
@@ -1192,6 +1193,12 @@ async function loadBookings(){
       var cr=await SB.from('checkins').select('fleet_no,odo_in,created_at').order('created_at',{ascending:false}).limit(1000);
       var seen={};(cr.data||[]).forEach(function(c){if(c.fleet_no&&c.odo_in&&!seen[c.fleet_no])seen[c.fleet_no]=c;});
       FLEET.forEach(function(v){var c=seen[v.fn];if(c){v.odo=c.odo_in;v.lastRet={km:c.odo_in,at:c.created_at};}});
+    }catch(e){}
+    // Client names corrected on the tablet (Fleet Manager booking stays as it is)
+    try{
+      var ov=await SB.from('booking_overrides').select('booking_id,client_name');
+      OVERRIDES={};(ov.data||[]).forEach(function(o){if(o.client_name)OVERRIDES[o.booking_id]=o.client_name;});
+      FLEET.forEach(function(v){var n=OVERRIDES[bkKey(v)];if(n)v.cl=n;});
     }catch(e){}
     BOOKINGS_LOADED=true;
     return true;
@@ -1759,7 +1766,7 @@ function drawCO(){
       '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
         '<div>'+
           '<div class="fhdr-fn">'+co.fn+' <span>'+_cov.reg+'</span></div>'+
-          '<div class="fhdr-cl">'+(co.clientName||_cov.cl||'No booking')+'</div>'+
+          '<div class="fhdr-cl">'+(co.clientName||_cov.cl||'No booking')+nameEditBtn(bkKey(_cov),co.clientName||_cov.cl,'drawCO')+'</div>'+
           '<div class="fhdr-cl" style="font-size:13px;opacity:.7;margin-top:1px">📅 '+(_cov.pu||'?')+' → '+(_cov.rt||'?')+'</div>'+
           '<div style="margin-top:4px;display:flex;align-items:center;gap:6px;">'+'<span style="font-size:10px;font-weight:800;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.3px;">Prepared by</span>'+'<span style="font-size:11px;font-weight:900;color:var(--am);padding:1px 8px;background:rgba(245,166,35,.15);border-radius:4px;">'+(co.prepBy||APP_USER&&APP_USER.name||'—')+'</span></div>'+
         '</div>'+
@@ -3925,7 +3932,7 @@ function drawCI(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
           <div class="fhdr-fn">${r.fn} <span>${v.reg}</span></div>
-          <div class="fhdr-cl">${v.cl} · Return: ${v.rt}</div>
+          <div class="fhdr-cl">${v.cl}${nameEditBtn(bkKey(v),v.cl,'drawCI')} · Return: ${v.rt}</div>
           <div style="margin-top:5px;font-size:11px;font-weight:800;color:rgba(255,255,255,.5);">👤 ${ci.receivedBy||APP_USER&&APP_USER.name||"—"}</div>
         </div>
         <div style="text-align:right">
@@ -4476,6 +4483,24 @@ async function signMgmtCI(){
 // Files are stored per booking (key = fleet no + pickup date, same key as the check-out/check-in records):
 //   client-docs (private):  bookings/<key>/id-docs, /contract, /signatures
 //   vehicle-photos:         bookings/<key>/<stage>
+// Client name can be corrected on the tablet (spelling, full passport name). The Fleet Manager booking is not changed.
+async function editClientName(key,current,after){
+  var n=prompt('Client name for this booking\n\nType the correct full name as on the passport:',current||'');
+  if(n===null)return;n=n.trim();if(!n)return;
+  banner('Saving client name');
+  try{
+    var r=await SB.from('booking_overrides').upsert({booking_id:key,client_name:n,updated_by:(APP_USER&&APP_USER.name)||'staff',updated_at:new Date().toISOString()},{onConflict:'booking_id'});
+    hideBanner();
+    if(r&&r.error){toast('Not saved: '+r.error.message,'err');return;}
+  }catch(e){hideBanner();toast('Not saved — check the connection','err');return;}
+  OVERRIDES[key]=n;
+  FLEET.forEach(function(v){if(bkKey(v)===key)v.cl=n;});
+  if(typeof co!=='undefined'&&co&&co.v&&bkKey(co.v)===key){co.v.cl=n;if(co.clientName)co.clientName=n;}
+  if(typeof ci!=='undefined'&&ci&&ci.v&&bkKey(ci.v)===key)ci.v.cl=n;
+  toast('Client name updated ✅','ok');
+  try{if(after)after();}catch(e){}
+}
+function nameEditBtn(key,current,after){return '<button onclick="event.stopPropagation();editClientName(\''+_bx(key)+'\',\''+_bx(String(current||'').replace(/\'/g,''))+'\','+(after||'null')+')" title="Edit client name" style="margin-left:6px;background:none;border:none;color:var(--al);font-size:13px;cursor:pointer;padding:0 2px;">✏️</button>';}
 function bkKey(v){return v?(v.fn+'_'+v.pu):'';}
 function curBkKey(fn){
   if(typeof co!=='undefined'&&co&&co.v&&co.v.fn===fn)return bkKey(co.v);
