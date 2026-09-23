@@ -3690,7 +3690,7 @@ function coStep6_mgmt(){
   <!-- Manager sign -->
   ${co.mgmtSig?
     `<div class="signed">✅<div class="signed-name">${co.mgmtBy} — Vehicle cleared for departure</div><div class="signed-time">${co.mgmtAt}</div></div>
-    <button class="btn g" style="margin-top:10px" onclick="completeCO()">✅ Complete Check-Out</button>`:
+    <button class="btn g" style="margin-top:10px" onclick="coFinishCheck()">✅ Complete Check-Out</button>`:
     `<div class="fi"><label>Manager name *</label>
       ${selStaff('co-m-nm',STAFF_HO,co.mgmtBy)}
     </div>
@@ -3774,6 +3774,46 @@ function coReopen(step){
   if(!canDoStep(step)){toast('You do not have access to that step','err');return;}
   coStep=step;goPage('co');drawCO();
   toast('Correct what is needed, then finish again at Step 7 — Management','ok');
+}
+// Everything still outstanding, checked before the check-out is finalised
+function coMissing(){
+  var m=[],c=co.contract||{},d=co.docItems||{},v=co.v||{};
+  var clean=coCleanItems().filter(function(l){return !coPst(l);});
+  if(clean.length)m.push('🧹 Cleaning: '+clean.length+' item'+(clean.length===1?'':'s')+' not done');
+  var unPrep=L_PREP.filter(function(x){var i=x[0],l=x[1];return i!=='__SECTION__'&&i!=='__OPTIONAL__'&&i!=='__OPT_ITEM__'&&!(i==='__CAMPING__'&&!v.camping)&&!noCampHidden(l,v.camping)&&!noCampOpt(l,v.camping)&&String(l).indexOf('__QTY__')!==0&&!coPst(l)&&clean.indexOf(l)<0;}).map(function(x){return x[1];});
+  if(unPrep.length)m.push('📦 Equipment: '+unPrep.length+' item'+(unPrep.length===1?'':'s')+' not checked');
+  var unMech=L_MECH.filter(function(it){return it&&it[0]!=='__SECTION__'&&!(it[0]==='__CAMPING__'&&!v.camping)&&!(co.mechItems||{})[it[1]];}).map(function(it){return it[1];});
+  if(unMech.length)m.push('🔩 Mechanical: '+unMech.length+' item'+(unMech.length===1?'':'s')+' not checked');
+  if(!co.odometerOut&&!v.odo)m.push('🛣 Current odo reading not filled in');
+  if(!(v.lic&&v.lic.expiry)&&!v._licExpiry)m.push('🚗 Licence disc date missing');
+  var d0=(co.drivers&&co.drivers[0])||{};
+  if(!d0.name)m.push('👤 Client name not filled in');
+  if(!d0.passportImg)m.push('🛂 No passport photo');
+  if(!d0.licFront)m.push('🪪 No licence photo');
+  if(!c.insurance_option)m.push('📋 Insurance option not selected');
+  if(!c.fuel_deposit_received)m.push('⛽ Fuel & admin deposit not ticked');
+  if(v.xb&&!c.cross_border_deposit)m.push('🌍 Cross-border deposit not ticked');
+  if(!co.contractSigned)m.push('✍️ Rental contract NOT SIGNED');
+  if(d.wifi!=='ok')m.push('📶 WiFi device not handed over');
+  if(v.xb&&d.xb!=='ok')m.push('🌍 Cross-border documents not handed over');
+  if(!co.returnTime)m.push('🕑 Expected return time not set');
+  if(!co.custSig)m.push('✍️ Client has not signed the handover');
+  return m;
+}
+function coFinishCheck(){
+  var m=coMissing();
+  if(!m.length){completeCO();return;}
+  var box=document.createElement('div');box.id='co-missing';
+  box.setAttribute('style','position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:18px;');
+  box.innerHTML='<div style="background:var(--g1);border:2px solid var(--re);border-radius:16px;max-width:520px;width:100%;padding:18px;max-height:88vh;overflow:auto;">'
+    +'<div style="font-size:19px;font-weight:900;color:var(--rl);margin-bottom:4px;">⚠ '+m.length+' thing'+(m.length===1?'':'s')+' still outstanding</div>'
+    +'<div style="font-size:13px;color:var(--g5);margin-bottom:12px;">Check these before the vehicle leaves. You can still finish, but it is recorded as it stands.</div>'
+    +'<ul style="margin:0 0 14px 18px;padding:0;font-size:15px;font-weight:700;color:var(--tx);line-height:1.9;">'+m.map(function(x){return '<li>'+_bx(x)+'</li>';}).join('')+'</ul>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button class="btn g" style="flex:2;" onclick="document.getElementById(\'co-missing\').remove()">← Go back and fix</button>'
+    +'<button class="btn s" style="flex:1;" onclick="document.getElementById(\'co-missing\').remove();completeCO()">Finish anyway</button>'
+    +'</div></div>';
+  document.body.appendChild(box);
 }
 async function completeCO(){
   co._done=true;
