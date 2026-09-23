@@ -423,6 +423,7 @@ input[type=file]{display:none;}
     <button class="nb" id="nb-co" onclick="goPage('co')"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;background:#4a6fa5;color:#fff;font-size:13px;font-weight:900;margin-right:5px;vertical-align:-4px;">↗</span>Check-Out</button>
     <button class="nb" id="nb-ci" onclick="goPage('ci')"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;background:#2a9d5c;color:#fff;font-size:13px;font-weight:900;margin-right:5px;vertical-align:-4px;">↙</span>Check-In</button>
     <button class="nb" id="nb-out" onclick="goPage('out')">🚙 On Rental</button>
+    <button class="nb" id="nb-cal" onclick="openCalendar()">📅 Calendar</button>
     <button class="nb" id="nb-doc" onclick="goPage('doc')">📁 Documentation</button>
     <button class="nb" id="nb-rp" onclick="goPage('rp')">🔧 Vehicle Reports</button>
     <div style="margin-left:auto;display:flex;align-items:center;gap:6px;padding-right:6px;">
@@ -1463,10 +1464,11 @@ function renderOV(){
   const timeStr=nowDT.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
   // Filter vehicles for this week / past 7 days
-  const weekOut=FLEET.filter(v=>v.pu&&daysFrom(v.pu)>=0&&daysFrom(v.pu)<=7).sort((a,b)=>a.pu>b.pu?1:-1);
-  const weekIn =FLEET.filter(v=>v.rt&&daysFrom(v.rt)>=0&&daysFrom(v.rt)<=7).sort((a,b)=>a.rt>b.rt?1:-1);
-  const pastOut=FLEET.filter(v=>v.pu&&daysFrom(v.pu)>=-7&&daysFrom(v.pu)<0).sort((a,b)=>a.pu<b.pu?1:-1);
-  const pastIn =FLEET.filter(v=>v.rt&&daysFrom(v.rt)>=-7&&daysFrom(v.rt)<0).sort((a,b)=>a.rt<b.rt?1:-1);
+  const WIN=14;  // two weeks ahead / behind
+  const weekOut=FLEET.filter(v=>v.pu&&daysFrom(v.pu)>=0&&daysFrom(v.pu)<=WIN).sort((a,b)=>a.pu>b.pu?1:-1);
+  const weekIn =FLEET.filter(v=>v.rt&&daysFrom(v.rt)>=0&&daysFrom(v.rt)<=WIN).sort((a,b)=>a.rt>b.rt?1:-1);
+  const pastOut=FLEET.filter(v=>v.pu&&daysFrom(v.pu)>=-WIN&&daysFrom(v.pu)<0).sort((a,b)=>a.pu<b.pu?1:-1);
+  const pastIn =FLEET.filter(v=>v.rt&&daysFrom(v.rt)>=-WIN&&daysFrom(v.rt)<0).sort((a,b)=>a.rt<b.rt?1:-1);
 
   const outList = view==='week' ? weekOut : pastOut;
   const inList  = view==='week' ? weekIn  : pastIn;
@@ -1628,8 +1630,8 @@ function renderOV(){
   // Every day of the window gets a heading — days with nothing show "none"
   function windowDays(groups){
     var out=[],base=new Date(TODAY+'T00:00:00');
-    if(view==='week'){for(var i=0;i<8;i++){var d=new Date(base);d.setDate(d.getDate()+i);out.push(d.toISOString().split('T')[0]);}}
-    else{for(var j=7;j>=0;j--){var e=new Date(base);e.setDate(e.getDate()-j);out.push(e.toISOString().split('T')[0]);}}
+    if(view==='week'){for(var i=0;i<=WIN;i++){var d=new Date(base);d.setDate(d.getDate()+i);out.push(d.toISOString().split('T')[0]);}}
+    else{for(var j=WIN;j>=0;j--){var e=new Date(base);e.setDate(e.getDate()-j);out.push(e.toISOString().split('T')[0]);}}
     Object.keys(groups||{}).forEach(function(d){if(out.indexOf(d)<0)out.push(d);});
     return out.sort(function(a,b){return daysFrom(a)>daysFrom(b)?1:-1;});
   }
@@ -1675,8 +1677,8 @@ function renderOV(){
     '<div style="background:#fff;border-bottom:1px solid #e0e0e0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">'
     +'<div style="font-size:11px;font-weight:800;color:#666;letter-spacing:.3px;">'+dateStr+'</div>'
     +'<div style="display:flex;align-items:center;gap:8px;">'
-    +'<button ontouchend="event.preventDefault();ovSetView(\'week\')" onclick="ovSetView(\'week\')" style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer;border:2px solid '+(view==='week'?'#f6ad55':'#e0e0e0')+';background:'+(view==='week'?'#fffbf0':'#fff')+';color:'+(view==='week'?'#c07a00':'#888')+';">📅 Next 7 Days</button>'
-    +'<button ontouchend="event.preventDefault();ovSetView(\'past\')" onclick="ovSetView(\'past\')" style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer;border:2px solid '+(view==='past'?'#68d391':'#e0e0e0')+';background:'+(view==='past'?'#f0fff4':'#fff')+';color:'+(view==='past'?'#276749':'#888')+';">📋 Past 7 Days</button>'
+    +'<button ontouchend="event.preventDefault();ovSetView(\'week\')" onclick="ovSetView(\'week\')" style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer;border:2px solid '+(view==='week'?'#f6ad55':'#e0e0e0')+';background:'+(view==='week'?'#fffbf0':'#fff')+';color:'+(view==='week'?'#c07a00':'#888')+';">📅 Next 14 Days</button>'
+    +'<button ontouchend="event.preventDefault();ovSetView(\'past\')" onclick="ovSetView(\'past\')" style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer;border:2px solid '+(view==='past'?'#68d391':'#e0e0e0')+';background:'+(view==='past'?'#f0fff4':'#fff')+';color:'+(view==='past'?'#276749':'#888')+';">📋 Past 14 Days</button>'
     +'<div style="background:#f5f5f5;border:1px solid #e0e0e0;border-radius:8px;padding:5px 10px;text-align:center;">'
     +'<div id="ov-clock" style="font-size:16px;font-weight:900;color:#2a9d5c;font-variant-numeric:tabular-nums;">'+timeStr+'</div>'
     +'</div>'
@@ -1738,7 +1740,7 @@ function renderOV(){
     +'</div>'
     +'<div style="display:flex;align-items:center;gap:5px;">'
     +'<span style="font-size:11px;font-weight:900;padding:3px 10px;border-radius:12px;background:#f6ad55;color:#1a1a1a;">'+todayMovCount+' today</span>'
-    +'<span style="font-size:11px;color:#aaa;">'+(view==='past'?'Past 7 days':'Next 7 days')+'</span>'
+    +'<span style="font-size:11px;color:#aaa;">'+(view==='past'?'Past 14 days':'Next 14 days')+'</span>'
     +'</div>'
     +'</div>'
     +'</div>'
@@ -1754,7 +1756,7 @@ function renderOV(){
     +'</div>'
     +'<div style="display:flex;align-items:center;gap:5px;">'
     +'<span style="font-size:11px;font-weight:900;padding:3px 10px;border-radius:12px;background:#f6ad55;color:#1a1a1a;">'+todayArrCount+' today</span>'
-    +'<span style="font-size:11px;color:#aaa;">'+(view==='past'?'Past 7 days':'Next 7 days')+'</span>'
+    +'<span style="font-size:11px;color:#aaa;">'+(view==='past'?'Past 14 days':'Next 14 days')+'</span>'
     +'</div>'
     +'</div>'
     +'</div>'
@@ -1770,7 +1772,7 @@ function renderOV(){
     +'</div>'
     +'<div style="display:flex;align-items:center;gap:5px;">'
     +'<span style="font-size:11px;font-weight:900;padding:3px 10px;border-radius:12px;background:#f6ad55;color:#1a1a1a;">'+todayDepCount+' today</span>'
-    +'<span style="font-size:11px;color:#aaa;">'+(view==='past'?'Past 7 days':'Next 7 days')+'</span>'
+    +'<span style="font-size:11px;color:#aaa;">'+(view==='past'?'Past 14 days':'Next 14 days')+'</span>'
     +'</div>'
     +'</div>'
     +'</div>'
@@ -5224,6 +5226,77 @@ function rpTab(btn,id){
 }
 // Fleet tab: numbers first, then the report for the one you tap
 function fnNum(fn){var m=/(\d+)/.exec(String(fn||''));return m?+m[1]:9999;}
+// ── 📅 Calendar: how many vehicles go out and come back, by week or month ──
+var CAL_MODE='month', CAL_OFF=0;
+function calKey(d){return d.toISOString().split('T')[0];}
+function calCounts(){
+  var out={},back={};
+  FLEET.forEach(function(v){
+    if(v.pu){out[v.pu]=(out[v.pu]||[]);out[v.pu].push(v);}
+    if(v.rt){back[v.rt]=(back[v.rt]||[]);back[v.rt].push(v);}
+  });
+  return {out:out,back:back};
+}
+function calRange(){
+  var now=new Date();now.setHours(0,0,0,0);
+  if(CAL_MODE==='week'){
+    var s=new Date(now);s.setDate(s.getDate()-((s.getDay()+6)%7)+CAL_OFF*7);
+    var e=new Date(s);e.setDate(e.getDate()+6);
+    return {start:s,end:e,title:'Week of '+s.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})};
+  }
+  var s2=new Date(now.getFullYear(),now.getMonth()+CAL_OFF,1);
+  var e2=new Date(s2.getFullYear(),s2.getMonth()+1,0);
+  return {start:s2,end:e2,title:s2.toLocaleDateString('en-GB',{month:'long',year:'numeric'})};
+}
+function calSet(mode){CAL_MODE=mode;CAL_OFF=0;drawCalendar();}
+function calMove(step){CAL_OFF+=step;drawCalendar();}
+function openCalendar(){
+  if(document.getElementById('cal-modal'))return;
+  var m=document.createElement('div');m.id='cal-modal';
+  m.setAttribute('style','position:fixed;inset:0;z-index:99996;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;');
+  m.onclick=function(e){if(e.target===m)m.remove();};
+  m.innerHTML='<div id="cal-box" style="background:var(--g0);border:2px solid var(--gb);border-radius:16px;max-width:900px;width:100%;max-height:92vh;overflow:auto;padding:16px;"></div>';
+  document.body.appendChild(m);
+  drawCalendar();
+}
+function drawCalendar(){
+  var box=document.getElementById('cal-box');if(!box)return;
+  var c=calCounts(),r=calRange();
+  var days=[],d=new Date(r.start);
+  while(d<=r.end){days.push(new Date(d));d.setDate(d.getDate()+1);}
+  var totOut=0,totBack=0;
+  days.forEach(function(x){var k=calKey(x);totOut+=(c.out[k]||[]).length;totBack+=(c.back[k]||[]).length;});
+  var today=calKey(new Date());
+  var pad=CAL_MODE==='month'?((r.start.getDay()+6)%7):0;
+  var cells='';
+  for(var i=0;i<pad;i++)cells+='<div></div>';
+  days.forEach(function(x){
+    var k=calKey(x),o=(c.out[k]||[]),b=(c.back[k]||[]);
+    var isToday=k===today;
+    cells+='<div style="border:2px solid '+(isToday?'var(--am)':'var(--g2)')+';border-radius:10px;padding:6px;min-height:74px;background:'+(isToday?'var(--ag)':'var(--g1)')+';">'
+      +'<div style="font-size:12px;font-weight:900;color:'+(isToday?'var(--al)':'var(--g5)')+';">'+x.getDate()+' <span style="font-weight:700;">'+x.toLocaleDateString('en-GB',{weekday:'short'})+'</span></div>'
+      +(o.length?'<div style="margin-top:4px;font-size:12px;font-weight:900;color:#1d4ed8;">↗ '+o.length+' out</div>':'')
+      +(b.length?'<div style="margin-top:2px;font-size:12px;font-weight:900;color:var(--se);">↙ '+b.length+' back</div>':'')
+      +((!o.length&&!b.length)?'<div style="margin-top:6px;font-size:11px;color:var(--g4);">—</div>':'')
+      +((o.length||b.length)?'<div style="margin-top:4px;font-size:10px;color:var(--g5);line-height:1.35;">'+o.concat(b).slice(0,3).map(function(v){return _bx(v.fn);}).join(', ')+(o.length+b.length>3?' +'+(o.length+b.length-3):'')+'</div>':'')
+      +'</div>';
+  });
+  var btn=function(mode,lbl){return '<button onclick="calSet(\''+mode+'\')" style="padding:7px 16px;border-radius:20px;font-size:13px;font-weight:900;cursor:pointer;border:2px solid '+(CAL_MODE===mode?'var(--gb)':'var(--g3)')+';background:'+(CAL_MODE===mode?'var(--sg)':'var(--g0)')+';color:'+(CAL_MODE===mode?'var(--se)':'var(--g5)')+';">'+lbl+'</button>';};
+  box.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">'
+    +'<div style="font-size:19px;font-weight:900;color:var(--tx);">📅 '+_bx(r.title)+'</div>'
+    +'<div style="display:flex;gap:6px;align-items:center;">'+btn('week','Week')+btn('month','Month')
+    +'<button onclick="calMove(-1)" style="padding:7px 12px;border-radius:8px;border:1px solid var(--g3);background:var(--g0);color:var(--tx);font-weight:900;cursor:pointer;">←</button>'
+    +'<button onclick="calMove(1)" style="padding:7px 12px;border-radius:8px;border:1px solid var(--g3);background:var(--g0);color:var(--tx);font-weight:900;cursor:pointer;">→</button>'
+    +'<button onclick="document.getElementById(\'cal-modal\').remove()" style="padding:7px 12px;border-radius:8px;border:1px solid var(--g3);background:var(--g0);color:var(--g5);font-weight:900;cursor:pointer;">✕</button>'
+    +'</div></div>'
+    +'<div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">'
+    +'<div style="flex:1;min-width:150px;background:#e6f0fd;border:2px solid #1d6fd6;border-radius:10px;padding:10px;text-align:center;"><div style="font-size:24px;font-weight:900;color:#1d4ed8;">↗ '+totOut+'</div><div style="font-size:12px;font-weight:800;color:#1d4ed8;">GOING OUT</div></div>'
+    +'<div style="flex:1;min-width:150px;background:var(--sg);border:2px solid var(--gb);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:24px;font-weight:900;color:var(--se);">↙ '+totBack+'</div><div style="font-size:12px;font-weight:800;color:var(--se);">COMING BACK</div></div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;">'
+    +['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(function(d){return '<div style="font-size:11px;font-weight:900;color:var(--g5);text-align:center;padding-bottom:2px;">'+d+'</div>';}).join('')
+    +cells+'</div>';
+}
 // Open one vehicle's report straight from an alert chip
 function openVehReport(fn){
   if(!canViewReports()){toast('🔒 Vehicle reports are not available for '+(APP_USER?APP_USER.name:'you'),'err');return;}
