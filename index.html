@@ -1016,8 +1016,8 @@ function renderCIPicker(){
     return '<div data-fn="'+v.fn+'" data-bid="'+_bx(v.bid||'')+'" data-s="'+_bx(srch)+'" class="picker-row-ci" style="background:var(--g1);border:2px solid '+col+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;">'
       +'<div><div style="font-size:16px;font-weight:900;color:var(--se);">'+v.fn+'</div>'
-      +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+_bx(v.cl||'')+'</div>'
-      +'<div style="font-size:11px;color:var(--g5);margin-top:3px;">'+_bx(v.reg||'')+' &middot; Return: '+dt+' <b class="ci-rt" style="color:#7db8ff;margin-left:6px;"></b></div></div>'
+      +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+_bx(v.cl||'')+(waChip(v)?' · '+waChip(v):'')+'</div>'
+      +'<div style="font-size:11px;color:var(--g5);margin-top:3px;">'+_bx(v.reg||'')+' &middot; '+(v.pu||'?')+' → '+(v.rt||'?')+' <b class="ci-rt" style="color:#7db8ff;margin-left:6px;"></b></div></div>'
       +'<div>'+badge+'</div></div></div>';
   }
   var rows=returning.map(function(v){return row(v,false);}).join('')||'<div style="padding:24px;text-align:center;color:var(--g5);font-size:13px;">No check-ins in the next 7 days</div>';
@@ -2888,7 +2888,7 @@ function viewSignedContract(){
   if(w){
     w.document.open();
     w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Signed contract</title></head><body style="margin:0;background:#fff;">'
-      +'<div style="text-align:right;padding:8px;" class="noprint"><button onclick="window.print()" style="padding:10px 18px;font-size:15px;font-weight:bold;">🖨 Print / Save as PDF</button></div>'
+      +'<div style="text-align:right;padding:8px;" class="noprint"><button onclick="window.close()" style="padding:10px 18px;font-size:15px;font-weight:bold;margin-right:8px;">← Back</button><button onclick="window.print()" style="padding:10px 18px;font-size:15px;font-weight:bold;">🖨 Print / Save as PDF</button></div>'
       +h+'<style>@media print{.noprint{display:none}}</style></body></html>');
     w.document.close();
   }else{
@@ -4640,7 +4640,10 @@ function closeRentalFile(){var m=document.getElementById('rf-modal');if(m)m.pare
 function rfShowContract(){
   var h=window._rfContractHTML||'';if(!h)return;
   var w=window.open('','_blank');
-  if(w){w.document.open();w.document.write(h);w.document.close();}
+  if(w){w.document.open();w.document.write('<div class="noprint" style="text-align:right;padding:8px;font-family:Arial;">'
+    +'<button onclick="window.close()" style="padding:10px 18px;font-size:15px;font-weight:bold;margin-right:8px;">← Back</button>'
+    +'<button onclick="window.print()" style="padding:10px 18px;font-size:15px;font-weight:bold;">🖨 Print / Save as PDF</button></div>'
+    +'<style>@media print{.noprint{display:none}}</style>'+h);w.document.close();}
   else{var m=document.getElementById('rf-body');if(m)m.innerHTML='<iframe srcdoc="'+_bx(h)+'" style="width:100%;height:70vh;border:0;background:#fff;border-radius:10px;"></iframe>';}
 }
 async function openRentalFile(key,fn,client){
