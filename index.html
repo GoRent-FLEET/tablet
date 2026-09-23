@@ -912,17 +912,40 @@ function renderCOPicker(){
     var diff=Math.round((new Date(v.pu+'T00:00:00')-new Date(today+'T00:00:00'))/86400000);
     return diff>=0&&diff<=7;
   }).sort(function(a,b){return a.pu>b.pu?1:-1;});
+  function ipInfo(fn){
+    var best=null;
+    try{
+      for(var i=0;i<localStorage.length;i++){
+        var k=localStorage.key(i);
+        if(!k||k.indexOf('ip_')!==0||!k.endsWith('_'+fn))continue;
+        var rec=JSON.parse(localStorage.getItem(k)||'{}');
+        if(!rec||rec.type==='checkin')continue;
+        rec._name=rec.staff||k.split('_')[1]||'';
+        if(!best||(rec.updated||0)>(best.updated||0))best=rec;
+      }
+    }catch(e){}
+    return best;
+  }
   var rows='';
   upcoming.forEach(function(v){
     var isToday=v.pu===today;
+    var ip=ipInfo(v.fn);
     var badge=isToday?'<span style="background:#4a6fa5;color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">TODAY</span>':'<span style="background:var(--g2);color:var(--g5);font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">UPCOMING</span>';
     var dt=new Date(v.pu+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
-    var col=isToday?'#4a6fa5':'var(--g3)';
-    rows+='<div data-fn="'+v.fn+'" class="picker-row" ontouchend="event.preventDefault();startCO(this.dataset.fn);" style="background:var(--g1);border:2px solid '+col+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
+    if(ip)badge='<span style="background:var(--ag);color:var(--al);border:1px solid var(--am);font-size:11px;font-weight:900;padding:3px 10px;border-radius:8px;">IN PROGRESS</span>';
+    var col=ip?'var(--am)':isToday?'#4a6fa5':'var(--g3)';
+    rows+='<div data-fn="'+v.fn+'" class="picker-row" ontouchend="event.preventDefault();startCO(this.dataset.fn);" style="background:'+(ip?'var(--ag)':'var(--g1)')+';border:2px solid '+col+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;">'
       +'<div><div style="font-size:16px;font-weight:900;color:var(--se);">'+v.fn+'</div>'
       +'<div style="font-size:13px;font-weight:700;color:var(--tx);margin-top:2px;">'+v.cl+'</div>'
-      +'<div style="font-size:11px;color:var(--g5);margin-top:3px;">'+v.reg+' &middot; '+dt+'</div></div>'
+      +'<div style="font-size:11px;color:var(--g5);margin-top:3px;">'+v.reg+' &middot; '+dt+'</div>'
+      +(ip?'<div style="margin-top:6px;font-size:12px;font-weight:800;color:var(--al);">⏳ '+_bx(ip.stepName||'Started')+(ip._name?' · '+_bx(ip._name):'')+(ip.done?' · '+ip.done+' items done':'')
+          +(ip.updated?' · last touched '+new Date(ip.updated).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'')+'</div>'
+        +(ip.who?'<div style="margin-top:3px;font-size:11px;color:var(--g5);">'
+          +['cleaning','equipment','mechanical','inspection','contract','handover'].filter(function(k){return ip.who[k];})
+             .map(function(k){return k.charAt(0).toUpperCase()+k.slice(1)+': '+_bx(ip.who[k]);}).join(' · ')+'</div>':'')
+        :'')
+      +'</div>'
       +'<div>'+badge+'</div></div></div>';
   });
   if(!upcoming.length) rows='<div style="padding:40px;text-align:center;color:var(--g5);font-size:13px;">No check-outs in the next 7 days</div>';
@@ -3253,6 +3276,16 @@ function saveCOProgress(){
     if(!co||!co.fn)return;
     var raw=localStorage.getItem(ipKey(co.fn));var rec=raw?JSON.parse(raw):{};
     rec.mechItems=co.mechItems||{};rec.docItems=co.docItems||{};rec.updated=Date.now();
+    // progress, so the picker can show who is busy and how far they are
+    try{
+      var names=[co.prepBy,co.equipBy,co.mechCheckBy,co.inspBy,co.contractBy,co.mechBy,co.mgmtBy].filter(Boolean);
+      rec.staff=names.length?names[names.length-1]:(rec.staff||'');
+      rec.step=coStep;
+      rec.stepName=['Cleaning','Bonnet','Equipment','Mechanical','Inspection','Contract','Handover','Management'][coStep]||'';
+      var prep=Object.keys(co.prepItems||{}).length, mech=Object.keys(co.mechItems||{}).length;
+      rec.done=prep+mech;
+      rec.who={cleaning:co.prepBy||'',equipment:co.equipBy||'',mechanical:co.mechCheckBy||'',inspection:co.inspBy||'',contract:co.contractBy||'',handover:co.mechBy||''};
+    }catch(e){}
     localStorage.setItem(ipKey(co.fn),JSON.stringify(rec));
   }catch(e){}
 }
