@@ -2015,9 +2015,9 @@ function coCleanReport(){
     +'</div>';
 }
 function tapPrep(i){
-  const nm=(function(){var _e=document.getElementById('co-p-nm');return _e?_e.value:undefined;})();
-  if(nm) co.prepBy=nm;
-  else if(APP_USER) co.prepBy=APP_USER.name;
+  // the person signed in on the tablet gets the tick
+  const who=(APP_USER&&APP_USER.name)||(function(){var _e=document.getElementById('co-p-nm');return _e?_e.value:'';})()||co.prepBy;
+  if(who)co.prepBy=who;
   if(!co.prepBy){toast('Select your name first','err');return;}
   if(L_PREP[i][0]==='__SECTION__'||L_PREP[i][0]==='__OPTIONAL__')return;
   if(L_PREP[i][1]&&L_PREP[i][1].startsWith('__QTY__'))return;
@@ -2265,7 +2265,9 @@ function coStep1_equip(){
 
 function tapPrepIdx(i){
   if(i<0||i>=L_PREP.length)return;
-  const nm=(function(){var _e=document.getElementById('co-p-nm');return _e?_e.value:undefined;})();if(nm)co.prepBy=nm;
+  // the person signed in on the tablet gets the tick
+  const who=(APP_USER&&APP_USER.name)||(function(){var _e=document.getElementById('co-p-nm');return _e?_e.value:'';})()||co.prepBy;
+  if(who)co.prepBy=who;
   if(!co.prepBy){toast('Select your name first','err');return;}
   if(L_PREP[i][0]==='__SECTION__'||L_PREP[i][0]==='__OPTIONAL__')return;
   if(L_PREP[i][1]&&L_PREP[i][1].startsWith('__QTY__'))return;
