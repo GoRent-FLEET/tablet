@@ -935,8 +935,8 @@ async function checkAppUpdate(onReturn){
       if(!lm||new Date(lm).getTime()<=APP_LOADED_AT+5000)return;
       _appNew=true;
     }
+    if(onReturn){appUpdateNow();return;}   // work in progress is saved (device + server) and reopens after the reload
     if(busyNow()){showAppUpdateBar();return;}
-    if(onReturn){appUpdateNow();return;}
     showAppUpdateBar();
   }catch(e){}
 }
@@ -946,12 +946,13 @@ function showAppUpdateBar(){
   b.setAttribute('style','position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:99999;background:#145c30;color:#fff;border-radius:12px;padding:12px 16px;font-weight:800;font-size:15px;box-shadow:0 6px 24px rgba(0,0,0,.35);display:flex;gap:12px;align-items:center;max-width:94vw;');
   b.innerHTML='<span>🔄 New version of the app available</span><button style="background:#fff;color:#145c30;border:none;border-radius:8px;padding:8px 14px;font-weight:900;font-size:14px;cursor:pointer;">Update now</button>';
   b.querySelector('button').onclick=function(){
-    if(busyNow()&&!confirm('A check-out or check-in is open. Update anyway? Anything not yet saved on this screen may be lost.'))return;
+    
     appUpdateNow();
   };
   document.body.appendChild(b);
 }
 async function appUpdateNow(){
+  try{if(typeof drTick==='function')await drTick();}catch(e){}
   try{await fetch(location.pathname,{cache:'reload'});}catch(e){}
   location.reload();
 }
@@ -2235,13 +2236,13 @@ async function drLoadFor(kind,key){
   var row=null;
   if(drOnline()){try{var q=await SB.from('work_drafts').select('*').eq('id',id).maybeSingle();if(!q.error)row=q.data;}catch(e){}}
   if(row&&!(row.data&&row.data.o))row=null;   // older format
-  if(loc&&!loc.pushed){try{var st0=JSON.parse(loc.json);drRestore(kind,st0,null);DR_LAST[id]={json:loc.json,im:st0.im||null};return {src:'here'};}catch(e){}}
+  if(loc&&!loc.pushed){try{var st0=JSON.parse(loc.json);drRestore(kind,st0,null);DR_LAST[id]={json:loc.json,im:st0.im||null};return {src:'here',by:loc.by};}catch(e){}}
   if(row){
     banner('Loading work from '+(row.updated_by||'another device'));
     try{var st=await drUnpack(row.data);hideBanner();drRestore(kind,st,row);return {src:'server',by:row.updated_by,device:row.device};}
     catch(e){hideBanner();}
   }
-  if(loc){try{var st1=JSON.parse(loc.json);drRestore(kind,st1,null);DR_LAST[id]={json:loc.json,im:st1.im||null};return {src:'here'};}catch(e){}}
+  if(loc){try{var st1=JSON.parse(loc.json);drRestore(kind,st1,null);DR_LAST[id]={json:loc.json,im:st1.im||null};return {src:'here',by:loc.by};}catch(e){}}
   return null;
 }
 // Finished / reset: remove everywhere (queued if there is no internet)
@@ -2316,6 +2317,10 @@ function markActive(){try{localStorage.setItem('gorent_active_at',String(Date.no
 function lockedSinceSleep(){ // used on page load: was the device away too long?
   try{var t=+localStorage.getItem('gorent_active_at')||0;return !t||(Date.now()-t)/1000>=lockLimitSec();}catch(e){return false;}
 }
+// Someone else was working on this vehicle: the new person confirms they are taking over
+function drConfirmTakeover(fn,prev,what){
+  return confirm('👤 WHO IS WORKING ON '+fn+'?\n\n'+prev+' was busy with this '+what+'.\n\nYou are signed in as '+APP_USER.name+'.\n\nOK = I ('+APP_USER.name+') carry on from here\nCancel = leave it (nothing is lost)');
+}
 function lockForNextPerson(){
   if(!APP_USER)return;
   var open=null;
@@ -2323,24 +2328,41 @@ function lockForNextPerson(){
   else if(drPageOn('ci')&&ci&&ci.v&&!ci._done)open='ci';
   try{drTick();}catch(e){}
   window._lockReturn=open;
+  window._lockPrev=APP_USER.name;
   try{closeRentalFile();}catch(e){}
   showLoginScreen();
-  try{var m=document.getElementById('ls-msg');if(m){m.style.color='#64748b';m.textContent='🔒 Locked after sleep — tap your name and enter your PIN';}}catch(e){}
+  try{var m=document.getElementById('ls-msg');if(m){m.style.color='#64748b';
+    var job=open==='co'?co:open==='ci'?ci:null;
+    m.textContent='🔒 Locked after sleep'+(job?' — '+job.fn+' was being done by '+window._lockPrev:'')+'. Tap YOUR name and enter your PIN';}}catch(e){}
 }
 // After a correct PIN: go back to the check-out / check-in that was open (as the person now signed in)
 function afterUnlock(){
-  markActive();
+  markActive();_lastBeat=Date.now();
   var p=window._lockReturn;window._lockReturn=null;
+  var prev=window._lockPrev;window._lockPrev=null;
+  var job=p==='co'?co:p==='ci'?ci:null;
+  if(job&&job.v&&prev&&APP_USER&&prev!==APP_USER.name&&!drConfirmTakeover(job.fn,prev,p==='ci'?'check-in':'check-out'))return;
   try{
     if(p==='co'&&co&&co.v&&!co._done){if(!canDoStep(coStep))coStep=firstAllowedStep();goPage('co');}
     else if(p==='ci'&&ci&&ci.v&&!ci._done&&(typeof canCheckIn!=='function'||canCheckIn()))goPage('ci');
   }catch(e){}
 }
+// Heartbeat: while the iPad sleeps no timers run, so a gap between beats = the device was asleep / in the background
+var _lastBeat=Date.now();
+function checkSleepGap(){
+  var now=Date.now(),gap=(now-_lastBeat)/1000;_lastBeat=now;
+  var away=_hiddenAt?(now-_hiddenAt)/1000:0;
+  if(!document.hidden)_hiddenAt=0;
+  if(APP_USER&&Math.max(gap,away)>=lockLimitSec()){lockForNextPerson();return true;}
+  return false;
+}
+setInterval(checkSleepGap,1000);
 document.addEventListener('visibilitychange',function(){
-  if(document.hidden){_hiddenAt=Date.now();markActive();return;}
-  var away=_hiddenAt?(Date.now()-_hiddenAt)/1000:0;_hiddenAt=0;
-  if(APP_USER&&away>=lockLimitSec())lockForNextPerson();else if(APP_USER)markActive();
+  if(document.hidden){_hiddenAt=Date.now();_lastBeat=Date.now();markActive();return;}
+  if(!checkSleepGap()&&APP_USER)markActive();
 });
+window.addEventListener('focus',function(){checkSleepGap();});
+window.addEventListener('pageshow',function(){checkSleepGap();});
 window.addEventListener('pageshow',function(e){if(e.persisted&&APP_USER&&lockedSinceSleep())lockForNextPerson();});
 setInterval(function(){if(APP_USER&&!document.hidden)markActive();},3000);
 // PINs also work without internet once that person has signed in on this device before
@@ -2386,6 +2408,7 @@ async function startCO(fn){
   var _sr=DR_SRV['checkout:'+_dk];
   if(!(CO_DRAFTS[_dk]&&!(_sr&&_sr.device!==DR_DEV))){
     var _got=await drLoadFor('checkout',_dk);
+    if(_got&&co&&co.v&&_got.by&&APP_USER&&_got.by!==APP_USER.name&&!drConfirmTakeover(fn,_got.by,'check-out')){co={};coStep=0;renderCOPicker();return;}
     if(_got&&co&&co.v){
       delete CO_DRAFTS[_dk];
       if(!canDoStep(coStep))coStep=firstAllowedStep();
@@ -4846,6 +4869,7 @@ async function startCI(fn){
   var _ck=v.bid||fn;
   if(!(ci&&ci.v&&drKeyOf(ci)===_ck&&!ci._done)){
     var _gotI=await drLoadFor('checkin',_ck);
+    if(_gotI&&ci&&ci.v&&_gotI.by&&APP_USER&&_gotI.by!==APP_USER.name&&!drConfirmTakeover(fn,_gotI.by,'check-in')){ci={};ciStep=0;renderCIPicker();return;}
     if(_gotI&&ci&&ci.v){
       drMarkLocal('checkin',fn,ci.v.cl,ci.receivedBy||'',false);
       toast(_gotI.src==='server'&&_gotI.device!==DR_DEV?('Continuing '+fn+' — last saved by '+(_gotI.by||'another device')):('Continuing check-in: '+fn),'ok');
