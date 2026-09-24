@@ -34,7 +34,12 @@ html,body{height:100%;overflow:hidden;max-width:100%;background:var(--bg);color:
 .nb.on{background:rgba(61,220,132,.12);color:var(--se);border:1px solid rgba(61,220,132,.3);}
 
 /* PAGES */
-.page{display:none;flex-direction:column;height:calc(100vh - 56px);height:calc(100dvh - 56px);overflow:hidden;}
+.page{display:none;flex-direction:column;height:calc(100vh - var(--navh,56px));height:calc(100dvh - var(--navh,56px));overflow:hidden;}
+/* Narrower screens (iPad held upright): menu wraps onto two rows instead of running off the screen */
+@media (max-width:1120px){
+  .nav{flex-wrap:wrap;height:auto;min-height:56px;padding-top:6px;padding-bottom:6px;row-gap:5px;overflow:visible;}
+  .nb{padding:8px 9px;}
+}
 .page.on{display:flex;}
 .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;padding-bottom:calc(24px + env(safe-area-inset-bottom));}
 
@@ -904,6 +909,9 @@ async function autoRefresh(force){
     else if(pg==='page-co'&&!(co&&co.fn))renderCOPicker();
   }catch(e){}
 }
+function setNavH(){var n=document.querySelector('#app .nav');if(n&&n.offsetHeight)document.documentElement.style.setProperty('--navh',n.offsetHeight+'px');}
+window.addEventListener('resize',setNavH);window.addEventListener('orientationchange',function(){setTimeout(setNavH,300);});
+try{new ResizeObserver(setNavH).observe(document.querySelector('#app .nav'));}catch(e){}
 function startAutoRefresh(){
   if(_autoTimer)clearInterval(_autoTimer);
   _autoTimer=setInterval(function(){autoRefresh(false);checkAppUpdate(false);},AUTO_MS);
@@ -2169,8 +2177,8 @@ function drawCO(){
           }).join('');
           return '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 14px 10px;border-top:1px solid rgba(255,255,255,.1);">'
             +'<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:rgba(255,255,255,.6);">🛣 CURRENT ODO READING'
-            +'<input type="number" inputmode="numeric" pattern="[0-9]*" id="co-odo-out" class="'+(km?'':'need-flash')+'" value="'+km+'" placeholder="Enter odo reading" onfocus="this.select()" oninput="co.odometerOut=+this.value" '
-            +'style="width:110px;padding:5px 8px;font-size:14px;font-weight:800;background:rgba(0,0,0,.35);border:2px solid '+(km?'var(--gb)':'var(--re)')+';border-radius:6px;color:#fff;"></label>'
+            +'<input type="number" inputmode="numeric" pattern="[0-9]*" id="co-odo-out" class="'+(km?'':'need-flash')+'" value="'+km+'" placeholder="Odo km" onfocus="this.select()" oninput="co.odometerOut=+this.value" '
+            +'style="width:120px;padding:5px 8px;font-size:14px;font-weight:800;background:rgba(0,0,0,.35);border:2px solid '+(km?'var(--gb)':'var(--re)')+';border-radius:6px;color:#fff;"></label>'
             +'<span style="font-size:10px;color:rgba(255,255,255,.45);">'+src+'</span>'
             +'<div style="display:flex;align-items:center;gap:4px;margin-left:auto;"><span style="font-size:11px;font-weight:800;color:rgba(255,255,255,.6);margin-right:2px;">⛽ FUEL OUT</span>'+fb+'</div>'
             +'</div>';
