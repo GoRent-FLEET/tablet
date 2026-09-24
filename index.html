@@ -2209,6 +2209,14 @@ function drawCO(){
     })()+
     '</div>'+
     '<div class="stg-bar s7">'+bar+'</div>'+
+    (function(){
+      var by=[['🧹',co.prepBy],['📦',co.equipBy||co.prepBy],['🔩',co.mechCheckBy],['🔍',co.inspBy],['📋',co.contractBy],['🤝',co.mechBy],['👔',co.mgmtBy]]
+        .filter(function(x){return x[1];})
+        .map(function(x){return '<span style="white-space:nowrap;">'+x[0]+' '+_bx(x[1])+'</span>';});
+      if(!by.length)return '';
+      return '<div style="display:flex;gap:10px;flex-wrap:wrap;margin:-8px 0 12px;padding:6px 10px;background:var(--g2);border-radius:8px;font-size:12px;font-weight:800;color:var(--g6);">'
+        +'<span style="color:var(--g5);">WHO IS ON THIS VEHICLE:</span>'+by.join('')+'</div>';
+    })()+
     '<div id="cos">'+body+'</div>'+
     '<div class="btn-row">'+_backBtn+_nextBtn+'</div>';
   setTimeout(()=>['co-p-sig','co-c-sig','co-m-sig'].forEach(initSig),80);
@@ -3635,6 +3643,14 @@ async function pickUpRemoteWork(fn,bid){
     if(!done&&!(d.data&&d.data.contractSigned))return;
     var who=d.updated_by||d.staff||'another device';
     if(d.device===DEVICE_ID){applyDraft(d);drawCO();return;}
+    var mine=Object.keys(co.prepItems||{}).length+Object.keys(co.mechItems||{}).length;
+    if(!mine){   // nothing done on this tablet — just show what the others have done
+      applyDraft(d);
+      if(d.step!=null&&canDoStep(d.step))coStep=d.step;
+      saveCOProgress();drawCO();
+      toast('Showing work by '+who,'ok');
+      return;
+    }
     if(!confirm('WORK ALREADY STARTED\n\n'+fn+' was started by '+who+' on another device'
       +(d.step!=null?'\n\nThey are on: '+(['Cleaning','Bonnet','Equipment','Mechanical','Pre-handover inspection','Contract','Handover','Management'][d.step]||''):'')
       +'\n'+done+' items already ticked'
