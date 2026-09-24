@@ -3288,9 +3288,12 @@ function previewAndSignContract(){
         <div style="font-size:14px;font-weight:700;color:#1e8449;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">✍️ Type your full name to confirm identity</div>
         <input id="ct-name-confirm" type="text" placeholder="Type your full name exactly as on your passport"
           style="width:100%;padding:12px 14px;border:2px solid #1e8449;border-radius:8px;font-size:15px;font-family:inherit;color:#111;background:#fff;"
-          oninput="document.getElementById('ct-name-match').textContent=ctNameOk(this.value)?'✓ Name matches':'⚠ Name does not match — check spelling'">
+          oninput="ctNameShow(this.value)">
         <div id="ct-name-match" style="font-size:14px;color:#888;margin-top:5px;font-weight:700;min-height:16px;"></div>
-        <div style="font-size:13px;color:#888;margin-top:3px;">Must match exactly: <strong style="color:#333;">${(co.contract&&co.contract.client_name)||co.clientName||'—'}</strong></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:3px;">
+          <div style="font-size:13px;color:#888;">Name on passport: <strong style="color:#333;">${(co.contract&&co.contract.client_name)||co.clientName||'—'}</strong> · small spelling slips, missing middle names and word order are OK</div>
+          <button type="button" onclick="ctNameCopy()" style="background:#fff;border:2px solid #1e8449;border-radius:8px;color:#1e8449;padding:8px 14px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;">📋 Use passport name</button>
+        </div>
       </div>
 
       <!-- Signature canvas -->
@@ -3348,9 +3351,31 @@ function clrContractSig(){ window._ctClr&&window._ctClr(); }
 
 // Typed name must match the client (ignores capitals, spaces, dashes and accents)
 function ctNameOk(typed){
-  var norm=function(x){return String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');};
+  var norm=function(x){return String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim();};
+  var lev=function(a,b){if(a===b)return 0;var d=[],i,j;for(i=0;i<=a.length;i++)d[i]=[i];for(j=0;j<=b.length;j++)d[0][j]=j;for(i=1;i<=a.length;i++)for(j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length];};
+  var close=function(a,b){var n=Math.max(a.length,b.length);return lev(a,b)<=(n>=8?2:n>=4?1:0);};
   var t=norm(typed);if(!t)return false;
-  return [(co.drivers&&co.drivers[0]&&co.drivers[0].name),(co.contract&&co.contract.client_name),co.clientName,co.v&&co.v.cl].some(function(n){return n&&norm(n)===t;});
+  var tw=t.split(' ');
+  return [(co.drivers&&co.drivers[0]&&co.drivers[0].name),(co.contract&&co.contract.client_name),co.clientName,co.v&&co.v.cl].some(function(n){
+    n=norm(n);if(!n)return false;
+    var nw=n.split(' ');
+    if(close(t.replace(/ /g,''),n.replace(/ /g,'')))return true;           // whole name, a small slip
+    // every typed word matches a passport word (any order, middle names may be left out)
+    var used={},all=tw.every(function(w){for(var i=0;i<nw.length;i++){if(!used[i]&&close(w,nw[i])){used[i]=1;return true;}}return false;});
+    if(!all)return false;
+    // must include the first and last name when there are two or more names
+    return nw.length<2?true:(used[0]&&used[nw.length-1])||(tw.length>=2&&used[nw.length-1]);
+  });
+}
+function ctNameShow(v){
+  var el=document.getElementById('ct-name-match');if(!el)return;
+  var ok=ctNameOk(v);el.textContent=v?(ok?'✓ Name accepted':'⚠ Name does not match — check spelling, or tap "Use passport name"'):'';
+  el.style.color=ok?'#1e8449':'#c0392b';
+}
+function ctNameCopy(){
+  var n=(co.drivers&&co.drivers[0]&&co.drivers[0].name)||(co.contract&&co.contract.client_name)||co.clientName||'';
+  var i=document.getElementById('ct-name-confirm');if(!i||!n)return;
+  i.value=n;ctNameShow(n);
 }
 async function submitContractSig(){
   var _m=ctMissing(co.contract);
@@ -3372,7 +3397,7 @@ async function submitContractSig(){
   }
   if(!nameOk){
     nameInput.style.border='2px solid #e74c3c';
-    document.getElementById('ct-name-match').textContent='⚠ Name does not match — must match exactly: '+expectedName;
+    document.getElementById('ct-name-match').textContent='⚠ Name does not match — check spelling, or tap "Use passport name" ('+expectedName+')';
     document.getElementById('ct-name-match').style.color='#c0392b';
     setTimeout(()=>{nameInput.style.border='2px solid #1e8449';},2500);
     return;
