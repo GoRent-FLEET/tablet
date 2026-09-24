@@ -4290,7 +4290,7 @@ async function saveHandoverLink(html){
     if(up&&up.error)return '';
     var su=await SB.storage.from('client-docs').createSignedUrl(path,60*60*24*REPORT_LINK_DAYS);
     var signed=su&&su.data&&su.data.signedUrl;if(!signed)return '';
-    return 'https://gorent-fleet.github.io/fleet/#r='+encodeURIComponent(signed);
+    return 'https://gorent-fleet.github.io/tablet/#r='+encodeURIComponent(signed);
   }catch(e){return '';}
 }
 function sendHandoverWA(){
@@ -5077,7 +5077,7 @@ async function openRentalFile(key,fn,client){
     var RD=window._rfData;
     h+='<button class="btn g" style="width:100%;margin-bottom:6px;" onclick="rfPrintPicker()">🖨 Print / save documents (choose what)</button>'
       +'<div style="font-size:12px;color:var(--g5);margin-bottom:6px;">Pick what you need — contract, passports, equipment &amp; vehicle checks, damage, photos, return report — then print it or save it as a PDF.</div>'
-      +((RD.handover||RD.ret)?'<div style="display:flex;gap:8px;flex-wrap:wrap;">'+(RD.handover?'<a class="btn s" style="flex:1;text-align:center;text-decoration:none;" href="https://gorent-fleet.github.io/fleet/#r='+encodeURIComponent(RD.handover)+'" target="_blank">🤝 Open handover document</a>':'')+(RD.ret?'<a class="btn s" style="flex:1;text-align:center;text-decoration:none;" href="https://gorent-fleet.github.io/fleet/#r='+encodeURIComponent(RD.ret)+'" target="_blank">🏠 Open return report</a>':'')+'</div>':'');
+      +((RD.handover||RD.ret)?'<div style="display:flex;gap:8px;flex-wrap:wrap;">'+(RD.handover?'<a class="btn s" style="flex:1;text-align:center;text-decoration:none;" href="https://gorent-fleet.github.io/tablet/#r='+encodeURIComponent(RD.handover)+'" target="_blank">🤝 Open handover document</a>':'')+(RD.ret?'<a class="btn s" style="flex:1;text-align:center;text-decoration:none;" href="https://gorent-fleet.github.io/tablet/#r='+encodeURIComponent(RD.ret)+'" target="_blank">🏠 Open return report</a>':'')+'</div>':'');
     h+=sec('📝 Signed contract',contract?(line('Signed by client',_bx(contract.client_name||'')+(contract.client_signed_at?' · '+new Date(contract.client_signed_at).toLocaleString('en-GB'):''))+line('Staff',_bx(contract.staff_signed_by||contract.created_by||'—'))+line('Deposit',contract.deposit_amount?('N$ '+Number(contract.deposit_amount).toLocaleString()):'—')
       +(window._rfContractHTML?'<button class="btn g" style="margin-top:8px;width:auto;padding:10px 16px;" onclick="rfShowContract()">📄 Open full signed contract</button>':'')):'<div style="font-size:13px;color:var(--g5);">No signed contract saved for this booking yet.</div>');
     h+=sec('🪪 Passport, ID & licence scans',idDocs.length?idDocs.map(function(p){return signed[p]?thumb(signed[p],rfLabel(p)):'';}).join(''):'<div style="font-size:13px;color:var(--g5);">No scans saved for this booking yet.</div>');
@@ -5195,7 +5195,7 @@ async function saveCIReportLink(){
     if(up&&up.error)return '';
     var s=await SB.storage.from('client-docs').createSignedUrl(path,60*60*24*REPORT_LINK_DAYS);
     var signed=s&&s.data&&s.data.signedUrl;if(!signed)return '';
-    return 'https://gorent-fleet.github.io/fleet/#r='+encodeURIComponent(signed);
+    return 'https://gorent-fleet.github.io/tablet/#r='+encodeURIComponent(signed);
   }catch(e){return '';}
 }
 function waNumber(p){
