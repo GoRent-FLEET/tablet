@@ -1106,7 +1106,7 @@ function drawDoc(){
     +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
     +'<select id="doc-fn" onchange="DOC_FN=this.value;drawDoc();" style="color-scheme:dark;padding:12px;font-size:15px;font-weight:800;border-radius:var(--rs);border:2px solid var(--g3);background:var(--g0);color:var(--tx);min-width:190px;">'
       +'<option value="">🚗 All vehicles</option>'
-      +DOC_ROWS.map(function(r){return r.fn;}).filter(function(v,i,a){return v&&a.indexOf(v)===i;}).sort(function(a,b){return fnNum(a)-fnNum(b);})
+      +FLEET.map(function(v){return v.fn;}).concat(DOC_ROWS.map(function(r){return r.fn;})).filter(function(v,i,a){return v&&a.indexOf(v)===i;}).sort(function(a,b){return fnNum(a)-fnNum(b);})
         .map(function(fn){return '<option'+(DOC_FN===fn?' selected':'')+'>'+_bx(fn)+'</option>';}).join('')
     +'</select>'
     +'<input class="search-bar" id="doc-find" style="flex:1;min-width:220px;margin:0;" placeholder="🔎 Search client name" value="'+_bx(DOC_FIND)+'" oninput="DOC_FIND=this.value;drawDoc();document.getElementById(\'doc-find\').focus();">'
@@ -1115,8 +1115,46 @@ function drawDoc(){
     +'<div style="font-size:12px;color:var(--g5);">Contract, booking details, passports, photos, damage, handover and return report — with print.</div>'
     +'<button onclick="backupNow(false)" style="padding:8px 14px;border-radius:8px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:13px;font-weight:900;cursor:pointer;white-space:nowrap;">💾 Backup to this computer</button>'
     +'</div>'
-    +(rows||'<div style="padding:40px;text-align:center;color:var(--g5);font-size:13px;">Nothing found</div>')
+    +docVehPanel()
+    +(rows?'<div style="font-size:12px;font-weight:900;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;">📁 Documents on file</div>'+rows
+          :'<div style="padding:26px;text-align:center;color:var(--g5);font-size:13px;">No hand-over documents'+(DOC_FN?' for '+_bx(DOC_FN):'')+' yet</div>')
     +'</div>';
+}
+// Vehicle details and every client booked on it
+function docVehPanel(){
+  if(!DOC_FN)return '';
+  var v=FLEET.filter(function(x){return x.fn===DOC_FN;})[0];
+  var bookings=FLEET.filter(function(x){return x.fn===DOC_FN&&x.cl;}).sort(function(a,b){return (a.pu||'')>(b.pu||'')?1:-1;});
+  var today=new Date().toISOString().split('T')[0];
+  var lic=(v&&(v._licExpiry||(v.lic&&v.lic.expiry)))||'';
+  var licDays=lic?Math.round((new Date(lic)-new Date())/86400000):null;
+  var head=v?('<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;">'
+      +'<div><div style="font-size:20px;font-weight:900;color:var(--se);">'+_bx(v.fn)+' <span style="font-size:13px;color:var(--g5);">'+_bx(v.reg||'')+'</span></div>'
+      +'<div style="font-size:12px;color:var(--g5);margin-top:2px;">Odo '+((v.odo||0).toLocaleString())+' km'
+        +(lic?' · licence '+(licDays<0?'EXPIRED':licDays+' days'):' · no licence date')
+        +(v.blocked?' · ⚠ '+_bx(v.blocked):'')+'</div></div>'
+      +'<button onclick="openVehReport(\''+_bx(v.fn)+'\')" style="padding:8px 14px;border-radius:8px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:13px;font-weight:900;cursor:pointer;">🔧 Vehicle report</button>'
+      +'</div>'):('<div style="font-size:18px;font-weight:900;color:var(--tx);">'+_bx(DOC_FN)+'</div>');
+  var docFor={};DOC_ROWS.forEach(function(r){if(r.fn===DOC_FN)docFor[r.bid]=r;});
+  var list=bookings.map(function(b){
+    var key=bkKey(b), d=docFor[key];
+    var state=b.rt&&b.rt<today?'past':(b.pu&&b.pu<=today&&b.rt>=today?'now':'coming');
+    return '<div '+(d?'onclick="docOpenBooking(\''+_bx(key)+'\')" style="cursor:pointer;':'style="')
+      +'border:2px solid '+(state==='now'?'var(--gb)':'var(--g3)')+';border-radius:10px;padding:10px 12px;margin-bottom:6px;background:var(--g0);display:flex;justify-content:space-between;gap:10px;align-items:center;">'
+      +'<div style="min-width:0;"><div style="font-size:14px;font-weight:800;color:var(--tx);">'+_bx(b.cl||'—')+(waChip(b)?' · '+waChip(b):'')+'</div>'
+      +'<div style="font-size:12px;color:var(--g5);margin-top:2px;">📅 '+(b.pu||'?')+' → '+(b.rt||'?')+(b.quote?' · Quote '+_bx(String(b.quote)):'')+(b.camping?' · Camping':'')+'</div></div>'
+      +'<div style="font-size:11px;font-weight:900;white-space:nowrap;color:'+(d?'var(--bl)':'var(--g4)')+';">'
+        +(state==='now'?'🚙 OUT NOW':state==='past'?'✔ PAST':'📅 UPCOMING')+(d?' · Open 📁':'')+'</div></div>';
+  }).join('');
+  return '<div style="border:2px solid var(--gb);border-radius:12px;padding:12px;margin-bottom:12px;background:var(--gr);">'
+    +head
+    +'<div style="font-size:12px;font-weight:900;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;">👤 Clients booked on '+_bx(DOC_FN)+' ('+bookings.length+')</div>'
+    +(list||'<div style="font-size:13px;color:var(--g5);padding:8px 0;">No bookings on record</div>')
+    +'</div>';
+}
+function docOpenBooking(bid){
+  var r=DOC_ROWS.filter(function(x){return x.bid===bid;})[0];
+  if(r)openRentalFile(r.bid,r.fn,r.cl);
 }
 function docOpen(i){
   var q=(DOC_FIND||'').toLowerCase().trim();
