@@ -890,8 +890,39 @@ async function autoRefresh(force){
 }
 function startAutoRefresh(){
   if(_autoTimer)clearInterval(_autoTimer);
-  _autoTimer=setInterval(function(){autoRefresh(false);},AUTO_MS);
-  document.addEventListener('visibilitychange',function(){if(!document.hidden)autoRefresh(false);});
+  _autoTimer=setInterval(function(){autoRefresh(false);checkAppUpdate(false);},AUTO_MS);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden){autoRefresh(false);checkAppUpdate(true);}});
+  setTimeout(function(){checkAppUpdate(false);},15000);
+}
+// ── App update: when a new version is published, load it (never in the middle of a job) ──
+var APP_LOADED_AT=new Date(document.lastModified).getTime()||Date.now(),_appNew=false;
+async function checkAppUpdate(onReturn){
+  try{
+    if(!_appNew){
+      var r=await fetch(location.pathname,{method:'HEAD',cache:'no-store'});
+      var lm=r.ok&&r.headers.get('last-modified');
+      if(!lm||new Date(lm).getTime()<=APP_LOADED_AT+5000)return;
+      _appNew=true;
+    }
+    if(busyNow()){showAppUpdateBar();return;}
+    if(onReturn){appUpdateNow();return;}
+    showAppUpdateBar();
+  }catch(e){}
+}
+function showAppUpdateBar(){
+  if(document.getElementById('app-upd'))return;
+  var b=document.createElement('div');b.id='app-upd';
+  b.setAttribute('style','position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:99999;background:#145c30;color:#fff;border-radius:12px;padding:12px 16px;font-weight:800;font-size:15px;box-shadow:0 6px 24px rgba(0,0,0,.35);display:flex;gap:12px;align-items:center;max-width:94vw;');
+  b.innerHTML='<span>🔄 New version of the app available</span><button style="background:#fff;color:#145c30;border:none;border-radius:8px;padding:8px 14px;font-weight:900;font-size:14px;cursor:pointer;">Update now</button>';
+  b.querySelector('button').onclick=function(){
+    if(busyNow()&&!confirm('A check-out or check-in is open. Update anyway? Anything not yet saved on this screen may be lost.'))return;
+    appUpdateNow();
+  };
+  document.body.appendChild(b);
+}
+async function appUpdateNow(){
+  try{await fetch(location.pathname,{cache:'reload'});}catch(e){}
+  location.reload();
 }
 
 // ── Backup: a copy of everything on this computer each day the app is opened ──
