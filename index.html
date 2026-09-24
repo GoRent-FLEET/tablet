@@ -1401,7 +1401,18 @@ async function showApp(){
 }
 async function restoreSession(){
   var _rl=sharedReportLink(); if(_rl){showSharedReport(_rl);return;}
-  try{var _ds=await SB.auth.getSession();if(!(_ds&&_ds.data&&_ds.data.session)){showDeviceLogin();return;}}catch(e){showDeviceLogin();return;}
+  try{
+    var _ds=await SB.auth.getSession();
+    if(!(_ds&&_ds.data&&_ds.data.session)){showDeviceLogin();return;}
+    // the saved token can belong to an account that no longer exists — check it is still good
+    var _du=await SB.auth.getUser();
+    if(!(_du&&_du.data&&_du.data.user)||(_du&&_du.error)){
+      try{await SB.auth.signOut();}catch(e2){}
+      showDeviceLogin();
+      setTimeout(function(){toast('This tablet must be set up again','err');},400);
+      return;
+    }
+  }catch(e){showDeviceLogin();return;}
   // Check for saved login
   try {
     var saved = localStorage.getItem('gorent_user');
