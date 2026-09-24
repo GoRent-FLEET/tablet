@@ -1070,8 +1070,15 @@ function renderCOPicker(){
     var diff=Math.round((new Date(v.pu+'T00:00:00')-new Date(today+'T00:00:00'))/86400000);
     return diff>=0&&diff<=7;
   }).sort(function(a,b){return a.pu>b.pu?1:-1;});
-  function ipInfo(fn){
+  function ipInfo(fn,bid){
     var best=null;
+    try{
+      var rd=remoteDraftFor(fn,bid,'checkout');
+      if(rd)best={_name:rd.updated_by||rd.staff||'',stepName:['Cleaning','Bonnet','Equipment','Mechanical','Pre-handover inspection','Contract','Handover','Management'][rd.step]||'',
+        done:Object.keys((rd.data&&rd.data.prepItems)||{}).length+Object.keys((rd.data&&rd.data.mechItems)||{}).length,
+        updated:new Date(rd.updated_at).getTime(),device:rd.device,
+        who:{cleaning:(rd.data&&rd.data.prepBy)||'',equipment:(rd.data&&rd.data.equipBy)||'',mechanical:(rd.data&&rd.data.mechCheckBy)||'',inspection:(rd.data&&rd.data.inspBy)||'',contract:(rd.data&&rd.data.contractBy)||'',handover:(rd.data&&rd.data.mechBy)||''}};
+    }catch(e){}
     try{
       for(var i=0;i<localStorage.length;i++){
         var k=localStorage.key(i);
@@ -1087,7 +1094,7 @@ function renderCOPicker(){
   var rows='';
   upcoming.forEach(function(v){
     var isToday=v.pu===today;
-    var ip=ipInfo(v.fn);
+    var ip=ipInfo(v.fn,v.bid);
     var badge=isToday?'<span style="background:#4a6fa5;color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">TODAY</span>':'<span style="background:var(--g2);color:var(--g5);font-size:11px;font-weight:800;padding:3px 10px;border-radius:8px;">UPCOMING</span>';
     var dt=new Date(v.pu+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
     if(ip)badge='<span style="background:var(--ag);color:var(--al);border:1px solid var(--am);font-size:11px;font-weight:900;padding:3px 10px;border-radius:8px;">IN PROGRESS</span>';
@@ -1523,6 +1530,7 @@ async function loadBookings(){
         return x.return_place&&x.return_place!=='Go Rent Office, 6 Diehl Str, Windhoek';
       }).map(function(x){var v=FLEET.filter(function(f){return bkKey(f)===x.booking_id;})[0];x.rt=v?v.rt:'';return x;});
     }catch(e){}
+    try{await loadRemoteDrafts();}catch(e){}
     BOOKINGS_LOADED=true;
     return true;
   }catch(e){console.warn('loadBookings',e);return false;}
@@ -2020,6 +2028,7 @@ function startCO(fn){
     return;
   }
   toast('Starting check-out: '+fn,'ok');
+  setTimeout(function(){pickUpRemoteWork(fn,v.bid);},300);   // work started on another device
   // Mark as in-progress (preserve existing staff if already set)
   try{
     const existing=localStorage.getItem(ipKey(fn));
@@ -3608,6 +3617,102 @@ function coStep4_dmg(){
       :'<div class="al warn" style="text-align:center;">'+(co.inspBy?'Finish the red items and documents above':'Select your name above to start the inspection')+'</div>');
 }
 // Keeps ticked items if the page reloads mid check-out (was missing, which broke the tick buttons)
+// ── Shared work: a check-out or check-in in progress is visible on every device ──
+var REMOTE_DRAFTS={}, _pushTimer=null, DEVICE_ID=(function(){
+  try{var d=localStorage.getItem('gorent_device');if(!d){d='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gorent_device',d);}return d;}catch(e){return 'dev';}
+})();
+async function pickUpRemoteWork(fn,bid){
+  try{
+    var id=draftId('checkout',fn,bid);
+    var r=await SB.from('work_drafts').select('*').eq('id',id).limit(1);
+    var d=(r&&r.data&&r.data[0])||null;
+    if(!d||!co||co.fn!==fn||co._done)return;
+    REMOTE_DRAFTS[id]=d;
+    var done=Object.keys((d.data&&d.data.prepItems)||{}).length+Object.keys((d.data&&d.data.mechItems)||{}).length;
+    if(!done&&!(d.data&&d.data.contractSigned))return;
+    var who=d.updated_by||d.staff||'another device';
+    if(d.device===DEVICE_ID){applyDraft(d);drawCO();return;}
+    if(!confirm('WORK ALREADY STARTED\n\n'+fn+' was started by '+who+' on another device'
+      +(d.step!=null?'\n\nThey are on: '+(['Cleaning','Bonnet','Equipment','Mechanical','Pre-handover inspection','Contract','Handover','Management'][d.step]||''):'')
+      +'\n'+done+' items already ticked'
+      +'\n\nLoad their work and carry on?\n(Cancel starts fresh on this tablet)'))return;
+    applyDraft(d);
+    if(d.step!=null&&canDoStep(d.step))coStep=d.step;
+    saveCOProgress();drawCO();
+    toast('Loaded work from '+who,'ok');
+  }catch(e){}
+}
+function draftId(kind,fn,bid){return kind+':'+(bid||fn);}
+// photos and signatures stay on the device that took them — everything else is shared
+function draftPayload(){
+  if(!co||!co.fn)return null;
+  var v=co.v||{};
+  return {
+    id:draftId('checkout',co.fn,v.bid), kind:'checkout', fleet_no:co.fn, client:co.clientName||v.cl||'',
+    staff:[co.prepBy,co.equipBy,co.mechCheckBy,co.inspBy,co.contractBy,co.mechBy,co.mgmtBy].filter(Boolean).slice(-1)[0]||'',
+    step:coStep,
+    data:{
+      prepItems:co.prepItems||{}, prepLog:co.prepLog||[], mechItems:co.mechItems||{}, docItems:co.docItems||{},
+      prepBy:co.prepBy||'', equipBy:co.equipBy||'', equipAt:co.equipAt||'', equipSig:co.equipSig?'confirmed':'',
+      mechCheckBy:co.mechCheckBy||'', mechWho:co.mechWho||{}, inspBy:co.inspBy||'',
+      contractBy:co.contractBy||'', contractSigned:!!co.contractSigned, contractAt:co.contractAt||'',
+      contract:co.contract||{}, drivers:(co.drivers||[]).map(function(d){return {name:d.name||'',dob:d.dob||'',nat:d.nat||'',passport:d.passport||'',passportExp:d.passportExp||'',licNo:d.licNo||'',licExpiry:d.licExpiry||''};}),
+      odometerOut:co.odometerOut||0, fuelOut:co.fuelOut||'', returnTime:co.returnTime||'',
+      clientName:co.clientName||'', mgmtBy:co.mgmtBy||'',
+      marks:(typeof imarks!=='undefined'?imarks:null), isize:(typeof isize!=='undefined'?isize:'M')
+    },
+    updated_by:(APP_USER&&APP_USER.name)||'', device:DEVICE_ID,
+    started_at:co._startedAt||new Date().toISOString(), updated_at:new Date().toISOString()
+  };
+}
+function pushDraft(){
+  if(_pushTimer)clearTimeout(_pushTimer);
+  _pushTimer=setTimeout(async function(){
+    try{
+      var pl=draftPayload();
+      if(!pl||co._done)return;
+      await SB.from('work_drafts').upsert(pl);
+      REMOTE_DRAFTS[pl.id]=pl;
+    }catch(e){}
+  },1500);
+}
+async function loadRemoteDrafts(){
+  try{
+    var r=await SB.from('work_drafts').select('*');
+    REMOTE_DRAFTS={};
+    ((r&&r.data)||[]).forEach(function(x){REMOTE_DRAFTS[x.id]=x;});
+  }catch(e){}
+}
+function remoteDraftFor(fn,bid,kind){
+  return REMOTE_DRAFTS[draftId(kind||'checkout',fn,bid)]||null;
+}
+async function dropDraft(fn,bid,kind){
+  try{
+    var id=draftId(kind||'checkout',fn,bid);
+    await SB.from('work_drafts').delete().eq('id',id);
+    delete REMOTE_DRAFTS[id];
+  }catch(e){}
+}
+// take over work another device started
+function applyDraft(d){
+  if(!d||!d.data)return false;
+  var x=d.data;
+  co.prepItems=x.prepItems||co.prepItems; co.prepLog=x.prepLog||co.prepLog;
+  co.mechItems=x.mechItems||co.mechItems; co.docItems=x.docItems||co.docItems;
+  co.prepBy=x.prepBy||co.prepBy; co.equipBy=x.equipBy||co.equipBy; co.equipAt=x.equipAt||co.equipAt;
+  if(x.equipSig)co.equipSig=x.equipSig;
+  co.mechCheckBy=x.mechCheckBy||co.mechCheckBy; co.mechWho=x.mechWho||co.mechWho; co.inspBy=x.inspBy||co.inspBy;
+  co.contractBy=x.contractBy||co.contractBy; co.contractSigned=!!x.contractSigned||co.contractSigned; co.contractAt=x.contractAt||co.contractAt;
+  co.contract=Object.assign(co.contract||{},x.contract||{});
+  (x.drivers||[]).forEach(function(d2,i){ co.drivers[i]=Object.assign(co.drivers[i]||{},d2); });
+  if(x.odometerOut)co.odometerOut=x.odometerOut;
+  if(x.fuelOut)co.fuelOut=x.fuelOut;
+  if(x.returnTime)co.returnTime=x.returnTime;
+  if(x.clientName)co.clientName=x.clientName;
+  if(x.mgmtBy)co.mgmtBy=x.mgmtBy;
+  try{ if(x.marks&&typeof imarks!=='undefined'){ VIEWS.forEach(function(v){ if(x.marks[v])imarks[v]=x.marks[v]; }); if(x.isize)isize=x.isize; } }catch(e){}
+  return true;
+}
 function saveCOProgress(){
   try{
     if(!co||!co.fn)return;
@@ -3625,6 +3730,7 @@ function saveCOProgress(){
     }catch(e){}
     localStorage.setItem(ipKey(co.fn),JSON.stringify(rec));
   }catch(e){}
+  pushDraft();   // share it with the other devices
 }
 function setDocItem(k,v){
   if(!co.docItems)co.docItems={};
@@ -4065,6 +4171,7 @@ function coCloseCheckout(){
   if(!co._handoverLink&&!confirm('The handover document has not been sent yet.\n\nClose this check-out anyway?'))return;
   try{localStorage.removeItem(ipKey(co.fn));}catch(e){}
   try{if(co.v&&co.v.bid&&CO_DRAFTS[co.v.bid])delete CO_DRAFTS[co.v.bid];delete CO_DRAFTS[co.fn];}catch(e){}
+  try{dropDraft(fn,(co.v&&co.v.bid)||null,'checkout');}catch(e){}
   co={};coStep=0;
   goPage('ov');renderOV();
   toast('Check-out closed ✅','ok');
@@ -4121,6 +4228,7 @@ function coFinishCheck(){
 }
 async function completeCO(){
   co._done=true;
+  try{dropDraft(co.fn,co.v&&co.v.bid,'checkout');}catch(e){}
   try{localStorage.removeItem(ipKey(co.fn));}catch(e){}
   co.prepByAll=coCleanStaff();if(!co.prepBy)co.prepBy=co.prepByAll[0]||'';
   try{uploadPhotos(co.prepPhotos,co.fn,co.clientName||co.v.cl,'prep');}catch(e){}
