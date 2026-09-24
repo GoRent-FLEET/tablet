@@ -679,19 +679,34 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const SB=supabase.createClient(SB_URL,SB_KEY);
 
 // ── STAFF ────────────────────────────────────────────────────────
+// PINs are NOT stored in the app — they are checked by Supabase (verify_staff_pin)
 const STAFF_ROSTER=[
-  {name:'Bonga',    code:'1111', role:'prep'},
-  {name:'Dixon',    code:'2222', role:'prep'},
-  {name:'Vince',    code:'3333', role:'prep'},
-  {name:'Joe',      code:'4444', role:'prep'},
-  {name:'Nelson',   code:'5555', role:'prep'},
-  {name:'Robbie',   code:'6666', role:'prep'},
-  {name:'Peter',    code:'7777', role:'admin'},
-  {name:'Simon',    code:'8888', role:'prep'},
-  {name:'Christina',code:'9090', role:'prep'},
-  {name:'Abia',     code:'1010', role:'prep'},
-  {name:'Manager',  code:'9999', role:'manager'},
+  {name:'Bonga',    role:'prep'},
+  {name:'Dixon',    role:'prep'},
+  {name:'Vince',    role:'prep'},
+  {name:'Joe',      role:'prep'},
+  {name:'Nelson',   role:'prep'},
+  {name:'Robbie',   role:'prep'},
+  {name:'Peter',    role:'admin'},
+  {name:'Simon',    role:'prep'},
+  {name:'Christina',role:'prep'},
+  {name:'Abia',     role:'prep'},
+  {name:'Manager',  role:'manager'},
 ];
+// Check a staff PIN on the server. Returns {ok, name, role} or {ok:false, reason, wait_minutes}
+async function checkStaffPin(name,pin){
+  try{
+    var r=await SB.rpc('verify_staff_pin',{p_name:name,p_pin:String(pin||'').trim()});
+    if(r.error)return {ok:false,reason:'offline'};
+    return r.data||{ok:false,reason:'wrong'};
+  }catch(e){return {ok:false,reason:'offline'};}
+}
+function pinFailText(res){
+  if(res.reason==='locked')return '🔒 Too many wrong PINs — wait '+(res.wait_minutes||5)+' min';
+  if(res.reason==='offline')return '📶 No internet — cannot check PIN';
+  return '❌ Wrong PIN — try again';
+}
+function staffUser(res){var st=STAFF_ROSTER.filter(function(s){return s.name===res.name;})[0]||{};return {name:res.name,role:res.role||st.role||'prep'};}
 // 'Manager' is a login only — it is not offered in the name lists
 const STAFF_PREP=STAFF_ROSTER.map(s=>s.name).filter(n=>n!=='Manager');
 const STAFF_HO  =STAFF_ROSTER.map(s=>s.name).filter(n=>n!=='Manager');
@@ -701,11 +716,11 @@ let APP_USER = null; // {name, code, role} - set on login
 function initAppUser(){
   try{
     const saved=localStorage.getItem('gorent_user');
-    if(saved){APP_USER=JSON.parse(saved);}
+    if(saved){APP_USER=JSON.parse(saved);if(APP_USER&&APP_USER.code){delete APP_USER.code;localStorage.setItem('gorent_user',JSON.stringify(APP_USER));}}
   }catch(e){}
 }
 function loginUser(code){
-  const staff=STAFF_ROSTER.find(s=>s.code===code.trim());
+  const staff=null; // PINs are checked on the server now (checkStaffPin)
   if(!staff){return false;}
   APP_USER=staff;
   try{localStorage.setItem('gorent_user',JSON.stringify(staff));}catch(e){}
@@ -768,18 +783,19 @@ function _refreshDots() {
   document.getElementById('s2dots').textContent = d;
 }
 
-function pinTap(d) {
-  if (_pin.length >= 4) return;
+var _pinBusy=false;
+async function pinTap(d) {
+  if (_pinBusy || _pin.length >= 4) return;
   _pin += d;
   _refreshDots();
   if (_pin.length === 4) {
-    var matched = null;
-    for (var i = 0; i < STAFF_ROSTER.length; i++) {
-      if (STAFF_ROSTER[i].name === _who && STAFF_ROSTER[i].code === _pin) {
-        matched = STAFF_ROSTER[i]; break;
-      }
-    }
+    _pinBusy=true;
+    var _m0=document.getElementById('s2msg'); if(_m0){_m0.style.color='#64748b';_m0.textContent='Checking…';}
+    var res = await checkStaffPin(_who,_pin);
+    _pinBusy=false;
+    var matched = res.ok ? staffUser(res) : null;
     if (matched) {
+      if(_m0)_m0.textContent='';
       APP_USER = matched;
       try { localStorage.setItem('gorent_user', JSON.stringify(matched)); } catch(e) {}
       // Update nav
@@ -802,7 +818,7 @@ function pinTap(d) {
       try { renderOV(); } catch(err) { console.error('renderOV error:', err); }
     } else {
       document.getElementById('s2msg').style.color = '#f05050';
-      document.getElementById('s2msg').textContent = '❌ Wrong PIN — try again';
+      document.getElementById('s2msg').textContent = pinFailText(res);
       _pin = '';
       _refreshDots();
       setTimeout(function(){ var m=document.getElementById('s2msg'); if(m) m.textContent=''; }, 2000);
@@ -6058,10 +6074,13 @@ function askStaffPin(name,onOk,onCancel){
   document.body.appendChild(m);
   var inp=document.getElementById('pin-in');setTimeout(function(){inp.focus();},50);
   function close(){if(m.parentNode)m.parentNode.removeChild(m);}
-  function ok(){
-    var st=STAFF_ROSTER.filter(function(s){return s.name===name;})[0];
-    if(st&&String(st.code)===String(inp.value).trim()){close();onOk();}
-    else{document.getElementById('pin-msg').textContent='Wrong PIN — try again';inp.value='';inp.focus();}
+  var busy=false;
+  async function ok(){
+    if(busy)return;busy=true;
+    var msg=document.getElementById('pin-msg');msg.textContent='Checking…';
+    var res=await checkStaffPin(name,inp.value);busy=false;
+    if(res.ok){close();onOk();}
+    else{msg.textContent=pinFailText(res).replace(/^❌ /,'');inp.value='';inp.focus();}
   }
   document.getElementById('pin-ok').onclick=ok;
   document.getElementById('pin-cancel').onclick=function(){close();if(onCancel)onCancel();};
@@ -6905,17 +6924,16 @@ function lsDots() {
   document.getElementById('ls-dots').textContent = t;
 }
 
-function lsPin(d) {
-  if (LS_PIN.length >= 4) return;
+var _lsBusy=false;
+async function lsPin(d) {
+  if (_lsBusy || LS_PIN.length >= 4) return;
   LS_PIN += d;
   lsDots();
   if (LS_PIN.length === 4) {
-    var match = null;
-    for (var i = 0; i < STAFF_ROSTER.length; i++) {
-      if (STAFF_ROSTER[i].name === LS_WHO && STAFF_ROSTER[i].code === LS_PIN) {
-        match = STAFF_ROSTER[i]; break;
-      }
-    }
+    _lsBusy=true;
+    var res = await checkStaffPin(LS_WHO,LS_PIN);
+    _lsBusy=false;
+    var match = res.ok ? staffUser(res) : null;
     if (match) {
       APP_USER = match;
       try { localStorage.setItem('gorent_user', JSON.stringify(match)); } catch(e) {}
@@ -6948,7 +6966,7 @@ function lsPin(d) {
     } else {
       var msg = document.getElementById('ls-msg');
       msg.style.color = '#f05050';
-      msg.textContent = '❌ Wrong PIN — try again';
+      msg.textContent = pinFailText(res);
       LS_PIN = '';
       lsDots();
       setTimeout(function() { msg.textContent = ''; }, 2000);
@@ -6961,16 +6979,7 @@ function lsDel() {
   lsDots();
 }
 
-function debugGo() {
-  // Keep for emergency access - just calls same flow as normal login
-  APP_USER = {name:'Peter', code:'7777', role:'prep'};
-  var ls = document.getElementById('login-screen');
-  var ap = document.getElementById('app');
-  ls.setAttribute('style','display:none!important');
-  ap.setAttribute('style','display:flex!important;height:100%;flex-direction:column;');
-  try { renderOV(); } catch(e) {}
-  try { loadFleetFromDB().then(function(){ loadClients().then(function(){ try{renderOV();}catch(e){} }); }); } catch(e) {}
-}
+function debugGo() { showLoginScreen(); } // old emergency bypass removed — log in with a PIN
 function showLoginScreen() {
   APP_USER = null;
   LS_PIN = ''; LS_WHO = '';
@@ -6983,15 +6992,7 @@ function showLoginScreen() {
   if (nl) nl.style.display = 'none';
 }
 
-function debugSwitch(){
-  alert('Switching now...');
-  document.getElementById('login-screen').style.setProperty('display','none','important');
-  document.getElementById('app').style.setProperty('display','flex','important');
-  document.getElementById('app').style.height = '100%';
-  document.getElementById('app').style.flexDirection = 'column';
-  alert('Done! If you see this but not the app, the app div has a problem.');
-  try{ renderOV(); }catch(e){ alert('renderOV error: '+e.message); }
-}
+function debugSwitch(){ showLoginScreen(); } // old bypass removed
 
 // ── RESUME PANEL ──────────────────────────────────────────────────
 function checkResume() {
