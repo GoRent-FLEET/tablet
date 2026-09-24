@@ -3286,8 +3286,8 @@ function previewAndSignContract(){
       <!-- Client types their own name -->
       <div style="background:#f0f9f4;border-top:2px solid #1e8449;border-bottom:1px solid #b2dfca;padding:10px 14px;">
         <div style="font-size:14px;font-weight:700;color:#1e8449;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">✍️ Type your full name to confirm identity</div>
-        <input id="ct-name-confirm" type="text" placeholder="Type your full name exactly as on your passport"
-          style="width:100%;padding:12px 14px;border:2px solid #1e8449;border-radius:8px;font-size:15px;font-family:inherit;color:#111;background:#fff;"
+        <input id="ct-sig-ack" type="search" name="ack_${Date.now()}" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" enterkeyhint="done" placeholder="Type it as on your passport"
+          style="-webkit-appearance:none;appearance:none;width:100%;padding:12px 14px;border:2px solid #1e8449;border-radius:8px;font-size:15px;font-family:inherit;color:#111;background:#fff;"
           oninput="ctNameShow(this.value)">
         <div id="ct-name-match" style="font-size:14px;color:#888;margin-top:5px;font-weight:700;min-height:16px;"></div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:3px;">
@@ -3374,7 +3374,7 @@ function ctNameShow(v){
 }
 function ctNameCopy(){
   var n=(co.drivers&&co.drivers[0]&&co.drivers[0].name)||(co.contract&&co.contract.client_name)||co.clientName||'';
-  var i=document.getElementById('ct-name-confirm');if(!i||!n)return;
+  var i=document.getElementById('ct-sig-ack');if(!i||!n)return;
   i.value=n;ctNameShow(n);
 }
 async function submitContractSig(){
@@ -3384,7 +3384,7 @@ async function submitContractSig(){
     var _b=document.getElementById('ct-miss-box');if(_b)_b.scrollIntoView({behavior:'smooth',block:'start'});
     return;
   }
-  const nameInput=document.getElementById('ct-name-confirm');
+  const nameInput=document.getElementById('ct-sig-ack');
   const typedName=((nameInput&&nameInput.value)||'').trim();
   const expectedName=((co.drivers&&co.drivers[0]&&co.drivers[0].name)||(co.contract&&co.contract.client_name)||co.clientName||'').trim();
   const nameOk=ctNameOk(typedName);
@@ -3392,7 +3392,7 @@ async function submitContractSig(){
   if(!typedName){
     nameInput.style.border='2px solid #e74c3c';
     nameInput.placeholder='⚠ Please type your full name first';
-    setTimeout(()=>{nameInput.style.border='2px solid #1e8449';nameInput.placeholder='Type your full name exactly as on your passport';},2500);
+    setTimeout(()=>{nameInput.style.border='2px solid #1e8449';nameInput.placeholder='Type it as on your passport';},2500);
     return;
   }
   if(!nameOk){
