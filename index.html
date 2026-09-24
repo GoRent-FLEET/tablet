@@ -987,6 +987,8 @@ function applyTabAccess(){
     var el=document.getElementById(id);
     if(el)el.style.display=show?'':'none';
   });
+  // hide Check-In for staff who are not allowed to do check-ins
+  var ciTab=document.getElementById('nb-ci');if(ciTab)ciTab.style.display=canCheckIn()?'':'none';
 }
 const MANAGEMENT=['Manager','Robbie','Peter','Simon','Joe','Christina'];
 function isManagement(){ return !!(APP_USER && MANAGEMENT.includes(APP_USER.name)); }
@@ -2850,15 +2852,20 @@ function driverDocSlot(di,field,ico,lbl,val){
   </div>`;
 }
 
+// Redraw the driver section. On the Contract step the contract details sit underneath — keep them on screen
+function coRedrawDrivers(){
+  var s=document.getElementById('cos');if(!s)return;
+  s.innerHTML=coStep1()+(coStep===5?'<div style="height:14px"></div>'+coStep2():'');
+}
 function addDriver(){
   co.drivers.push({name:'',dob:'',nationality:'',passport:'',licNo:'',licExpiry:'',
                    passportImg:null,licFront:null,licBack:null});
-  const s=document.getElementById('cos');if(s)s.innerHTML=coStep1();
+  coRedrawDrivers();
 }
 
 function removeDriver(i){
   co.drivers.splice(i,1);
-  const s=document.getElementById('cos');if(s)s.innerHTML=coStep1();
+  coRedrawDrivers();
 }
 
 
@@ -3011,7 +3018,7 @@ If a field is not visible or unclear, use an empty string. Return only the JSON.
         if(m.nationality&&!d2.nationality){d2.nationality=m.nationality;ch.push('nationality');}
         if(m.passport_number&&!d2.passport){d2.passport=m.passport_number;ch.push('passport #');}
         if(m.expiry&&!d2.ppExpiry){d2.ppExpiry=m.expiry;ch.push('passport expiry');}
-        var s2=document.getElementById('cos');if(s2)s2.innerHTML=coStep1();
+        coRedrawDrivers();
         toast(ch.length?('✅ Read from the passport code lines: '+ch.join(', ')+' — please check'):'Passport read — details already filled','ok');
         return;
       }
@@ -3114,13 +3121,13 @@ async function captureDriverDoc(event,driverIdx,field){
     else toast('Photo saved ✅','ok');
     // Auto-read documents
     if(field==='passportImg'){
-      const s=document.getElementById('cos');if(s)s.innerHTML=coStep1();
+      coRedrawDrivers();
       extractPassportData(b64,driverIdx);
     } else if(field==='licFront'){
-      const s=document.getElementById('cos');if(s)s.innerHTML=coStep1();
+      coRedrawDrivers();
       extractLicenceData(b64,driverIdx);
     } else {
-      const s=document.getElementById('cos');if(s)s.innerHTML=coStep1();
+      coRedrawDrivers();
     }
   };
   img.onerror=()=>{hideBanner();toast('Could not read image','err');};
@@ -4003,7 +4010,7 @@ function mgmtResolve(lbl, section){
 }
 
 function signMgmt(){
-  co.mgmtBy=(function(){var _e=document.getElementById('co-m-nm');return _e?_e.value:undefined;})().trim()||co.mgmtBy;
+  co.mgmtBy=String((function(){var _e=document.getElementById('co-m-nm');return _e?_e.value:'';})()||'').trim()||co.mgmtBy||(APP_USER&&APP_USER.name)||''; // name box is replaced by a 'locked' badge when this person started the check-out
   if(!co.mgmtBy){toast('Enter manager name','err');return;}
   if(!hasSig('co-m-sig')){toast('Manager must sign','err');return;}
   co.mgmtSig=getSig('co-m-sig');co.mgmtAt=now();
@@ -4360,7 +4367,7 @@ function startCI(fn){
     if(prev.staff){ci.receivedBy=prev.staff;}
   }catch(e){}
   RET_GROUPS.forEach(g=>g.items.forEach(i=>{retSt[i]='';})); // nothing pre-ticked: staff confirm each item came back
-  ci={v,fn,receivedBy:(APP_USER&&APP_USER.name)||'',odoIn:'',odometerOut:(co&&co.odometerOut)||v.odo,fuelIn:'',fuelNote:'',notes:'',
+  ci={v,fn,receivedBy:(APP_USER&&APP_USER.name)||'',odoIn:'',odometerOut:(co&&co.fn===fn&&co.odometerOut)||v.odo,fuelIn:'',fuelNote:'',notes:'',
       dmgd:[],dmgPhotos:[],custSig:null,custAt:'',
       mgmtName:'',mgmtSig:null,mgmtAt:'',deposit:'Full deposit returned',mgmtNotes:'',
       retItems:{},retSig:null,retAt:''};
@@ -4965,7 +4972,7 @@ function ciMgrSelect(val){
 async function signMgmtCI(){
   var _open=ciCompletion().filter(function(x){return !x.ok;});
   if(_open.length){toast('Not complete yet: '+_open[0].lbl,'err');return;}
-  ci.mgmtName=(function(){var _e=document.getElementById('ci-mgmt');return _e?_e.value:undefined;})().trim()||ci.mgmtName;
+  ci.mgmtName=String((function(){var _e=document.getElementById('ci-mgmt');return _e?_e.value:'';})()||'').trim()||ci.mgmtName||(APP_USER&&APP_USER.name)||'';
   ci.deposit=(function(){var _e=document.getElementById('ci-dep');return _e?_e.value:undefined;})()||ci.deposit;
   ci.mgmtNotes=(function(){var _e=document.getElementById('ci-mnotes');return _e?_e.value:undefined;})()||ci.mgmtNotes;
   if(!ci.mgmtName){toast('Enter manager name','err');return;}
