@@ -867,6 +867,62 @@ initIM();
 // ── NAV ──────────────────────────────────────────────────────────
 const REPORTS_ALLOWED=['Manager','Simon','Peter','Joe','Robbie','Christina'];  // may see On Rental, Calendar, Documentation and Reports
 const NO_OVERVIEW=['Bonga','Dixon','Vince','Abia','Nelson'];  // check-outs / check-ins only
+// ── Auto refresh: keep the bookings fresh without disturbing anyone mid-job ──
+var AUTO_MS=180000, _autoTimer=null, LAST_SYNC=null;
+function busyNow(){
+  return !!((typeof co==='object'&&co&&co.fn&&!co._done)||(typeof ci==='object'&&ci&&ci.fn&&!ci._done)
+    ||document.getElementById('contract-modal')||document.getElementById('co-missing')||document.getElementById('rf-modal'));
+}
+async function autoRefresh(force){
+  if(!APP_USER)return;
+  if(!force&&busyNow())return;
+  if(document.hidden&&!force)return;
+  try{
+    await loadBookings();
+    LAST_SYNC=new Date();
+    var pg=(document.querySelector('.page.on')||{}).id||'';
+    if(pg==='page-ov')renderOV();
+    else if(pg==='page-out')renderOut();
+    else if(pg==='page-doc')renderDoc();
+    else if(pg==='page-ci'&&!(ci&&ci.fn))renderCIPicker();
+    else if(pg==='page-co'&&!(co&&co.fn))renderCOPicker();
+  }catch(e){}
+}
+function startAutoRefresh(){
+  if(_autoTimer)clearInterval(_autoTimer);
+  _autoTimer=setInterval(function(){autoRefresh(false);},AUTO_MS);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)autoRefresh(false);});
+}
+
+// ── Backup: a copy of everything on this computer each day the app is opened ──
+async function backupNow(auto){
+  try{
+    var tables=['checkouts','checkins','rental_contracts','booking_overrides'];
+    var data={made:new Date().toISOString(),by:(APP_USER&&APP_USER.name)||'',bookings:[],vehicles:[]};
+    try{var bk=await SB.from('bookings').select('*');data.bookings=(bk&&bk.data)||[];}catch(e){}
+    try{var vh=await SB.from('vehicles').select('*');data.vehicles=(vh&&vh.data)||[];}catch(e){}
+    for(var i=0;i<tables.length;i++){
+      try{var r=await SB.from(tables[i]).select('*');data[tables[i]]=(r&&r.data)||[];}catch(e){data[tables[i]]=[];}
+    }
+    var name='gorent-backup-'+new Date().toISOString().split('T')[0]+'.json';
+    var blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(function(){URL.revokeObjectURL(url);a.remove();},2000);
+    try{localStorage.setItem('gorent_backup_day',new Date().toISOString().split('T')[0]);}catch(e){}
+    var n=(data.checkouts||[]).length+(data.checkins||[]).length+(data.rental_contracts||[]).length;
+    toast('💾 Backup saved to this computer — '+n+' records','ok');
+    return true;
+  }catch(e){ if(!auto)toast('Backup failed: '+e.message,'err'); return false; }
+}
+function backupOnOpen(){
+  try{
+    if(/iPad|iPhone|Android/i.test(navigator.userAgent))return;
+    var today=new Date().toISOString().split('T')[0];
+    if(localStorage.getItem('gorent_backup_day')===today)return;
+    setTimeout(function(){backupNow(true);},4000);
+  }catch(e){}
+}
 function canSeeOverview(){ return !!(APP_USER && NO_OVERVIEW.indexOf(APP_USER.name)<0); }
 function canViewReports(){ return APP_USER && canSeeOverview() && (REPORTS_ALLOWED.includes(APP_USER.name) || isAdmin()); }
 // Show or hide On Rental, Calendar, Documentation and Vehicle Reports for this user
@@ -1055,7 +1111,10 @@ function drawDoc(){
     +'</select>'
     +'<input class="search-bar" id="doc-find" style="flex:1;min-width:220px;margin:0;" placeholder="🔎 Search client name" value="'+_bx(DOC_FIND)+'" oninput="DOC_FIND=this.value;drawDoc();document.getElementById(\'doc-find\').focus();">'
     +'</div>'
-    +'<div style="font-size:12px;color:var(--g5);margin:8px 0 12px;">Contract, booking details, passports, photos, damage, handover and return report — with print.</div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0 12px;">'
+    +'<div style="font-size:12px;color:var(--g5);">Contract, booking details, passports, photos, damage, handover and return report — with print.</div>'
+    +'<button onclick="backupNow(false)" style="padding:8px 14px;border-radius:8px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:13px;font-weight:900;cursor:pointer;white-space:nowrap;">💾 Backup to this computer</button>'
+    +'</div>'
     +(rows||'<div style="padding:40px;text-align:center;color:var(--g5);font-size:13px;">Nothing found</div>')
     +'</div>';
 }
@@ -1242,6 +1301,8 @@ async function showApp(){
   try { renderOV(); } catch(e){ console.warn('renderOV2:',e); }
   // Check for in-progress vehicles and show resume panel
   setTimeout(function(){ try{ checkResume(); }catch(e){} }, 500);
+  try{ startAutoRefresh(); }catch(e){}
+  try{ backupOnOpen(); }catch(e){}
 }
 async function restoreSession(){
   var _rl=sharedReportLink(); if(_rl){showSharedReport(_rl);return;}
@@ -5312,7 +5373,14 @@ function drawCalendar(){
         return bar(o.length,'#1d4ed8')+bar(b.length,'#12803c');
       })()
       +((!o.length&&!b.length)?'<div style="margin-top:6px;font-size:11px;color:var(--g4);">—</div>':'')
-      +((o.length||b.length)?'<div style="margin-top:4px;font-size:10px;color:var(--g5);line-height:1.35;">'+o.concat(b).slice(0,3).map(function(v){return _bx(v.fn);}).join(', ')+(o.length+b.length>3?' +'+(o.length+b.length-3):'')+'</div>':'')
+      +(function(){
+        var line=function(list,col,arrow){
+          if(!list.length)return '';
+          var names=list.slice(0,3).map(function(v){return _bx(v.fn);}).join(', ')+(list.length>3?' +'+(list.length-3):'');
+          return '<div style="margin-top:2px;font-size:10px;color:'+col+';line-height:1.35;font-weight:700;">'+arrow+' '+names+'</div>';
+        };
+        return line(o,'#1d4ed8','↗')+line(b,'#12803c','↙');
+      })()
       +'</div>';
   });
   var btn=function(mode,lbl){return '<button onclick="calSet(\''+mode+'\')" style="padding:7px 16px;border-radius:20px;font-size:13px;font-weight:900;cursor:pointer;border:2px solid '+(CAL_MODE===mode?'var(--gb)':'var(--g3)')+';background:'+(CAL_MODE===mode?'var(--sg)':'var(--g0)')+';color:'+(CAL_MODE===mode?'var(--se)':'var(--g5)')+';">'+lbl+'</button>';};
