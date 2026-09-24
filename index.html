@@ -2397,6 +2397,7 @@ function tapPrep(i){
   co.prepItems[lbl]={st:newSt,by:co.prepBy,at:ts};
   if(newSt) co.prepLog.push({lbl,st:newSt,by:co.prepBy,at:ts});
   co.prepCheckedBy[co.prepBy]=(co.prepCheckedBy[co.prepBy]||0)+1;
+  saveCOProgress();
   const s=document.getElementById('cos');
   if(s){
     // Save existing signature before redraw
@@ -2646,6 +2647,7 @@ function tapPrepIdx(i){
   co.prepItems[lbl]={st:newSt,by:co.prepBy,at:ts};
   if(newSt) co.prepLog.push({lbl,st:newSt,by:co.prepBy,at:ts});
   co.prepCheckedBy[co.prepBy]=(co.prepCheckedBy[co.prepBy]||0)+1;
+  saveCOProgress();
   const s=document.getElementById('cos');
   if(s)s.innerHTML=coStep1_equip();
 }
@@ -2659,6 +2661,7 @@ function signEquip(){
   if(!allStaff.includes(co.prepBy)) allStaff.push(co.prepBy);
   co.equipByAll=allStaff;
   // Camping signed: go on to Inspection, or stay here if this person may not do it
+  saveCOProgress();
   if(canDoStep(3)){toast('Equipment signed ✅','ok');coStep=3;}else{toast('Equipment signed ✅','ok');}
   drawCO();
 }
@@ -3742,6 +3745,7 @@ function tapMech(i){
   const lbl=L_MECH[i][1];
   co.mechItems[lbl]=co.mechItems[lbl]===''||!co.mechItems[lbl]?'ok':co.mechItems[lbl]==='ok'?'prob':'';
   co.dmgDone=true;
+  saveCOProgress();
   const s=document.getElementById('cos');if(s){
     s.innerHTML=coStep4_dmg();
     setTimeout(()=>{VIEWS.forEach(v=>buildIG(v));renderIS();},80);
@@ -4001,6 +4005,7 @@ function tapHOSection(key){
 function tapHO(k){
   if(!co.handoverChecks) co.handoverChecks={};
   co.handoverChecks[k]=co.handoverChecks[k]==='ok'?'':'ok';
+  saveCOProgress();
   const s=document.getElementById('cos');
   if(s){
     const sig=hasSig('co-c-sig')?getSig('co-c-sig'):null;
