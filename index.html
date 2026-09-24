@@ -1320,7 +1320,7 @@ async function loadBookings(){
     var s=await SB.auth.getSession();
     if(!(s&&s.data&&s.data.session))return false;
     var today=new Date().toISOString().split('T')[0];
-    var from=_addDays(today,-9),to=_addDays(today,9);
+    var from=_addDays(today,-120),to=_addDays(today,365);  // wide enough for the 14-day dashboard and the calendar
     var r=await SB.from('bookings').select('id,quote,fleet_no,client,email,phone,nationality,driver_age,drivers,camping,pax,pickup_date,return_date,pickup_loc,dropoff_loc,cross_border,satphone,baby_seat,extra_fuel,itinerary,notes,arrival_flight,arrival_flight_date,departure_flight,departure_flight_date,airport_transfer').lte('pickup_date',to).gte('return_date',from);
     if(r.error){toast('Could not load bookings: '+r.error.message,'err');return false;}
     var vres=await SB.from('vehicles').select('*');
