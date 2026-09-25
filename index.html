@@ -1936,12 +1936,10 @@ function _renderOV(){
 
   // Build groups
   var movGroups={};
-  allList.forEach(v=>{
-    var isOut=outList.includes(v);
-    var d=isOut?v.pu:v.rt;
-    if(!movGroups[d])movGroups[d]=[];
-    movGroups[d].push({v,isOut});
-  });
+  // One card per movement: OUT on the pickup day, BACK on the return day.
+  // (A rental that goes out and comes back inside the window is in both lists — it must not show OUT twice.)
+  outList.forEach(v=>{var d=v.pu;if(!movGroups[d])movGroups[d]=[];movGroups[d].push({v,isOut:true});});
+  inList.forEach(v=>{var d=v.rt;if(!movGroups[d])movGroups[d]=[];movGroups[d].push({v,isOut:false});});
 
   var arrGroups={};
   outList.forEach(v=>{if(v.flightIn){if(!arrGroups[v.pu])arrGroups[v.pu]=[];arrGroups[v.pu].push(v);}});
