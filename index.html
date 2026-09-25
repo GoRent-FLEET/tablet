@@ -181,7 +181,9 @@ textarea{resize:vertical;min-height:60px;}
 .ret-grp.ok{border-color:var(--se);background:var(--sg);}
 .ret-grp.dmg{border-color:var(--am);background:var(--ag);}
 .ret-grp.miss{border-color:var(--re);background:var(--rg);}
-.ret-grp-name{font-size:14px;font-weight:800;margin-bottom:3px;}
+.ret-grp-name{font-size:16px;font-weight:900;margin-bottom:3px;color:#1f2d24;}
+.ret-grp.first{border:3px solid #d97706;background:#fff7e6;}
+.ret-grp.first .ret-grp-name{color:#b45309;}
 .ret-grp.ok .ret-grp-name{color:var(--se);}
 .ret-grp.dmg .ret-grp-name{color:var(--al);}
 .ret-grp.miss .ret-grp-name{color:var(--rl);}
@@ -5214,7 +5216,17 @@ function ciBuildRetGroups(){
     cur.items.push(String(x[1]).replace('__QTY__',''));
   });
   groups.push({g:'🔑 Keys, WiFi & documents',items:['WiFi device','All keys & remote','Vehicle licence & insurance']});
-  groups=groups.filter(function(g){return g.items.length;});
+  // Order at check-in: 1) the items clients lose most, 2) the other loose items, 3) Box 1, 2, 3, 4 in number order, 4) the rest
+  var loose=groups.filter(function(g){return /Loose Items/i.test(g.g);})[0]||{g:'📦 Loose Items',items:[]};
+  var hasComp=loose.items.indexOf('Compressor')>=0;
+  loose.items=loose.items.filter(function(i){return i!=='Compressor'&&i!=='Canvas bag';});
+  loose.items.push('Canvas bag, first aid kit & tyre gauge');
+  loose.g='📦 Loose Items';
+  var often={g:'⚠️ CHECK FIRST — most often lost',items:['USB chargers & cables','Lights (flash, tent, table)'].concat(hasComp?['Compressor']:[]).concat(['Binoculars'])};
+  var boxNo=function(g){var m=/Box\s*(\d+)/i.exec(g.g);return m?+m[1]:null;};
+  var boxes=groups.filter(function(g){return boxNo(g)!==null;}).sort(function(x,y){return boxNo(x)-boxNo(y);});
+  var rest=groups.filter(function(g){return g!==loose&&boxNo(g)===null;});
+  groups=[often,loose].concat(boxes,rest).filter(function(g){return g.items.length;});
   RET_GROUPS.length=0;groups.forEach(function(g){RET_GROUPS.push(g);});
   RET_GROUPS.forEach(function(g){g.items.forEach(function(i){if(retSt[i]===undefined)retSt[i]='';});});
 }
@@ -7009,7 +7021,7 @@ function renderRetGroups(){
       return '<div onclick="setRetItem('+gi+','+ii+')" style="padding:10px 12px;border-radius:10px;border:2px solid '+bd+';background:'+bg+';color:'+fg+';font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;">'
         +(st==='ok'?'✓ ':st==='missing'?'✗ ':'⬜ ')+i+(st==='missing'?' — not returned':'')+'</div>';
     }).join('');
-    return '<div class="ret-grp '+cls+'">'
+    return '<div class="ret-grp '+cls+(/CHECK FIRST/.test(grp.g)&&!allOk?' first':'')+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">'
       +'<div class="ret-grp-name" style="margin:0;">'+(allOk?'✅':anyMiss?'❌':'⬜')+' '+grp.g+'</div>'
       +'<div class="rbtn'+(allOk?' ok-on':'')+'" style="padding:8px 14px;font-size:12px;" onclick="setRetGrp('+gi+',\'ok\')">✓ All returned</div>'
