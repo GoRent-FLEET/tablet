@@ -1081,7 +1081,7 @@ function canSeeClientInfo(){ return !!(APP_USER && !PREP_ONLY.includes(APP_USER.
 var NAV_HIST=[];
 function appBack(){
   var pc=document.getElementById('pin-cancel');if(pc){pc.click();return;}
-  var ids=['sc-view','contract-modal','co-missing','rf-pick','rf-modal','bk-modal','cal-modal'];
+  var ids=['qty-pick','sc-view','contract-modal','co-missing','rf-pick','rf-modal','bk-modal','cal-modal'];
   for(var i=0;i<ids.length;i++){var m=document.getElementById(ids[i]);if(m){if(ids[i]==='contract-modal'&&window.ctBack)ctBack();else m.remove();return;}}
   var cur=(document.querySelector('.page.on')||{}).id||'';
   if(cur==='page-co'&&co&&co.v&&!co._done){var fa=firstAllowedStep();if(coStep>fa){try{coGoStep(coStep-1);}catch(e){coStep--;drawCO();}}else coChangeVehicle();return;}
@@ -4995,7 +4995,7 @@ function drawCI(){
   const r=ci,v=r.v;
   // Compute issues for step progress
   const allItems=RET_GROUPS.flatMap(g=>g.items);
-  const missing=allItems.filter(i=>retSt[i]==='missing');
+  const missing=allItems.filter(i=>retSt[i]==='missing').map(ciQtyLabel);
   const damaged=allItems.filter(i=>retSt[i]==='dmg');
   ci.dmgd=getDmgData();
   const newDmg=ci.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
@@ -5247,7 +5247,7 @@ function ciCompletion(){
 // ── CHECK-IN REPORT + DEPOSIT DECISION BY MANAGEMENT ─────────────────
 function ciIssues(){
   var all=RET_GROUPS.reduce(function(a,g){return a.concat(g.items);},[]);
-  var missing=all.filter(function(i){return retSt[i]==='missing';});
+  var missing=all.filter(function(i){return retSt[i]==='missing';}).map(ciQtyLabel);
   var damaged=all.filter(function(i){return retSt[i]==='dmg';});
   var newDmg=(ci.dmgd||[]).filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
   var fuelShort=!!ci.fuelIn&&ci.fuelIn!==ci.v.fuelOut;
@@ -5509,7 +5509,7 @@ function ciStep2_CI(){
   <div class="step-intro">
     <div class="step-ico">🏕</div>
     <div><div class="step-title">Step 3 — Equipment Return</div>
-    <div class="step-sub">Only check that each item has come back · cleaning and working condition are inspected at check-out</div></div>
+    <div class="step-sub">Tap an item when it is back · tap <b style="color:var(--rl)">✗ Missing</b> if it is not · missing items go on the client report and to management</div></div>
   </div>
   <div id="ret-grps">${renderRetGroups()}</div>
   <div class="fi" style="margin-top:10px">
@@ -5521,7 +5521,7 @@ function ciStep2_CI(){
 function ciStep3_CI(){
   const r=ci,v=r.v;
   const allItems=RET_GROUPS.flatMap(g=>g.items);
-  const missing=allItems.filter(i=>retSt[i]==='missing');
+  const missing=allItems.filter(i=>retSt[i]==='missing').map(ciQtyLabel);
   const damaged=allItems.filter(i=>retSt[i]==='dmg');
   const newDmg=r.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
   const fuelShort=(!!r.fuelIn&&r.fuelIn!==v.fuelOut);
@@ -5585,7 +5585,7 @@ function ciStep3_CI(){
 function ciStep4_CI(){
   const r=ci,v=r.v;
   const allItems=RET_GROUPS.flatMap(g=>g.items);
-  const missing=allItems.filter(i=>retSt[i]==='missing');
+  const missing=allItems.filter(i=>retSt[i]==='missing').map(ciQtyLabel);
   const damaged=allItems.filter(i=>retSt[i]==='dmg');
   const newDmg=r.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
   const fuelShort=(!!r.fuelIn&&r.fuelIn!==v.fuelOut);
@@ -6014,7 +6014,7 @@ function sendHandoverMgmt(){
 function sendCIMgmt(){
   if(!ci._reportLink){toast('The return report is still being saved — try again in a moment','err');return;}
   var all=RET_GROUPS.reduce(function(a,g){return a.concat(g.items);},[]);
-  var miss=all.filter(function(i){return retSt[i]==='missing';});
+  var miss=all.filter(function(i){return retSt[i]==='missing';}).map(ciQtyLabel);
   var newDmg=(ci.dmgd||[]).filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
   var fuelShort=!!ci.fuelIn&&ci.fuelIn!==ci.v.fuelOut;
   mgmtWA('GO RENT RECORD - RETURN'+(ci.early?' (EARLY)':'')
@@ -6075,7 +6075,7 @@ async function uploadCISigs(){
 function ciReportHTML(){
   var v=ci.v,S=ci._sigUrls||{};
   var newDmg=(ci.dmgd||[]).filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
-  var missing=RET_GROUPS.reduce(function(a,g){return a.concat(g.items.filter(function(i){return retSt[i]==='missing';}));},[]);
+  var missing=RET_GROUPS.reduce(function(a,g){return a.concat(g.items.filter(function(i){return retSt[i]==='missing';}));},[]).map(ciQtyLabel);
   var fuelShort=!!ci.fuelIn&&ci.fuelIn!==v.fuelOut;
   var odoOut=ci.odometerOut||v.odo||0, odoIn=ci.odoIn||0;
   var when=new Date().toLocaleString('en-GB',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
@@ -6129,7 +6129,7 @@ async function completeCI(){
   const newDmg=ci.dmgd.filter(function(d){return d.types&&d.types.some(function(t){return t!=='pr';});});
   ci.v.st=newDmg.length?'maintenance':'available';
   const allItems=RET_GROUPS.flatMap(g=>g.items);
-  const missing=allItems.filter(i=>retSt[i]==='missing');
+  const missing=allItems.filter(i=>retSt[i]==='missing').map(ciQtyLabel);
   const damaged=allItems.filter(i=>retSt[i]==='dmg');
   var _ciRes;try{_ciRes=await SB.from('checkins').insert({
     booking_id:ci.fn+'_'+ci.v.pu,fleet_no:ci.fn,client:ci.v.cl,
@@ -7210,6 +7210,32 @@ function insClear(){if(!canDelete('damage marks'))return;VIEWS.forEach(v=>{imark
 function renderIS(){const byVT={};let tot=0;VIEWS.forEach(v=>{const m=imarks[v][isize];const tp={};Object.values(m).forEach(t=>{tp[t]=true;});if(Object.keys(tp).length)byVT[v]=Object.keys(tp);tot+=Object.keys(m).length;});const cnt=document.getElementById('ins-cnt');if(cnt)cnt.textContent=tot+' block'+(tot!==1?'s':'');const tg=document.getElementById('ins-tags');if(!tg)return;if(!Object.keys(byVT).length){tg.innerHTML='<span class="ins-emsg">Tap vehicle photos above to mark damage</span>';return;}let h='';Object.keys(byVT).forEach(v=>{byVT[v].forEach(t=>{const c=Object.values(imarks[v][isize]).filter(x=>x===t).length;h+=`<div class="ins-tag ${t}">${VNAMES[v]} — ${ILBL[t]} (${c})</div>`;});});tg.innerHTML=h;}
 function getDmgData(){const out=[];VIEWS.forEach(v=>{const m=imarks[v][isize];if(!Object.keys(m).length)return;const cells=Object.keys(m).map(k=>{const[r,c]=k.split(',');return{r:+r,c:+c,t:m[k]};});out.push({view:v,view_name:VNAMES[v],size:isize,cells,types:[...new Set(cells.map(c=>c.t))]});});return out;}
 
+// ── Quantities (chairs, sleeping bags): what went out at check-out must come back ──
+function ciQtyItems(){if(!window._ciQtyItems)window._ciQtyItems=L_CI.filter(function(x){return String(x[1]).indexOf('__QTY__')===0;}).map(function(x){return String(x[1]).replace('__QTY__','');});return window._ciQtyItems;}
+function ciQtyOut(i){if(ciQtyItems().indexOf(i)<0||!ci)return 0;var v=ci._coItems&&ci._coItems[i];v=(v&&typeof v==='object')?v.st:v;return parseInt(v)||0;}
+function ciQtyLabel(i){var o=ciQtyOut(i);if(!o)return i;var r=ci.retQty?ci.retQty[i]:null;return (r!=null&&r<o)?i+' ('+r+' of '+o+' returned — '+(o-r)+' missing)':i;}
+function ciPickQty(gi,ii){
+  var i=RET_GROUPS[gi].items[ii],o=ciQtyOut(i),cur=ci.retQty?ci.retQty[i]:null;
+  var old=document.getElementById('qty-pick');if(old)old.remove();
+  var m=document.createElement('div');m.id='qty-pick';
+  m.setAttribute('style','position:fixed;inset:0;z-index:99995;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;');
+  var btns='';for(var n=0;n<=o;n++)btns+='<button onclick="ciSetQty('+gi+','+ii+','+n+')" style="min-width:64px;padding:16px 10px;border-radius:12px;font-size:22px;font-weight:900;cursor:pointer;border:3px solid '+(n===o?'var(--gb)':'var(--re)')+';background:'+(cur===n?(n===o?'var(--sg)':'var(--rg)'):'var(--g0)')+';color:var(--tx);">'+n+'</button>';
+  m.innerHTML='<div style="background:var(--g1);border:2px solid var(--am);border-radius:16px;padding:20px;max-width:460px;width:100%;">'
+    +'<div style="font-size:18px;font-weight:900;margin-bottom:4px;">How many '+_bx(i)+' came back?</div>'
+    +'<div style="font-size:15px;color:var(--g5);margin-bottom:14px;"><b>'+o+'</b> went out at check-out</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;">'+btns+'</div>'
+    +'<button onclick="document.getElementById(\'qty-pick\').remove()" class="btn s">← Back</button></div>';
+  document.body.appendChild(m);
+}
+function ciSetQty(gi,ii,n){
+  var i=RET_GROUPS[gi].items[ii],o=ciQtyOut(i);
+  if(!ci.retQty)ci.retQty={};ci.retQty[i]=n;
+  retSt[i]=n>=o?'ok':'missing';
+  if(!ci.retEqBy)ci.retEqBy={};ci.retEqBy[i]={st:retSt[i],qty:n,out:o,by:ci.receivedBy||(APP_USER&&APP_USER.name)||'',at:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
+  var m=document.getElementById('qty-pick');if(m)m.remove();
+  if(n<o)toast('⚠ '+i+': only '+n+' of '+o+' returned — flagged','err');
+  var el=document.getElementById('ret-grps');if(el)el.innerHTML=renderRetGroups();
+}
 // ── EQUIPMENT RETURN ──────────────────────────────────────────────
 function renderRetGroups(){
   // Check-in only records whether equipment came back: Returned / Not returned (tap an item to change it)
@@ -7222,8 +7248,15 @@ function renderRetGroups(){
       var bg=st==='ok'?'var(--sg)':st==='missing'?'var(--rg)':'var(--g0)';
       var bd=st==='ok'?'var(--se)':st==='missing'?'var(--re)':'var(--g3)';
       var fg=st==='ok'?'var(--se)':st==='missing'?'var(--rl)':'var(--g5)';
-      return '<div onclick="setRetItem('+gi+','+ii+')" style="padding:10px 12px;border-radius:10px;border:2px solid '+bd+';background:'+bg+';color:'+fg+';font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;">'
-        +(st==='ok'?'✓ ':st==='missing'?'✗ ':'⬜ ')+(ITEM_ICON(i)?'<span class="chip-ico">'+ITEM_ICON(i)+'</span>':'')+i+(st==='missing'?' — not returned':'')+'</div>';
+      var _o=ciQtyOut(i),_r=(ci&&ci.retQty)?ci.retQty[i]:null;
+      var _qt=_o?(_r==null?' · <b>'+_o+' out</b>':(_r>=_o?' '+_r+'/'+_o:' — only '+_r+' of '+_o+' back')):'';
+      var ico=ITEM_ICON(i)?'<span class="chip-ico">'+ITEM_ICON(i)+'</span>':'';
+      // Tap the item = returned · tap ✗ = MISSING (quantities ask how many came back)
+      return '<div style="display:inline-flex;align-items:stretch;border-radius:10px;border:2px solid '+bd+';background:'+bg+';overflow:hidden;">'
+        +'<div onclick="setRetState('+gi+','+ii+',\'ok\')" style="padding:10px 12px;color:'+fg+';font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;">'
+        +(st==='ok'?'✓ ':st==='missing'?'✗ ':'⬜ ')+ico+i+_qt+(st==='missing'&&!(_o&&_r!=null)?' — MISSING':'')+'</div>'
+        +'<div onclick="setRetState('+gi+','+ii+',\'missing\')" title="Mark as missing" style="display:flex;align-items:center;padding:0 12px;border-left:2px solid '+bd+';cursor:pointer;touch-action:manipulation;font-size:13px;font-weight:900;background:'+(st==='missing'?'var(--re)':'transparent')+';color:'+(st==='missing'?'#fff':'var(--rl)')+';">✗ Missing</div>'
+        +'</div>';
     }).join('');
     return '<div class="ret-grp '+cls+(/CHECK FIRST/.test(grp.g)&&!allOk?' first':'')+'">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">'
@@ -7233,6 +7266,15 @@ function renderRetGroups(){
       +'<div style="display:flex;flex-wrap:wrap;gap:8px;">'+chips+'</div>'
       +'</div>';
   }).join('');
+}
+// Returned / missing for one item (tapping the same choice again clears it)
+function setRetState(gi,ii,want){
+  var i=RET_GROUPS[gi].items[ii],o=ciQtyOut(i),cur=retSt[i]||'';
+  if(o){ if(want==='ok'){ if(cur==='ok'){retSt[i]='';if(ci.retQty)delete ci.retQty[i];} else {ciSetQty(gi,ii,o);return;} } else {ciPickQty(gi,ii);return;} }
+  else retSt[i]=(cur===want)?'':want;
+  if(ci){if(!ci.retEqBy)ci.retEqBy={};ci.retEqBy[i]={st:retSt[i]||'',by:ci.receivedBy||(APP_USER&&APP_USER.name)||'',at:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};}
+  if(retSt[i]==='missing')toast('✗ '+i+' marked MISSING — shows on the client and management report','err');
+  var el=document.getElementById('ret-grps');if(el)el.innerHTML=renderRetGroups();
 }
 function setRetItem(gi,ii){
   var i=RET_GROUPS[gi].items[ii];
@@ -7252,7 +7294,7 @@ function ciEqChecks(){
   });});
   return out;
 }
-function setRetGrp(gi,status){var _who=(ci&&ci.receivedBy)||(APP_USER&&APP_USER.name)||'';var _at=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});if(ci&&!ci.retEqBy)ci.retEqBy={};RET_GROUPS[gi].items.forEach(i=>{retSt[i]=status;if(ci)ci.retEqBy[i]={st:status,by:_who,at:_at};});var _rg=document.getElementById('ret-grps');if(_rg)_rg.innerHTML=renderRetGroups();}
+function setRetGrp(gi,status){var _who=(ci&&ci.receivedBy)||(APP_USER&&APP_USER.name)||'';var _at=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});if(ci&&!ci.retEqBy)ci.retEqBy={};RET_GROUPS[gi].items.forEach(i=>{retSt[i]=status;if(ci){var _o=ciQtyOut(i);if(_o&&status==='ok'){if(!ci.retQty)ci.retQty={};ci.retQty[i]=_o;}ci.retEqBy[i]={st:status,by:_who,at:_at};}});var _rg=document.getElementById('ret-grps');if(_rg)_rg.innerHTML=renderRetGroups();}
 
 // ── SIGNATURES ────────────────────────────────────────────────────
 function initSig(id){const cv=document.getElementById(id);if(!cv)return;if(sigs[id]&&sigs[id].cv===cv)return; /* redrawn screens get a new canvas: bind it again */cv.width=cv.offsetWidth||540;cv.height=cv.offsetHeight||150;const ctx=cv.getContext('2d');ctx.strokeStyle='#3ddc84';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';sigs[id]={ctx,cv:cv,drawing:false,hasData:false};const pos=(e,t)=>{const r=cv.getBoundingClientRect();return t?{x:(t.clientX-r.left)*(cv.width/r.width),y:(t.clientY-r.top)*(cv.height/r.height)}:{x:e.offsetX*(cv.width/cv.offsetWidth),y:e.offsetY*(cv.height/cv.offsetHeight)};};const start=(e,p)=>{e.preventDefault();sigs[id].drawing=true;sigs[id].hasData=true;ctx.beginPath();ctx.moveTo(p.x,p.y);};const move=(e,p)=>{if(!sigs[id].drawing)return;ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);};const stop=()=>{if(sigs[id])sigs[id].drawing=false;};cv.addEventListener('mousedown',e=>start(e,pos(e)));cv.addEventListener('mousemove',e=>{if(sigs[id]&&sigs[id].drawing)move(e,pos(e));});cv.addEventListener('mouseup',stop);cv.addEventListener('mouseleave',stop);cv.addEventListener('touchstart',e=>start(e,pos(e,e.touches[0])),{passive:false});cv.addEventListener('touchmove',e=>move(e,pos(e,e.touches[0])),{passive:false});cv.addEventListener('touchend',stop,{passive:false});}
