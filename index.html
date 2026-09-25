@@ -3645,6 +3645,9 @@ function ctDetailsForm(){
     +'<div id="ct-aeq">'+choice('addon_equipment','🏕 Camping Equipment cover','N$103.50 per day · accidental damage or loss of camping gear','N$103.50/day','N$103.50 × '+days+' = '+ctMoney(eqT))+'</div>'
     +((ws||eq)?'<div style="display:flex;justify-content:space-between;padding:8px 14px;margin:-2px 0 8px;border-top:1px dashed var(--g3);font-size:15px;font-weight:900;"><span style="color:var(--g5);">Cover total ('+days+' days)</span><span style="color:var(--se);">'+ctMoney((ws?wsT:0)+(eq?eqT:0))+'</span></div>':'')
     +'<div style="font-size:12px;font-weight:800;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin:12px 0 6px;">Deposits received</div>'
+    +'<div class="fi" style="margin-bottom:8px;"><label for="ct-dmethod">💳 Deposit method *</label><select id="ct-dmethod" onchange="ctSet(\'deposit_method\',this.value)" style="color-scheme:dark;font-size:16px;font-weight:700;border:2px solid '+(c.deposit_method?'var(--gb)':'var(--am)')+';">'
+      +['','Adumo','Swipe (card machine)','Cash','EFT / bank transfer','Paid online','Other (see notes)'].map(function(o){return '<option value="'+o+'"'+((c.deposit_method||'')===o?' selected':'')+'>'+(o||'— select how the deposit was paid —')+'</option>';}).join('')
+    +'</select></div>'
     +tick('ct-fdr',!!c.fuel_deposit_received,'⛽ Fuel &amp; Admin deposit — N$7,500.00','Required for every rental · refunded within 7 days after return',c.fuel_deposit_received?'✓ Received':'Required','req')
     +tick('ct-xbd',c.cross_border_deposit===true,'🌍 Cross-border/Damage deposit — N$30,000.00',need?'Required: this booking goes cross-border ('+_bx(co.v.xb||c.cross_border)+')':'Only for travel outside Namibia',c.cross_border_deposit===true?'✓ Received':(need?'Required':'Not needed'),need?'req':'opt');
   // wire the tick boxes after the screen is drawn
@@ -3751,6 +3754,7 @@ function ctMissing(c){
   if(c.addon_windscreen!==true&&c.addon_windscreen!==false)m.push('🛞 Windscreen & Tyre cover: Taken or Declined?');
   if(c.addon_equipment!==true&&c.addon_equipment!==false)m.push('🏕 Camping Equipment cover: Taken or Declined?');
   if(!c.fuel_deposit_received)m.push('⛽ N$7,500 Fuel & Admin deposit not ticked (compulsory)');
+  if(!c.deposit_method)m.push('💳 Deposit method not selected (Adumo, Swipe, Cash…)');
   if((co.v.xb||c.cross_border)&&c.cross_border_deposit!==true)m.push('🌍 N$30,000 Cross-border deposit not ticked (travel to '+(co.v.xb||c.cross_border)+')');
   return m;
 }
@@ -7449,7 +7453,7 @@ function buildContractHTML(c,sigUrl){
       <!-- Fuel deposit -->
       <div style="display:flex;align-items:flex-start;gap:6px;padding:7px 8px;border:1px solid #ccc;border-radius:4px;background:#fff;margin-bottom:5px;">
         ${chkBox(!!c.fuel_deposit_received)}
-        <div style="font-size:10.5px;line-height:1.5;"><strong>Fuel &amp; Admin Deposit (N$7,500.00) received</strong><br>
+        <div style="font-size:10.5px;line-height:1.5;"><strong>Fuel &amp; Admin Deposit (N$7,500.00) received</strong>${c.deposit_method?' — paid by <strong>'+c.deposit_method+'</strong>':''}<br>
         <span style="font-size:9.5px;color:#555;">Refunded within 7 days of the vehicle's return. Any fuel shortage (fill-up cost) and admin costs will be deducted from this deposit before the balance is refunded.</span></div>
       </div>
     </div>
