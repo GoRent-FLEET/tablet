@@ -3807,24 +3807,38 @@ function ctDetailsForm(){
   },0);
   return h;
 }
+// One way to show a finished document, everywhere in the app: a full-screen panel with a
+// Back button and a Print button. It deliberately does NOT open a new browser window —
+// on the iPads, in kiosk and home-screen mode, there are no tabs and no address bar, so a
+// new window swallows the whole screen and the staff member cannot get back to the app.
+function openDoc(html,title){
+  var old=document.getElementById('doc-view');if(old)old.remove();
+  var m=document.createElement('div');m.id='doc-view';
+  m.setAttribute('style','position:fixed;inset:0;z-index:99999;background:#fff;display:flex;flex-direction:column;');
+  var bar=document.createElement('div');
+  bar.setAttribute('style','flex:0 0 auto;display:flex;gap:10px;align-items:center;padding:10px 12px;background:#0f3d26;');
+  bar.innerHTML='<button id="doc-back" style="padding:13px 22px;font-size:16px;font-weight:900;border:0;border-radius:10px;background:#fff;color:#0f3d26;cursor:pointer;">← Back</button>'
+    +'<div style="flex:1;color:#fff;font-weight:800;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_bx(title||'Document')+'</div>'
+    +'<button id="doc-print" style="padding:13px 22px;font-size:16px;font-weight:900;border:0;border-radius:10px;background:#3ddc84;color:#052010;cursor:pointer;">🖨 Print / PDF</button>';
+  var fr=document.createElement('iframe');
+  fr.setAttribute('style','flex:1;width:100%;border:0;background:#fff;');
+  m.appendChild(bar);m.appendChild(fr);document.body.appendChild(m);
+  window.__docClose=function(){var x=document.getElementById('doc-view');if(x)x.remove();window.__docClose=null;};
+  document.getElementById('doc-back').onclick=function(){window.__docClose();};
+  document.getElementById('doc-print').onclick=function(){
+    try{fr.contentWindow.focus();fr.contentWindow.print();}catch(e){try{window.print();}catch(e2){toast('Use the share button to print','err');}}
+  };
+  try{var d=fr.contentWindow.document;d.open();d.write(html);d.close();}
+  catch(e){m.removeChild(fr);var w=document.createElement('div');w.setAttribute('style','flex:1;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;');w.innerHTML=html;m.appendChild(w);}
+  return m;
+}
 // Open the signed contract full screen (with a print / save as PDF button)
 function viewSignedContract(){
   var h=(co&&co.contract&&co.contract.contract_html)||window._lastContractHTML||'';
   if(!h){toast('The signed contract is not on this tablet — open the rental file','err');return;}
-  var w=window.open('','_blank');
-  if(w){
-    w.document.open();
-    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Signed contract</title></head><body style="margin:0;background:#fff;">'
-      +'<div style="text-align:right;padding:8px;" class="noprint"><button onclick="window.close()" style="padding:10px 18px;font-size:15px;font-weight:bold;margin-right:8px;">← Back</button><button onclick="window.print()" style="padding:10px 18px;font-size:15px;font-weight:bold;">🖨 Print / Save as PDF</button></div>'
-      +h+'<style>@media print{.noprint{display:none}}</style></body></html>');
-    w.document.close();
-  }else{
-    var m=document.createElement('div');m.id='sc-view';
-    m.setAttribute('style','position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.7);padding:16px;');
-    m.onclick=function(e){if(e.target===m)m.remove();};
-    m.innerHTML='<div style="background:#fff;border-radius:12px;height:100%;display:flex;flex-direction:column;"><div style="padding:8px;text-align:right;"><button onclick="var x=document.getElementById(&quot;sc-view&quot;);if(x)x.remove();" style="padding:10px 16px;font-weight:900;font-size:15px;border-radius:10px;">← Back</button></div><iframe srcdoc="'+_bx(h)+'" style="flex:1;width:100%;border:0;border-radius:0 0 12px 12px;"></iframe></div>';
-    document.body.appendChild(m);
-  }
+  openDoc('<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    +'<meta name="viewport" content="width=device-width,initial-scale=1">'
+    +'<title>Signed contract</title></head><body style="margin:0;padding:10px;background:#fff;">'+h+'</body></html>','Signed contract');
 }
 function coStep2(){
   if(co.contractSigned){
@@ -3985,28 +3999,78 @@ function previewAndSignContract(){
 
   // Init signature canvas
   const cv=document.getElementById('ct-sig-canvas');
-  cv.width=cv.offsetWidth*window.devicePixelRatio||1080;
-  cv.height=cv.offsetHeight*window.devicePixelRatio||260;
+  const DPR=window.devicePixelRatio||1;
+  cv.width=cv.offsetWidth*DPR||1080;
+  cv.height=cv.offsetHeight*DPR||260;
   const ctx=cv.getContext('2d');
-  ctx.scale(window.devicePixelRatio,window.devicePixelRatio);
-  ctx.strokeStyle='#0f3d26';ctx.lineWidth=2.8;ctx.lineCap='round';ctx.lineJoin='round';
+  // Every stroke is remembered as points, not just painted. iOS throws away the picture
+  // on a canvas that has been scrolled off screen, which is why the signature used to
+  // vanish when the client scrolled back up the contract. Now it is simply drawn again.
+  const strokes=[];let cur=null;
+  function style(){ctx.strokeStyle='#0f3d26';ctx.lineWidth=2.8;ctx.lineCap='round';ctx.lineJoin='round';}
+  function repaint(){
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.scale(DPR,DPR);style();
+    for(var s=0;s<strokes.length;s++){
+      var pts=strokes[s];if(!pts.length)continue;
+      ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+      if(pts.length===1)ctx.lineTo(pts[0].x+0.1,pts[0].y);
+      else for(var i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
+      ctx.stroke();
+    }
+  }
+  function refit(){
+    var w=Math.round((cv.offsetWidth||360)*DPR),h=Math.round((cv.offsetHeight||130)*DPR);
+    if(w&&h&&(cv.width!==w||cv.height!==h)){cv.width=w;cv.height=h;}
+    repaint();
+  }
+  ctx.scale(DPR,DPR);style();
   let drawing=false,hasSigned=false;
 
-  const pt=(e,t)=>{const r=cv.getBoundingClientRect();const dpr=window.devicePixelRatio||1;
+  const pt=(e,t)=>{const r=cv.getBoundingClientRect();
     return t?{x:(t.clientX-r.left),y:(t.clientY-r.top)}:{x:e.clientX-r.left,y:e.clientY-r.top};};
+  function begin(p){drawing=true;hasSigned=true;cur=[p];strokes.push(cur);ctx.beginPath();ctx.moveTo(p.x,p.y);}
+  function extend(p){if(!drawing)return;if(cur)cur.push(p);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);}
+  function finish(){drawing=false;cur=null;}
 
-  cv.addEventListener('mousedown',e=>{e.preventDefault();drawing=true;hasSigned=true;ctx.beginPath();const p=pt(e);ctx.moveTo(p.x,p.y);});
-  cv.addEventListener('mousemove',e=>{if(!drawing)return;const p=pt(e);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);});
-  cv.addEventListener('mouseup',()=>drawing=false);
-  cv.addEventListener('mouseleave',()=>drawing=false);
-  cv.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;hasSigned=true;ctx.beginPath();const p=pt(e,e.touches[0]);ctx.moveTo(p.x,p.y);},{passive:false});
-  cv.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;const p=pt(e,e.touches[0]);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);},{passive:false});
-  cv.addEventListener('touchend',()=>drawing=false,{passive:false});
+  cv.addEventListener('mousedown',e=>{e.preventDefault();begin(pt(e));});
+  cv.addEventListener('mousemove',e=>{if(!drawing)return;extend(pt(e));});
+  cv.addEventListener('mouseup',finish);
+  cv.addEventListener('mouseleave',finish);
+  cv.addEventListener('touchstart',e=>{e.preventDefault();begin(pt(e,e.touches[0]));},{passive:false});
+  cv.addEventListener('touchmove',e=>{e.preventDefault();extend(pt(e,e.touches[0]));},{passive:false});
+  cv.addEventListener('touchend',finish,{passive:false});
+
+  // Redraw whenever the screen may have thrown the picture away, and stop watching
+  // once the contract window is closed.
+  (function(){
+    var sc=document.getElementById('ct-scroll'),t=null;
+    function again(){clearTimeout(t);t=setTimeout(function(){
+      if(!document.getElementById('contract-modal')){off();return;}
+      if(!drawing&&strokes.length)refit();
+    },120);}
+    function off(){
+      if(sc)sc.removeEventListener('scroll',again);
+      window.removeEventListener('resize',again);
+      window.removeEventListener('orientationchange',again);
+      document.removeEventListener('visibilitychange',again);
+      clearInterval(iv);
+    }
+    if(sc)sc.addEventListener('scroll',again,{passive:true});
+    window.addEventListener('resize',again);
+    window.addEventListener('orientationchange',again);
+    document.addEventListener('visibilitychange',again);
+    var iv=setInterval(function(){
+      if(!document.getElementById('contract-modal')){off();return;}
+      if(!drawing&&strokes.length)repaint();
+    },1500);
+  })();
 
   // Expose to outer scope
-  window._ctHasSig=()=>hasSigned;
-  window._ctGetSig=()=>cv.toDataURL('image/png');
-  window._ctClr=()=>{ctx.clearRect(0,0,cv.width/window.devicePixelRatio,cv.height/window.devicePixelRatio);hasSigned=false;};
+  window._ctHasSig=()=>hasSigned&&strokes.length>0;
+  window._ctGetSig=()=>{repaint();return cv.toDataURL('image/png');};
+  window._ctClr=()=>{strokes.length=0;cur=null;hasSigned=false;repaint();};
 }
 
 function clrContractSig(){ window._ctClr&&window._ctClr(); }
@@ -5940,12 +6004,9 @@ function rfLabel(path){
 function closeRentalFile(){var m=document.getElementById('rf-modal');if(m)m.parentNode.removeChild(m);}
 function rfShowContract(){
   var h=window._rfContractHTML||'';if(!h)return;
-  var w=window.open('','_blank');
-  if(w){w.document.open();w.document.write('<div class="noprint" style="text-align:right;padding:8px;font-family:Arial;">'
-    +'<button onclick="window.close()" style="padding:10px 18px;font-size:15px;font-weight:bold;margin-right:8px;">← Back</button>'
-    +'<button onclick="window.print()" style="padding:10px 18px;font-size:15px;font-weight:bold;">🖨 Print / Save as PDF</button></div>'
-    +'<style>@media print{.noprint{display:none}}</style>'+h);w.document.close();}
-  else{var m=document.getElementById('rf-body');if(m)m.innerHTML='<iframe srcdoc="'+_bx(h)+'" style="width:100%;height:70vh;border:0;background:#fff;border-radius:10px;"></iframe>';}
+  openDoc('<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    +'<meta name="viewport" content="width=device-width,initial-scale=1">'
+    +'<title>Signed contract</title></head><body style="margin:0;padding:10px;background:#fff;">'+h+'</body></html>','Signed contract');
 }
 async function openRentalFile(key,fn,client){
   closeRentalFile();closeBookingDetail();
@@ -6043,8 +6104,7 @@ function rfPrintSelected(){
 async function rfPrintAll(pick){
   var R=window._rfData;if(!R){toast('Open the rental file first','err');return;}
   pick=pick||{sum:1,contract:1,ids:1,handover:1,notes:1,ret:1,pics:1,sigs:1};
-  var w=window.open('','_blank');if(!w){toast('Allow pop-ups to print','err');return;}
-  w.document.write('<p style="font-family:Arial;padding:30px;">Preparing the complete rental file…</p>');
+  banner('Preparing the complete rental file…');
   function body(html){var m=/<body[^>]*>([\s\S]*)<\/body>/i.exec(html||'');return m?m[1]:(html||'');}
   async function getText(u){try{var r=await fetch(u);return r.ok?await r.text():'';}catch(e){return '';}}
   var ho=(pick.handover&&R.handover)?body(await getText(R.handover)):'',rt=(pick.ret&&R.ret)?body(await getText(R.ret)):'';
@@ -6074,7 +6134,7 @@ async function rfPrintAll(pick){
     +(pick.pics?('<h2 class="pb">All Photos</h2>'+(R.pics.length?imgs(R.pics):'<p>No photos on file.</p>')):'')
     +(pick.sigs?('<h2>Signatures</h2>'+(R.sigs.length?imgs(R.sigs):'<p>No separate signature files.</p>')):'')
     +'</body></html>';
-  w.document.open();w.document.write(html);w.document.close();
+  hideBanner();openDoc(html,'Rental file — '+(R.fn||''));
   setTimeout(function(){try{w.focus();w.print();}catch(e){}},1500);
 }
 async function loadRentalFiles(q){
@@ -7478,8 +7538,7 @@ async function openInsurancePack(contractId,clientName,fleetNo){
   }
   modal.remove();
   const now=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
-  const win=window.open('','_blank');if(!win){toast('Allow pop-ups','err');return;}
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Insurance Pack</title>
+  const _packHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Insurance Pack</title>
   <style>body{font-family:Arial,sans-serif;font-size:14px;color:#111;padding:20px;max-width:800px;margin:0 auto}
   .hdr{border-bottom:3px solid #000;padding-bottom:14px;margin-bottom:20px;display:flex;justify-content:space-between}
   .logo{font-size:20px;font-weight:900}h2{font-size:15px;font-weight:700;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:4px;margin:20px 0 10px}
@@ -7497,7 +7556,7 @@ async function openInsurancePack(contractId,clientName,fleetNo){
     <div style="display:flex;gap:8px">
       <a href="mailto:?subject=Insurance Pack ${clientName} ${fleetNo}&body=Please find attached the insurance documentation.">📧 Email</a>
       <button onclick="window.print()">🖨 Print / PDF</button>
-      <button onclick="window.close()" style="background:rgba(255,255,255,.2);color:#fff">✕</button>
+      <button onclick="if(parent&&parent.__docClose)parent.__docClose();else window.close()" style="background:rgba(255,255,255,.2);color:#fff">✕</button>
     </div></div>
   <div class="hdr"><div><div class="logo">GO RENT 4×4 NAMIBIA</div><div style="font-size:14px;color:#555">CC/2021/04371 · Windhoek · gorent4x4.com</div><div style="font-size:16px;font-weight:700;margin-top:8px">INSURANCE CLAIM DOCUMENTATION</div></div>
     <div style="text-align:right;font-size:14px"><div style="color:#555">Generated:</div><div style="font-weight:700">${now}</div><div style="color:#555;margin-top:6px">Vehicle:</div><div style="font-weight:700">${fleetNo||'—'}</div></div></div>
@@ -7529,8 +7588,8 @@ async function openInsurancePack(contractId,clientName,fleetNo){
   <div style="text-align:center;margin-top:20px;font-size:13px;color:#777;border-top:1px solid #ccc;padding-top:10px">
     GO RENT 4×4 RENTALS AND TOURS CC · CC/2021/04371 · gorent4x4.com · WhatsApp: +264 81 858 1750<br>
     Document: ${(clientName||'unknown').replace(/\s+/g,'_')}_${fleetNo}_${Date.now()}
-  </div></body></html>`);
-  win.document.close();
+  </div></body></html>`;
+  openDoc(_packHTML,'Insurance pack \u2014 '+(fleetNo||''));
 }
 
 window.addEventListener('load',async()=>{
