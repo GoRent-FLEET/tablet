@@ -2681,7 +2681,7 @@ function drawCO(){
     const done=(s.n===0&&coCleanDone())||(s.n===1&&!!co.bonnetDone)||
                (s.n===2&&!!co.equipSig)||(s.n===3&&!!co.mechDone)||
                (s.n===4&&coInspDone())||(s.n===5&&co.contractSigned)||
-               (s.n===6&&!!co.custSig)||(s.n===7&&!!co.mgmtSig);
+               (s.n===6&&handoverClosed())||(s.n===7&&!!co.mgmtSig);
     // Who completed this step
     const stepBy=(s.n===0?co.prepBy:s.n===1?co.bonnetBy:s.n===2?co.equipBy:
                   s.n===3?co.mechCheckBy:s.n===4?co.inspBy:s.n===5?co.contractBy:
@@ -4631,6 +4631,35 @@ function tapMech(i){
   }
 }
 
+// ── PETER'S OVERRIDE ───────────────────────────────────────────────────────
+// Sometimes a vehicle has to go out without the client signing — the client has left,
+// the tablet died, a vehicle is swapped at the last minute. Only Peter can do this, and
+// it is never silent: who authorised it, when, and why are recorded on the check-out,
+// on the handover document and on the record sent to the office.
+function overrideSigBtn(){
+  if(!isAdmin())return '';
+  return '<button onclick="overrideClientSig()" style="margin-top:10px;width:100%;padding:13px;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;'
+    +'border:2px dashed var(--am);background:var(--ag);color:var(--al);">🔓 Peter only — close without the client signature</button>';
+}
+function overrideClientSig(){
+  if(!isAdmin()){toast('🔒 Only Peter can close a handover without a signature','err');return;}
+  if(co.custSig){toast('The client has already signed','ok');return;}
+  var why=prompt('CLOSE WITHOUT A CLIENT SIGNATURE\n\nThis is recorded against your name and appears on the handover document and in the office record.\n\nWhy is the client not signing?');
+  if(why===null)return;
+  why=String(why||'').trim();
+  if(why.length<4){toast('Give a short reason — it goes on the record','err');return;}
+  co.sigOverride={by:(APP_USER&&APP_USER.name)||'Peter',at:now(),reason:why};
+  co.custAt=co.sigOverride.at;
+  co.dmgd=getDmgData();
+  co.mechBy=(function(){var _e=document.getElementById('co-h-nm');return _e?_e.value:undefined;})()||co.mechBy;
+  try{uploadPhotos(co.dmgPhotos,co.fn,co.clientName||co.v.cl,'damage-out');}catch(e){}
+  try{saveCOProgress();}catch(e){}
+  toast('⚠ Closed without a signature — recorded against '+co.sigOverride.by,'err');
+  if(canDoStep(7))coStep=7;
+  drawCO();
+}
+// the handover counts as done when the client signed OR Peter overrode it
+function handoverClosed(){ return !!(co&&(co.custSig||co.sigOverride)); }
 function signHandover(){
   if(!(co.docItems&&co.docItems.wifi)){toast('Check the WiFi device first (top of this step)','err');return;}
   if(co.v.xb&&!(co.docItems&&co.docItems.xb)){toast('Check the cross-border documents first','err');return;}
@@ -4837,7 +4866,9 @@ function coStep5_client(){
       <div style="font-size:14px;color:rgba(255,255,255,.6);margin-top:2px;">I understand my responsibilities and accept the vehicle in the condition described</div>
     </div>
     <div style="padding:12px 16px;">
-      ${co.custSig?
+      ${co.sigOverride?
+        `<div class="signed" style="border-color:var(--am);background:var(--ag);">⚠️<div class="signed-name">Closed WITHOUT a client signature</div><div class="signed-time">Authorised by ${_bx(co.sigOverride.by)} · ${_bx(co.sigOverride.at)}<br>Reason: ${_bx(co.sigOverride.reason)}</div></div>`:
+      co.custSig?
         `<div class="signed">✅<div class="signed-name">${v.cl} — Handover accepted</div><div class="signed-time">${co.custAt}</div></div>`:
         `<div style="font-size:14px;color:var(--g5);margin-bottom:10px;">⛽ DIESEL ONLY · ✅ All equipment received · I accept responsibility for the vehicle and contents</div>
         <div class="sig-area" style="border-color:var(--gb)">
@@ -4849,7 +4880,8 @@ function coStep5_client(){
         </div>
         <button class="btn g" style="margin-top:10px;font-size:15px;padding:16px" onclick="signHandover()">
           ✍️ Client Signs — Handover Complete
-        </button>`}
+        </button>
+        ${overrideSigBtn()}`}
     </div>
   </div>`;
 }
@@ -4958,7 +4990,7 @@ function coStep6_mgmt(){
       ['📷','Client ID',co.clientPassport||co.licFront?'On file':'Missing',!!(co.clientPassport||co.licFront),0],
       ['📋','Contract',co.clientName,co.contractSigned,0],
       ['🔍','Damage',co.mechBy||'—',true,uncMech.length+probMech.length],
-      ['✍️','Client signed',co.clientName,!!co.custSig,0],
+      ['✍️','Client signed',co.sigOverride?('OVERRIDE by '+co.sigOverride.by):co.clientName,handoverClosed(),0],
     ].map(function(row){var ico=row[0],lbl=row[1],who=row[2],done=row[3],issues=row[4]; return `
       <div style="text-align:center;border:2px solid ${done&&!issues?'var(--gb)':done&&issues?'var(--am)':'var(--re)'};border-radius:var(--r);padding:10px 6px;background:${done&&!issues?'var(--sg)':done&&issues?'var(--ag)':'var(--rg)'}">
         <div style="font-size:20px">${ico}</div>
@@ -5046,7 +5078,7 @@ function coAccRows(uncPrep,uncMech){
     '📶 WiFi: '+(d.wifi==='ok'?'handed over':'NOT handed over')+(co.v.xb?' · 🌍 Cross-border docs: '+(d.xb==='ok'?'handed over':'MISSING'):'')
       +' · 📅 Return '+(co.v.rt||'—')+(co.returnTime?' at '+co.returnTime:'')+' · ⛽ '+(co.fuelOut||'Full')+' · '+((co.odometerOut||co.v.odo||0).toLocaleString())+' km'
       +(hoOpen?' · ⚠ '+hoOpen+' handover point'+(hoOpen===1?'':'s')+' not ticked':''),
-    d.wifi!=='ok'||(co.v.xb&&d.xb!=='ok')||!co.custSig);
+    d.wifi!=='ok'||(co.v.xb&&d.xb!=='ok')||!handoverClosed());
   rows+=coAccRow(7,'👔','Manager — '+(co.mgmtBy||'—'),'Cleared at '+(co.mgmtAt||'—'),false);
   return rows;
 }
@@ -5095,7 +5127,7 @@ function coMissing(){
   if(d.wifi!=='ok')m.push('📶 WiFi device not handed over');
   if(v.xb&&d.xb!=='ok')m.push('🌍 Cross-border documents not handed over');
   if(!co.returnTime)m.push('🕑 Expected return time not set');
-  if(!co.custSig)m.push('✍️ Client has not signed the handover');
+  if(!handoverClosed())m.push('✍️ Client has not signed the handover');
   return m;
 }
 function coFinishCheck(){
@@ -5145,7 +5177,8 @@ async function completeCO(){
     prep_by:co.prepBy, prep_by_all:co.prepByAll||[co.prepBy], prep_log:co.prepLog||[],
     prep_signed_at:coCleanDone()?new Date().toISOString():null, fuel_out:co.fuelOut,
     handover_by:co.mechBy, customer_name:co.clientName,
-    customer_signed_at:co.custSig?new Date().toISOString():null,
+    customer_signed_at:(co.custSig||co.sigOverride)?new Date().toISOString():null,
+    signature_override:co.sigOverride?(co.sigOverride.by+' · '+co.sigOverride.at+' · '+co.sigOverride.reason):null,
     manager_name:co.mgmtBy, manager_signed_at:co.mgmtSig?new Date().toISOString():null,
     odo_out:co.odometerOut||co.v.odo, unchecked_prep:uncPrep, unchecked_mech:uncMech,
     damage_panels:co.dmgd, prep_checklist:co.prepItems||{}, mech_checklist:co.mechItems||{}, mech_by:co.mechCheckBy||null, mech_who:co.mechWho||{}, return_time:co.returnTime||null,
@@ -5236,7 +5269,7 @@ async function completeCO(){
       <li>New damage on return is my responsibility</li>
       <li>I have read and signed the rental agreement</li>
     </ul>
-    ${co.custSig?`<img src="${co.custSig}" alt="client signature"><p style="font-size:13px;color:#888;margin:4px 0;">Signed: ${co.custAt}</p>`:'<p style="color:#e53e3e;font-weight:700;">No signature captured</p>'}
+    ${co.custSig?`<img src="${co.custSig}" alt="client signature"><p style="font-size:13px;color:#888;margin:4px 0;">Signed: ${co.custAt}</p>`:co.sigOverride?'<p style="color:#b45309;font-weight:700;border:2px solid #b45309;border-radius:6px;padding:8px 10px;background:#fffbeb;">\u26a0 CLOSED WITHOUT A CLIENT SIGNATURE<br>Authorised by '+_bx(co.sigOverride.by)+' on '+_bx(co.sigOverride.at)+'<br>Reason: '+_bx(co.sigOverride.reason)+'</p>':'<p style="color:#e53e3e;font-weight:700;">No signature captured</p>'}
   </div>
 
 
