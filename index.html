@@ -1005,17 +1005,46 @@ function busyNow(){
 }
 async function autoRefresh(force){
   if(!APP_USER)return;
-  if(!force&&busyNow())return;
   if(document.hidden&&!force)return;
   try{
+    // The booking list is ALWAYS refreshed, even while someone is working. A vehicle
+    // swapped in the Fleet Manager has to reach the tablets, and reloading the list
+    // does not touch the check-out that is open — only the screen redraw is held back.
     await loadBookings();
     LAST_SYNC=new Date();
+    checkVehicleSwap();
+    if(!force&&busyNow())return;
     var pg=(document.querySelector('.page.on')||{}).id||'';
     if(pg==='page-ov')renderOV();
     else if(pg==='page-out')renderOut();
     else if(pg==='page-doc')renderDoc();
     else if(pg==='page-ci'&&!(ci&&ci.fn))renderCIPicker();
     else if(pg==='page-co'&&!(co&&co.fn))renderCOPicker();
+  }catch(e){}
+}
+// A vehicle was re-allocated in the Fleet Manager while this check-out / check-in was
+// open. Nobody must hand over a vehicle the booking no longer points at, so say so
+// plainly — once per change, and without throwing away any work already captured.
+var _swapTold={};
+function checkVehicleSwap(){
+  try{
+    [['checkout',co],['checkin',ci]].forEach(function(p){
+      var o=p[1];
+      if(!o||!o.v||!o.v.bid||o._done)return;
+      var now=FLEET.filter(function(f){return String(f.bid)===String(o.v.bid);})[0];
+      if(!now||!now.fn||now.fn===o.v.fn)return;
+      var k=o.v.bid+'|'+o.v.fn+'>'+now.fn;
+      if(_swapTold[k])return;
+      _swapTold[k]=1;
+      o.v.swappedTo=now.fn;
+      toast('⚠ '+(o.v.cl||'This booking')+' has been moved from '+o.v.fn+' to '+now.fn,'err');
+      setTimeout(function(){
+        alert('VEHICLE CHANGED\n\n'+(o.v.cl||'This booking')+' was booked on '+o.v.fn
+          +'\nThe office has now put this booking on '+now.fn
+          +'\n\nDo NOT hand over '+o.v.fn+'.\n\nClose this '+(p[0]==='checkin'?'check-in':'check-out')
+          +' and start again on '+now.fn+', or check with the office first.');
+      },300);
+    });
   }catch(e){}
 }
 function setNavH(){var n=document.querySelector('#app .nav');if(n&&n.offsetHeight)document.documentElement.style.setProperty('--navh',n.offsetHeight+'px');}
