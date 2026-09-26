@@ -3379,6 +3379,9 @@ function coContractWho(){
     +'<option value="">— Select your name —</option>'+CONTRACT_STAFF.map(function(n){return '<option'+(n===co.contractBy?' selected':'')+'>'+n+'</option>';}).join('')+'</select></div>';
 }
 function coStep1(){
+  // the booking already says an airport transfer was arranged: start on 'somewhere else'
+  try{ if(co&&co.v&&co.v.transfer&&!co.pickupArrangement&&co._pickupArrangementOther===undefined){
+    co.pickupArrangement=co.v.transfer;co._pickupArrangementOther=1;} }catch(e){}
   if(!co||!co.v){return '<div style="padding:20px;color:red;">Error: co.v undefined in coStep1</div>';}
   // Office staff fill this in during prep — all client + driver details
   if(!co.drivers||co.drivers.length===0){
@@ -3478,20 +3481,10 @@ function coStep1(){
       </div>`:''}
 
       ${isPrimary?`
-      <!-- Pickup / dropoff & notes -->
+      <!-- Collection / return & notes -->
       <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
-        <div class="fi">
-          <label>📍 Pickup arrangement</label>
-          <input value="${co.pickupArrangement||co.v.transfer||''}" placeholder="e.g. Airport pickup · Hosea Kutako · 09:30"
-            oninput="co.pickupArrangement=this.value"
-            style="border-color:${co.pickupArrangement||co.v.transfer?'var(--gb)':'var(--g3)'}">
-        </div>
-        <div class="fi">
-          <label>📍 Return / dropoff arrangement</label>
-          <input value="${co.dropoffArrangement||''}" placeholder="e.g. Airport dropoff · Hosea Kutako · 16:00"
-            oninput="co.dropoffArrangement=this.value"
-            style="border-color:${co.dropoffArrangement?'var(--gb)':'var(--g3)'}">
-        </div>
+        ${placePicker('pickupArrangement','📍 Collection — where the client picks the vehicle up','e.g. Hosea Kutako Airport · arrivals · 09:30')}
+        ${placePicker('dropoffArrangement','📍 Return — where the client brings it back','e.g. Hosea Kutako Airport · departures · 16:00')}
         <div class="fi">
           <label>📍 Remote location pickup/dropoff</label>
           <input value="${co.remoteLocation||''}" placeholder="e.g. Sossusvlei campsite · GPS: -24.7, 15.3 · no cell signal"
@@ -3561,6 +3554,47 @@ function driverDocSlot(di,field,ico,lbl,val){
 }
 
 // Redraw the driver section. On the Contract step the contract details sit underneath — keep them on screen
+// ── WHERE THE VEHICLE IS COLLECTED AND RETURNED ───────────────────────────
+// Almost every rental starts and ends at the office, so that is the answer already
+// selected. Anywhere else has to be typed out in full, because a driver has to find it.
+var GR_HQ='Go Rent Office, 6 Diehl Str, Windhoek';
+function placeIsOther(field){
+  if(co['_'+field+'Other']!==undefined)return !!co['_'+field+'Other'];
+  var v=co[field]||'';
+  return !!v&&v!==GR_HQ;
+}
+function setPlaceMode(field,other){
+  co['_'+field+'Other']=other?1:0;
+  if(!other)co[field]=GR_HQ;
+  else if(!co[field]||co[field]===GR_HQ)co[field]='';
+  try{saveCOProgress();}catch(e){}
+  try{coRedrawDrivers();}catch(e){}
+}
+function setPlaceText(field,v){
+  co[field]=v;
+  try{saveCOProgress();}catch(e){}
+  var w=document.getElementById('pl-warn-'+field);
+  if(w)w.style.display=v?'none':'';
+}
+function placeValue(field){ return placeIsOther(field)?(co[field]||''):GR_HQ; }
+function placePicker(field,label,hint){
+  var other=placeIsOther(field),val=co[field]||'';
+  var btn=function(on,txt,mode,danger){
+    return '<button onclick="setPlaceMode(\''+field+'\','+mode+')" style="flex:1;padding:12px 10px;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;touch-action:manipulation;'
+      +(on?(danger?'border:2px solid var(--re);background:var(--re);color:#fff;':'border:2px solid var(--gb);background:var(--se);color:#052010;')
+          :'border:2px solid var(--g3);background:var(--g0);color:var(--g5);')+'">'+txt+'</button>';
+  };
+  return '<div class="fi"><label>'+label+'</label>'
+    +'<div style="display:flex;gap:8px;margin-bottom:6px;">'
+    +btn(!other,'🏢 Go Rent HQ',false,false)+btn(other,'📍 Somewhere else',true,true)
+    +'</div>'
+    +(other
+      ?'<input value="'+_bx(val)+'" placeholder="'+_bx(hint)+'" oninput="setPlaceText(\''+field+'\',this.value)" '
+        +'style="border-color:'+(val?'var(--gb)':'var(--re)')+';">'
+        +'<div id="pl-warn-'+field+'" style="display:'+(val?'none':'')+';font-size:12px;font-weight:800;color:var(--rl);margin-top:3px;">⚠ Type exactly where, and at what time</div>'
+      :'<div style="font-size:12px;color:var(--g5);padding-left:2px;">6 Diehl Str, Windhoek</div>')
+    +'</div>';
+}
 function coRedrawDrivers(){
   var s=document.getElementById('cos');if(!s)return;
   s.innerHTML=coStep1()+(coStep===5?'<div style="height:14px"></div>'+coStep2():'');
@@ -4005,8 +4039,9 @@ function gatherContract(){
   if(co.returnTime)co.contract.return_time=co.returnTime;
   co.contract.odo_out=co.v.odo;
   co.contract.fuel_out=co.fuelOut;
-  co.contract.pickup_location=co.contract.pickup_location||'Go Rent Office, 6 Diehl Str, Windhoek';
-  co.contract.return_location=co.contract.return_location||'Go Rent Office, 6 Diehl Str, Windhoek';
+  // whatever was chosen on the collection / return buttons is what goes on the contract
+  co.contract.pickup_location=placeValue('pickupArrangement')||co.contract.pickup_location||GR_HQ;
+  co.contract.return_location=placeValue('dropoffArrangement')||co.contract.return_location||GR_HQ;
   co.contract.deposit_method=(function(){var _e=document.getElementById('ct-dmethod');return _e?_e.value:undefined;})()||co.contract.deposit_method;
   co.contract.deposit_amount=+(function(){var _e=document.getElementById('ct-dep');return _e?_e.value:undefined;})()||co.contract.deposit_amount;
   co.contract.quote_number=(function(){var _e=document.getElementById('ct-quote');return _e?_e.value:undefined;})()||co.contract.quote_number||co.v.quote||'';
