@@ -2847,6 +2847,7 @@ function coStep0(){
       L_VEH.push(item);
     }
   }
+  prefillOK(L_VEH.filter(function(x){return x[0]!=='__SECTION__'&&x[0]!=='__OPTIONAL__';}).map(function(x){return x[1];}));
   function _pst(l){var v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';}
   function _pby(l){var v=co.prepItems[l];return (v&&v.by)||'';}
   function _pat(l){var v=co.prepItems[l];return (v&&v.at)||'';}
@@ -2860,7 +2861,7 @@ function coStep0(){
   <div class="step-intro">
     <div class="step-ico">🚗</div>
     <div><div class="step-title">Step 1 — Cleaning</div>
-    <div class="step-sub">Tap each item: once = ✅ OK · twice = ⚠ Problem · no signature needed — each tick records who did it</div></div>
+    <div class="step-sub">Everything is marked OK — tap only what is wrong</div></div>
     <div style="margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:6px;background:var(--g0);border:1px solid var(--am);border-radius:20px;padding:3px 10px 3px 3px;"><div style="width:22px;height:22px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000;">${APP_USER&&APP_USER.name?APP_USER.name.slice(0,2).toUpperCase():'??'}</div><span style="font-size:12px;font-weight:800;color:var(--al);white-space:nowrap;">🔒 ${APP_USER&&APP_USER.name?APP_USER.name:'Unknown'}</span></div>
   </div>
   <div class="prog-wrap">
@@ -2868,6 +2869,7 @@ function coStep0(){
     <div class="prog-lbl"><span class="prog-n">${done}/${checkable}</span> items checked
     ${pct===100?'<span style="color:var(--se);font-weight:700;margin-left:8px">✅ All done!</span>':''}</div>
   </div>
+  ${faultsOnlyNote('Cleaning &amp; vehicle checks')}
   <div class="chk-list">${L_VEH.map(function(item,i){var ico=item[0]||'',lbl=item[1]||'',det=item[2]||'';
     if(ico==='__CAMPING__'){
       if(!co.v.camping) return ''; // skip tent items if no camping booked
@@ -2964,6 +2966,48 @@ function coCleanItems(){
     if(noCampHidden(it[1],co&&co.v&&co.v.camping))continue;
     out.push(it[1]);}
   return out;
+}
+// ── EXCEPTION-BASED CHECKING ───────────────────────────────────────────────
+// Everything is taken as in order. Staff tap ONLY what is wrong. This is how a
+// driver's vehicle inspection report works: you record the faults, not the things
+// that were fine. Confirming the step is the statement that it was inspected, and
+// that is what carries the name and the time.
+// Items filled in this way are marked auto:true, so a report can still tell the
+// difference between "inspected and found in order" and "somebody tapped this one".
+function prefillOK(list){
+  var who=(APP_USER&&APP_USER.name)||'';
+  if(!who||!co||!co.prepItems)return 0;
+  var t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),n=0;
+  for(var i=0;i<list.length;i++){
+    var l=list[i];
+    if(co.prepItems[l])continue;
+    co.prepItems[l]={st:'ok',by:who,at:t,auto:true};n++;
+  }
+  if(n){if(!co.prepBy)co.prepBy=who;try{saveCOProgress();}catch(e){}}
+  return n;
+}
+function prefillMechOK(){
+  var who=(APP_USER&&APP_USER.name)||'';
+  if(!who||!co||!co.mechItems)return 0;
+  var n=0;
+  for(var i=0;i<L_MECH.length;i++){
+    var it=L_MECH[i];if(!it||it[0]==='__SECTION__')continue;
+    if(it[0]==='__CAMPING__'&&!(co.v&&co.v.camping))continue;
+    if(co.mechItems[it[1]])continue;
+    co.mechItems[it[1]]='ok';n++;
+    if(!co.mechWho)co.mechWho={};
+    co.mechWho[it[1]]=who+' · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  }
+  if(n){if(!co.mechBy&&APP_USER)co.mechBy=who;if(!co.mechCheckBy)co.mechCheckBy=who;try{saveCOProgress();}catch(e){}}
+  return n;
+}
+// The line that tells staff how the list now works
+function faultsOnlyNote(what){
+  return '<div style="display:flex;gap:9px;align-items:flex-start;background:var(--sg);border-left:4px solid var(--se);border-radius:8px;padding:8px 12px;margin-bottom:10px;">'
+    +'<span style="font-size:17px;line-height:1.2;">👉</span>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--tx);line-height:1.45;">Everything below is marked in order. '
+    +'<span style="color:var(--rl);">Tap ONLY what is wrong or missing.</span>'
+    +'<div style="font-weight:600;color:var(--g5);margin-top:2px;">'+_bx(what)+' — your name goes on this when you confirm at the bottom.</div></div></div>';
 }
 function coPst(l){var v=co&&co.prepItems&&co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';}
 function coCleanDone(){var it=coCleanItems();return it.length>0&&it.every(function(l){return !!coPst(l);});}
@@ -3093,6 +3137,7 @@ function coStepMech(){
   var who='<div class="who-box"><div class="who-lbl">👤 Who is checking the mechanics?</div>'
     +'<select id="co-mech-nm" onchange="co.mechCheckBy=this.value;saveCOProgress();drawCO()" style="color-scheme:dark;width:100%;padding:12px 14px;font-size:16px;font-weight:800;background:var(--g0);border:2px solid '+(co.mechCheckBy?'var(--gb)':'var(--am)')+';border-radius:var(--rs);color:var(--tx);">'
     +'<option value="">— Select your name —</option>'+names.map(function(n){return '<option'+(n===co.mechCheckBy?' selected':'')+'>'+n+'</option>';}).join('')+'</select></div>';
+  prefillMechOK();
   var rows='';
   for(var i=0;i<L_MECH.length;i++){
     var item=L_MECH[i];
@@ -3124,8 +3169,9 @@ function coStepMech(){
   var allDone=doneCount>=mechCount;
   return '<div class="step-intro"><div class="step-ico">🔩</div>'
     +'<div><div class="step-title">Step 3 — Mechanical</div>'
-    +'<div class="step-sub">Select your name, then mark each item OK or Issue ('+doneCount+'/'+mechCount+')</div></div></div>'
+    +'<div class="step-sub">All '+mechCount+' items are marked OK \u2014 tap Issue on anything that is not</div></div></div>'
     +who
+    +faultsOnlyNote('Mechanical check')
     +'<div style="padding:0 4px;">'+rows+'</div>'
     +(allDone
       ?'<div class="al ok" style="margin-top:12px;">✅ Mechanical check complete — checked by '+_bx(co.mechCheckBy||'—')+'</div><button class="btn g" style="margin-top:8px;" onclick="co.mechDone=true;saveCOProgress();coGoStep(4);">Continue to Inspection →</button>'
@@ -3155,6 +3201,7 @@ function coStep1_equip(){
   }
   // remove section headings that have nothing left under them
   for(var _q=L_EQUIP.length-1;_q>=0;_q--){var _it=L_EQUIP[_q];if(_it[0]==='__SECTION__'||_it[0]==='__OPTIONAL__'){var _nx=L_EQUIP[_q+1];if(!_nx||_nx[0]==='__SECTION__'||_nx[0]==='__OPTIONAL__')L_EQUIP.splice(_q,1);}}
+  prefillOK(L_EQUIP.filter(function(x){return x[0]!=='__SECTION__'&&x[0]!=='__OPTIONAL__'&&String(x[1]).indexOf('__QTY__')!==0;}).map(function(x){return x[1];}));
   function _est(l){var v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';}
   function _eby(l){var v=co.prepItems[l];return (v&&v.by)||'';}
   function _eat(l){var v=co.prepItems[l];return (v&&v.at)||'';}
@@ -3168,13 +3215,14 @@ function coStep1_equip(){
   <div class="step-intro">
     <div class="step-ico">🏕</div>
     <div><div class="step-title">Step 2 — Equipment Packing &amp; Checks</div>
-    <div class="step-sub">Check all equipment is present, clean and packed · once = ✅ OK · twice = ⚠ Problem · optional items tap to N/A</div></div>
+    <div class="step-sub">Everything is marked packed — tap only what is missing or damaged</div></div>
   </div>
   <div class="prog-wrap">
     <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:var(--se)"></div></div>
     <div class="prog-lbl"><span class="prog-n">${done}/${checkable}</span> items checked
     ${pct===100?'<span style="color:var(--se);font-weight:700;margin-left:8px">✅ All packed!</span>':''}</div>
   </div>
+  ${faultsOnlyNote('Equipment packing')}
   <div class="chk-list">${L_EQUIP.map(function(item,i){var ico=item[0]||'',lbl=item[1]||'',det=item[2]||'';
     const globalIdx=L_PREP.indexOf(L_PREP.find(x=>x[1]===lbl&&x[0]===ico));
     if(ico==='__SECTION__'||ico==='__OPTIONAL__'){
@@ -3230,7 +3278,7 @@ function coStep1_equip(){
   ${photoHTML('co.prepPhotos','📷 Equipment Photos','Photograph all packed equipment — tent, boxes, loose items. Client sees these at handover.',6)}
   ${co.equipSig?
     '<div class="signed">✅<div class="signed-name">'+co.prepBy+' — Equipment confirmed packed</div><div class="signed-time">'+co.equipAt+'</div></div>':
-    '<div class="liab">⚠️ <strong>'+(co.prepBy||'[prep staff]')+'</strong> confirms all ✅ green items are packed and loaded.<br>Every ⬜ grey = <strong>NOT CHECKED = personal liability.</strong> Every tick is recorded with your name.</div>'
+    '<div class="liab">⚠️ By confirming, <strong>'+(co.prepBy||'[prep staff]')+'</strong> states they have <strong>physically checked every item above</strong> and reported anything wrong.<br>This is recorded with your name and the time. Anything you did not look at is your responsibility.</div>'
     +'<button class="btn g" onclick="signEquip()">✓ Confirm — Equipment Packed</button>'}`;
 }
 
