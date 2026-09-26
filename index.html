@@ -3320,7 +3320,7 @@ function coStep1(){
             style="${isPrimary&&!d.name?'border-color:var(--am)':''}"
             ${isPrimary?'list="cl-names-list"':''}>
           ${isPrimary?`<datalist id="cl-names-list">${(typeof clientList!=='undefined'?clientList:[]).map(c=>`<option value="${c.full_name}">`).join('')}</datalist>`:''}
-          ${isPrimary?`<div style="font-size:13px;color:var(--g5);margin-top:3px;">This name will appear on the rental contract and must match the passport exactly.</div>`:''}
+          ${isPrimary?`<div style="font-size:13px;color:var(--g5);margin-top:3px;">This name goes on the rental contract — use the passport spelling.</div>`:''}
         </div>
         <div class="fi"><label>Date of birth</label>
           <input value="${d.dob||''}" placeholder="DD/MM/YYYY" oninput="co.drivers[${i}].dob=this.value">
@@ -3433,7 +3433,7 @@ function coStep1(){
   ${co.drivers.map((d,i)=>driverCard(d,i)).join('')}
 
   <div class="al info" style="font-size:14px;line-height:1.6;">
-    📋 Names must match the passport exactly. The booking often shows only a surname, so check every name against the passport and correct it here. These names go onto the rental contract, and the client types their name the same way when they sign.
+    📋 Use the passport spelling. The booking often shows only a surname, so check every name against the passport and correct it here. These names go onto the rental contract, and the client types their name when they sign — small differences are fine.
   </div>`;
 }
 
@@ -4012,26 +4012,54 @@ function previewAndSignContract(){
 function clrContractSig(){ window._ctClr&&window._ctClr(); }
 
 // Typed name must match the client (ignores capitals, spaces, dashes and accents)
+// Does the name the client typed look like the name on their passport?
+// Deliberately forgiving: clients mistype, keyboards autocorrect, and the passport
+// reader often runs names together or splits them oddly. A small slip, a missing
+// middle name, an initial, a shortened name or the names in a different order all
+// pass. A different person's name does not.
 function ctNameOk(typed){
   var norm=function(x){return String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim();};
   var lev=function(a,b){if(a===b)return 0;var d=[],i,j;for(i=0;i<=a.length;i++)d[i]=[i];for(j=0;j<=b.length;j++)d[0][j]=j;for(i=1;i<=a.length;i++)for(j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length];};
-  var close=function(a,b){var n=Math.max(a.length,b.length);return lev(a,b)<=(n>=8?2:n>=4?1:0);};
+  // two words count as the same name if about a third of the letters could differ
+  var close=function(a,b){
+    if(!a||!b)return false;
+    if(a===b)return true;
+    if(a.length===1||b.length===1)return a.charAt(0)===b.charAt(0);                 // an initial
+    if(a.length>=3&&b.length>=3&&(a.indexOf(b)===0||b.indexOf(a)===0))return true;  // shortened, or two names run together
+    var n=Math.max(a.length,b.length);
+    return lev(a,b)<=Math.max(1,Math.floor(n*0.34));
+  };
+  // comparing the two names as one run of letters: spacing and hyphens may differ,
+  // but the letters themselves have to be nearly the same, so "Peter Macdonald"
+  // is never mistaken for "Matthew Macdonald"
+  var closeFull=function(a,b){
+    if(a===b)return true;
+    var n=Math.max(a.length,b.length);
+    return lev(a,b)<=Math.max(1,Math.min(3,Math.floor(n*0.2)));
+  };
+  var squash=function(s){return s.replace(/ /g,'');};
   var t=norm(typed);if(!t)return false;
   var tw=t.split(' ');
   return [(co.drivers&&co.drivers[0]&&co.drivers[0].name),(co.contract&&co.contract.client_name),co.clientName,co.v&&co.v.cl].some(function(n){
     n=norm(n);if(!n)return false;
-    var nw=n.split(' ');
-    if(close(t.replace(/ /g,''),n.replace(/ /g,'')))return true;           // whole name, a small slip
-    // every typed word matches a passport word (any order, middle names may be left out)
-    var used={},all=tw.every(function(w){for(var i=0;i<nw.length;i++){if(!used[i]&&close(w,nw[i])){used[i]=1;return true;}}return false;});
-    if(!all)return false;
-    // must include the first and last name when there are two or more names
-    return nw.length<2?true:(used[0]&&used[nw.length-1])||(tw.length>=2&&used[nw.length-1]);
+    var nw=n.split(' '),ns=squash(n);
+    if(closeFull(squash(t),ns))return true;                               // the whole name, give or take a slip
+    // the surname carries the weight: the last word typed has to be somewhere in the passport name
+    var last=tw[tw.length-1];
+    var lastOk=nw.some(function(w){return close(last,w);})
+      ||close(last,ns)
+      ||(last.length>=4&&ns.indexOf(last)>=0);
+    if(!lastOk)return false;
+    if(tw.length===1)return true;                                          // surname on its own is enough
+    // and at least one of the other names typed should be recognisable too
+    return tw.slice(0,-1).some(function(w){
+      return nw.some(function(x){return close(w,x);})||(w.length>=3&&ns.indexOf(w)>=0);
+    });
   });
 }
 function ctNameShow(v){
   var el=document.getElementById('ct-name-match');if(!el)return;
-  var ok=ctNameOk(v);el.textContent=v?(ok?'✓ Name accepted':'⚠ Name does not match — check spelling, or tap "Use passport name"'):'';
+  var ok=ctNameOk(v);el.textContent=v?(ok?'✓ Name accepted':'⚠ That does not look like the name on the passport — check it, or tap "Use passport name"'):'';
   el.style.color=ok?'#1e8449':'#c0392b';
 }
 function ctNameCopy(){
@@ -4059,7 +4087,7 @@ async function submitContractSig(){
   }
   if(!nameOk){
     nameInput.style.border='2px solid #e74c3c';
-    document.getElementById('ct-name-match').textContent='⚠ Name does not match — check spelling, or tap "Use passport name" ('+expectedName+')';
+    document.getElementById('ct-name-match').textContent='⚠ That does not look like the name on the passport — check it, or tap "Use passport name" ('+expectedName+')';
     document.getElementById('ct-name-match').style.color='#c0392b';
     setTimeout(()=>{nameInput.style.border='2px solid #1e8449';},2500);
     return;
