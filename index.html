@@ -3163,17 +3163,22 @@ function coStep1_equip(){
     // Find real index in L_PREP
     const li=L_PREP.findIndex(x=>x[0]===ico&&x[1]===lbl&&x[2]===det);
     if(isQtyItem){
-      const qtyVal=co.prepItems[realLbl]||'';const qtyNum=parseInt(qtyVal)||0;
-      return `<div class="ci ${qtyNum>0?'ok':''}" style="cursor:default;">
+      const _qv=co.prepItems[realLbl];
+      const qtyStr=(_qv==null)?'':String((typeof _qv==='object')?(_qv.st||''):_qv);
+      // 0 is a real answer — "none packed" — so it counts as checked, not as an item nobody looked at
+      const qtyAns=qtyStr!=='';
+      const qtyNum=parseInt(qtyStr)||0;
+      return `<div class="ci ${qtyAns?'ok':''}" style="cursor:default;">
         <div class="ci-icon">${ico}</div>
-        <div class="ci-text"><div class="ci-lbl">${realLbl}</div><div class="ci-det">${det}</div></div>
+        <div class="ci-text"><div class="ci-lbl">${realLbl}</div><div class="ci-det">${qtyAns&&qtyNum===0?'None packed for this booking':det}</div></div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-          <select onchange="co.prepItems['${realLbl}']=this.value;if(!co.prepBy){toast('Select your name first','err');this.value='';return;}const s=document.getElementById('cos');if(s)s.innerHTML=coStep1_equip();"
-            style="color-scheme:dark;padding:8px 10px;border-radius:var(--rs);border:2px solid ${qtyNum>0?'var(--gb)':'var(--g3)'};background:${qtyNum>0?'var(--sg)':'var(--g1)'};color:${qtyNum>0?'var(--se)':'var(--g5)'};font-size:14px;font-weight:700;min-width:70px;">
+          <select onchange="if(!co.prepBy){toast('Select your name first','err');this.value='';return;}co.prepItems['${realLbl}']=this.value;saveCOProgress();const s=document.getElementById('cos');if(s)s.innerHTML=coStep1_equip();"
+            style="color-scheme:dark;padding:8px 10px;border-radius:var(--rs);border:2px solid ${qtyAns?'var(--gb)':'var(--g3)'};background:${qtyAns?'var(--sg)':'var(--g1)'};color:${qtyAns?'var(--se)':'var(--g5)'};font-size:14px;font-weight:700;min-width:70px;">
             <option value="">Qty</option>
-            ${Array.from({length:maxQty},function(_,k){return '<option value="'+(k+1)+'" '+(qtyVal==k+1?'selected':'')+'>'+  (k+1)+'</option>';}).join('')}
+            <option value="0" ${qtyStr==='0'?'selected':''}>0</option>
+            ${Array.from({length:maxQty},function(_,k){return '<option value="'+(k+1)+'" '+(qtyStr===String(k+1)?'selected':'')+'>'+(k+1)+'</option>';}).join('')}
           </select>
-          <div class="ci-st">${qtyNum>0?okSVG():uncSVG()}</div>
+          <div class="ci-st">${qtyAns?okSVG():uncSVG()}</div>
         </div>
       </div>`;
     }
