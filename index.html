@@ -914,7 +914,7 @@ async function showWorkProgress(kind,fn){
   var sec=function(title,done,total,body){return '<div style="margin-top:14px;"><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.4px;color:#374151;border-bottom:2px solid '+(done>=total?'#1e8449':'#f6ad55')+';padding-bottom:4px;"><span>'+title+'</span><span style="color:'+(done>=total?'#1e8449':'#b7791f')+';">'+done+' / '+total+'</span></div>'+body+'</div>';};
   var stepsHtml='',outstanding=0,total=0;
   if(kind==='checkout'){
-    var steps=[['🚿 Cleaning',null,o.prepBy],['🔧 Engine / bonnet',!!o.bonnetDone,o.bonnetBy],['📦 Equipment',!!o.equipSig,o.equipBy||o.prepBy],['🔩 Mechanical',!!o.mechDone,o.mechCheckBy],['🔍 Pre-handover inspection',!!o.dmgDone||!!o.inspDone,o.inspBy],['📋 Contract',!!o.contractSigned,o.contractBy],['🤝 Handover (client signed)',!!o.custSig,o.mechBy],['👔 Management cleared',!!o.mgmtSig,o.mgmtBy]];
+    var steps=[['🚿 Cleaning',null,o.prepBy],['🔧 Engine / bonnet',!!o.bonnetDone,o.bonnetBy],['📦 Equipment',!!o.equipSig,o.equipBy||o.prepBy],['🔩 Mechanical',!!o.mechDone,o.mechCheckBy],['🔍 Pre-handover inspection',!!o.dmgDone||!!o.inspDone,o.inspBy],['📋 Contract',!!o.contractSigned,o.contractBy],['🤝 Handover (client signed)',!!(o.custSig||o.sigOverride),o.sigOverride?('closed by '+o.sigOverride.by):o.mechBy],['👔 Management cleared',!!o.mgmtSig,o.mgmtBy]];
     var saved=co;try{co=o;steps[0][1]=coCleanDone();try{steps[4][1]=coInspDone();}catch(e){}}catch(e){}finally{co=saved;}
     stepsHtml=steps.map(function(s,i){return row(s[1],s[0]+(w.step===i?' <span style="font-size:11px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:6px;">NOW</span>':''),s[2]||'');}).join('');
     // checklist items by section
@@ -2682,14 +2682,15 @@ function drawCO(){
                (s.n===2&&!!co.equipSig)||(s.n===3&&!!co.mechDone)||
                (s.n===4&&coInspDone())||(s.n===5&&co.contractSigned)||
                (s.n===6&&handoverClosed())||(s.n===7&&!!co.mgmtSig);
-    // Who completed this step
-    const stepBy=(s.n===0?co.prepBy:s.n===1?co.bonnetBy:s.n===2?co.equipBy:
+    // Who completed this step — or who closed it without the usual proof
+    const ovr=stepOverride(s.n);
+    const stepBy=ovr?('closed by '+ovr.by):((s.n===0?co.prepBy:s.n===1?co.bonnetBy:s.n===2?co.equipBy:
                   s.n===3?co.mechCheckBy:s.n===4?co.inspBy:s.n===5?co.contractBy:
-                  s.n===6?co.custBy:co.mgmtBy)||'';
+                  s.n===6?co.custBy:co.mgmtBy)||'');
     const active=s.n===coStep;
     const restricted=!canDoStep(s.n);
     return `<div class="stg ${active?'active':done?'done':restricted?'restricted':''}" onclick="coGoStep(${s.n})" style="position:relative;overflow:hidden;${restricted?'opacity:.4;cursor:not-allowed;':''}">
-      ${done&&!active&&stepBy?`<div style="font-size:7px;font-weight:900;color:var(--se);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 2px;background:var(--sg);line-height:11px;letter-spacing:-.2px;">${stepBy}</div>`:'<div style="line-height:3px;">&nbsp;</div>'}
+      ${done&&stepBy?`<div style="font-size:7px;font-weight:900;color:${ovr?'var(--al)':'var(--se)'};text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 2px;background:${ovr?'var(--ag)':'var(--sg)'};border-radius:3px;position:relative;z-index:3;">${_bx(stepBy)}</div>`:''}
       ${done?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;">
         <span style="font-size:42px;line-height:1;color:#3ddc84;font-weight:900;opacity:.9;text-shadow:0 2px 6px rgba(0,0,0,.9);">✓</span></div>`:''}
       <div style="font-size:13px;line-height:1.2;position:relative;z-index:1;${done?'opacity:.25;':''}">${s.ico}</div>
@@ -4636,6 +4637,22 @@ function tapMech(i){
 // the tablet died, a vehicle is swapped at the last minute. Only Peter can do this, and
 // it is never silent: who authorised it, when, and why are recorded on the check-out,
 // on the handover document and on the record sent to the office.
+// Any step Peter has closed without the usual proof. Kept in one place so a step tile,
+// the accountability list and the reports all read it the same way.
+function stepOverride(n){
+  try{
+    if(co&&co.overrides&&co.overrides[n])return co.overrides[n];
+    if(n===6&&co&&co.sigOverride)return co.sigOverride;   // the handover override
+  }catch(e){}
+  return null;
+}
+function anyOverride(){
+  try{
+    var out=[];
+    for(var n=0;n<=7;n++){var o=stepOverride(n);if(o)out.push({step:n,o:o});}
+    return out;
+  }catch(e){return [];}
+}
 function overrideSigBtn(){
   if(!isAdmin())return '';
   return '<button onclick="overrideClientSig()" style="margin-top:10px;width:100%;padding:13px;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;'
@@ -4649,6 +4666,7 @@ function overrideClientSig(){
   why=String(why||'').trim();
   if(why.length<4){toast('Give a short reason — it goes on the record','err');return;}
   co.sigOverride={by:(APP_USER&&APP_USER.name)||'Peter',at:now(),reason:why};
+  co.overrides=co.overrides||{}; co.overrides[6]=co.sigOverride;
   co.custAt=co.sigOverride.at;
   co.dmgd=getDmgData();
   co.mechBy=(function(){var _e=document.getElementById('co-h-nm');return _e?_e.value:undefined;})()||co.mechBy;
@@ -5736,7 +5754,7 @@ function ciReportHeader(){
       +(x.damaged.length?row('Damaged items','⚠ '+x.damaged.map(_bx).join(', '),true):'')
       +row('Photos',((r.dmgPhotos&&r.dmgPhotos.length)||0)+' on file',false)
       +(r.notes?row('Client notes',_bx(r.notes),false):'')
-      +row('Client signed','✅ '+_bx(r.custAt||''),false)
+      +row('Client signed',r.sigOverride?('⚠ CLOSED BY '+_bx(r.sigOverride.by)+' — no client signature'):('✅ '+_bx(r.custAt||'')),!!r.sigOverride)
     +'</div>'
     +'<div style="padding:12px 16px;font-size:15px;font-weight:900;background:'+(x.any?'var(--rg)':'var(--sg)')+';color:'+(x.any?'var(--rl)':'var(--se)')+';">'
       +(x.any?'⚠ ISSUES FOUND — management decides the deposit (by '+fmtDay(nextWorkingDay())+')'
