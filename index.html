@@ -404,7 +404,6 @@ input[type=file]{display:none;}
       <button ontouchstart="event.preventDefault();lsPick('Simon');" onclick="lsPick('Simon')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Simon</button>
       <button ontouchstart="event.preventDefault();lsPick('Christina');" onclick="lsPick('Christina')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Christina</button>
       <button ontouchstart="event.preventDefault();lsPick('Abia');" onclick="lsPick('Abia')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">Abia</button>
-      <button ontouchstart="event.preventDefault();lsPick('Manager');" onclick="lsPick('Manager')" style="padding:18px;border-radius:12px;border:2px solid #f0c27a;background:#fff6e5;color:#a35a00;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;">👔 Manager</button>
     </div>
   </div>
   <div id="ls-pin" style="display:none;width:100%;max-width:300px;text-align:center;">
@@ -474,7 +473,6 @@ input[type=file]{display:none;}
       <button onclick="pickName('Peter')"    style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Peter</button>
       <button onclick="pickName('Simon')"    style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Simon</button>
       <button onclick="pickName('Christina')" style="padding:18px;border-radius:12px;border:2px solid #cbd5e1;background:#ffffff;color:#0f172a;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">Christina</button>
-      <button onclick="pickName('Manager')"  style="padding:18px;border-radius:12px;border:2px solid #5a3e00;background:#2a1e00;color:#f5a623;font-size:17px;font-weight:800;cursor:pointer;touch-action:manipulation;">👔 Manager</button>
     </div>
   </div>
 
@@ -726,7 +724,6 @@ const STAFF_ROSTER=[
   {name:'Simon',    role:'prep'},
   {name:'Christina',role:'prep'},
   {name:'Abia',     role:'prep'},
-  {name:'Manager',  role:'manager'},
 ];
 // Check a staff PIN on the server. Returns {ok, name, role} or {ok:false, reason, wait_minutes}
 async function checkStaffPin(name,pin){
@@ -749,9 +746,9 @@ function pinFailText(res){
   return '❌ Wrong PIN — try again';
 }
 function staffUser(res){var st=STAFF_ROSTER.filter(function(s){return s.name===res.name;})[0]||{};return {name:res.name,role:res.role||st.role||'prep'};}
-// 'Manager' is a login only — it is not offered in the name lists
-const STAFF_PREP=STAFF_ROSTER.map(s=>s.name).filter(n=>n!=='Manager');
-const STAFF_HO  =STAFF_ROSTER.map(s=>s.name).filter(n=>n!=='Manager');
+// Everyone on the roster is a real person; Peter is the admin
+const STAFF_PREP=STAFF_ROSTER.map(s=>s.name);
+const STAFF_HO  =STAFF_ROSTER.map(s=>s.name);
 
 // ── CURRENT LOGIN ──────────────────────────────────────────────
 let APP_USER = null; // {name, code, role} - set on login
@@ -995,7 +992,7 @@ function initIM(){VIEWS.forEach(v=>{imarks[v]={S:{},M:{},L:{}};});}
 initIM();
 
 // ── NAV ──────────────────────────────────────────────────────────
-const REPORTS_ALLOWED=['Manager','Simon','Peter','Joe','Robbie','Christina'];  // may see On Rental, Calendar, Documentation and Reports
+const REPORTS_ALLOWED=['Simon','Peter','Joe','Robbie','Christina'];  // may see On Rental, Calendar, Documentation and Reports
 const NO_OVERVIEW=['Bonga','Dixon','Vince','Abia','Nelson'];  // check-outs / check-ins only
 // ── Auto refresh: keep the bookings fresh without disturbing anyone mid-job ──
 var AUTO_MS=180000, _autoTimer=null, LAST_SYNC=null;
@@ -1129,7 +1126,7 @@ function applyTabAccess(){
   // hide Check-In for staff who are not allowed to do check-ins
   var ciTab=document.getElementById('nb-ci');if(ciTab)ciTab.style.display=canCheckIn()?'':'none';
 }
-const MANAGEMENT=['Manager','Robbie','Peter','Simon','Joe','Christina'];
+const MANAGEMENT=['Robbie','Peter','Simon','Joe','Christina'];
 function isManagement(){ return !!(APP_USER && MANAGEMENT.includes(APP_USER.name)); }
 function isAdmin(){ return !!(APP_USER && (APP_USER.name==='Peter' || APP_USER.role==='admin')); }
 // Deleting anything (photos, damage marks, records) is for the admin only
