@@ -4881,6 +4881,8 @@ async function completeCO(){
   const equipPhotos=co.prepPhotos||[];
 
   const handoverHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Go Rent 4×4 Namibia — Handover Document</title>
   <style>
     body{font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:20px;color:#1a1a1a;font-size:15px;}
     h1{color:#145c30;font-size:20px;margin-bottom:4px;}
@@ -5038,11 +5040,11 @@ function coHandoverExtras(){
 async function saveHandoverLink(html){
   try{
     var path='bookings/'+bkKey(co.v)+'/handover-report_'+Date.now()+'.html';
-    var up=await SB.storage.from('client-docs').upload(path,new Blob([html],{type:'text/plain'}),{contentType:'text/plain;charset=utf-8',upsert:true});
+    var up=await SB.storage.from('client-docs').upload(path,new Blob([html],{type:'text/html'}),{contentType:'text/html;charset=utf-8',upsert:true});
     if(up&&up.error)return '';
     var su=await SB.storage.from('client-docs').createSignedUrl(path,60*60*24*REPORT_LINK_DAYS);
     var signed=su&&su.data&&su.data.signedUrl;if(!signed)return '';
-    return 'https://gorent-fleet.github.io/tablet/#r='+encodeURIComponent(signed);
+    return signed;   // straight to the document: the client never has to load this app
   }catch(e){return '';}
 }
 function sendHandoverWA(){
@@ -6095,19 +6097,26 @@ async function loadRentalFiles(q){
 }
 
 // ── RETURN REPORT BY WHATSAPP ─────────────────────────────────────
-// The report is saved privately with the booking; the client gets a long-lived private link
-// that opens this app in "report only" mode (#r=...). Staff send it with one tap in WhatsApp.
+// The report is saved privately with the booking and the client gets a long-lived private
+// link straight to it. The link opens the report itself — not this app — so a client on a
+// phone on holiday data sees their document in a second and never meets the tablet
+// sign-in screen. Links sent by the older version (#r=…) still work, see showSharedReport.
 var REPORT_LINK_DAYS=365;
 async function saveCIReportLink(){
   try{
-    var html=ciReportHTML();
+    // the client opens this on a phone, so it goes out as a proper mobile web page
+    var html='<!DOCTYPE html><html><head><meta charset="UTF-8">'
+      +'<meta name="viewport" content="width=device-width,initial-scale=1">'
+      +'<title>Go Rent 4×4 Namibia — Vehicle Return Report</title>'
+      +'<style>body{margin:0;padding:16px;background:#f3f3f3;}</style></head><body>'
+      +ciReportHTML()+'</body></html>';
     var path='bookings/'+bkKey(ci.v)+'/return-report_'+Date.now()+'.html';
-    var blob=new Blob([html],{type:'text/plain'});
-    var up=await SB.storage.from('client-docs').upload(path,blob,{contentType:'text/plain;charset=utf-8',upsert:true});
+    var blob=new Blob([html],{type:'text/html'});
+    var up=await SB.storage.from('client-docs').upload(path,blob,{contentType:'text/html;charset=utf-8',upsert:true});
     if(up&&up.error)return '';
     var s=await SB.storage.from('client-docs').createSignedUrl(path,60*60*24*REPORT_LINK_DAYS);
     var signed=s&&s.data&&s.data.signedUrl;if(!signed)return '';
-    return 'https://gorent-fleet.github.io/tablet/#r='+encodeURIComponent(signed);
+    return signed;
   }catch(e){return '';}
 }
 function waNumber(p){
@@ -6171,24 +6180,32 @@ function sendCIWhatsApp(){
   try{SB.from('checkins').update({report_whatsapp_at:new Date().toISOString()}).eq('booking_id',bkKey(ci.v)).then(function(){},function(){});}catch(e){}
   if(!ci._mgmtSent)toast('Now send the copy to Management (green button)','ok');
 }
-// "Report only" mode: opened from the WhatsApp link
+// "Report only" mode: opened from a link sent by the older version of the app.
+// New links go straight to the document, but every link already in a client's WhatsApp
+// still has to work, and a client must never land on the tablet sign-in screen.
 function sharedReportLink(){
   var h=location.hash||'';
   if(h.indexOf('#r=')!==0)return '';
-  var u='';try{u=decodeURIComponent(h.slice(3));}catch(e){return '';}
-  return u.indexOf(SB_URL+'/storage/v1/object/sign/client-docs/bookings/')===0?u:'';
+  var u='';try{u=decodeURIComponent(h.slice(3));}catch(e){u='';}
+  return (u.indexOf(SB_URL+'/storage/v1/object/')===0)?u:'#bad';
 }
 async function showSharedReport(u){
   document.documentElement.style.overflow='auto';
   document.body.setAttribute('style','overflow:auto;background:#f3f3f3;height:auto;min-height:100vh;margin:0;');
-  document.body.innerHTML='<div id="shared-report" style="padding:16px;font-family:Arial,sans-serif;color:#333;">Loading your return report…</div>';
+  document.body.innerHTML='<div id="shared-report" style="padding:16px;font-family:Arial,sans-serif;color:#333;">Loading your document…</div>';
   var el=document.getElementById('shared-report');
+  var oops='<div style="max-width:520px;margin:40px auto;text-align:center;font-family:Arial,sans-serif;">'
+    +'<div style="font-size:40px;">📄</div>'
+    +'<h2 style="color:#145c30;">Go Rent 4×4 Namibia</h2>'
+    +'<p style="font-size:16px;color:#444;">This document link could not be opened. It may have expired, or the link may have been cut short when it was sent.</p>'
+    +'<p style="font-size:16px;color:#444;">Please WhatsApp us on <b>+264 81 861 8085</b> and we will send it again.</p></div>';
+  if(u==='#bad'){el.innerHTML=oops;document.title='Go Rent 4×4';return;}
   try{
     var r=await fetch(u);
-    if(!r.ok){el.innerHTML='<p>This report link has expired or is not valid. Please contact Go Rent 4×4 at info@gorent4x4.com.</p>';return;}
+    if(!r.ok){el.innerHTML=oops;document.title='Go Rent 4×4';return;}
     el.innerHTML=await r.text();
-    document.title='Go Rent 4×4 — Vehicle Return Report';
-  }catch(e){el.innerHTML='<p>The report could not be loaded. Please check your internet connection and try again.</p>';}
+    document.title='Go Rent 4×4 — Your Document';
+  }catch(e){el.innerHTML=oops;document.title='Go Rent 4×4';}
 }
 
 // ── RETURN REPORT EMAIL (sent to the client when the check-in is completed) ──
