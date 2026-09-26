@@ -2780,7 +2780,8 @@ function drawCO(){
         '<div>'+
           '<div class="fhdr-fn">'+co.fn+' <span>'+_cov.reg+'</span></div>'+
           '<div class="fhdr-cl">'+(co.clientName||_cov.cl||'No booking')+nameEditBtn(bkKey(_cov),co.clientName||_cov.cl,'drawCO')+(waChip(_cov)?' · '+waChip(_cov):'')+'</div>'+
-          '<div class="fhdr-cl" style="font-size:13px;opacity:.7;margin-top:1px">📅 '+(_cov.pu||'?')+' → '+(_cov.rt||'?')+'</div>'+
+          '<div class="fhdr-cl" style="font-size:13px;opacity:.7;margin-top:1px">📅 '+(_cov.pu||'?')+' → '+(_cov.rt||'?')
+            +(rentalDays(_cov)?'<span style="margin-left:8px;padding:2px 9px;border-radius:6px;background:rgba(255,255,255,.16);font-weight:800;opacity:1;">'+rentalDays(_cov)+' days</span>':'')+'</div>'+
           '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">'+hdrTripChips(_cov)+'</div>'+
           ((co.contract&&placeChips(co.contract.pickup_location,co.contract.return_location))?'<div style="margin-top:4px;">'+placeChips(co.contract.pickup_location,co.contract.return_location)+'</div>':'')+
           '<div style="margin-top:4px;display:flex;align-items:center;gap:6px;">'+'<span style="font-size:10px;font-weight:800;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.3px;">Prepared by</span>'+'<span style="font-size:11px;font-weight:900;color:var(--am);padding:1px 8px;background:rgba(245,166,35,.15);border-radius:4px;">'+(co.prepBy||APP_USER&&APP_USER.name||'—')+'</span></div>'+
@@ -2877,6 +2878,14 @@ function coGoStep(t){
 // These decide whether somebody has to drive out to meet a client, so they are shown
 // the whole way through rather than buried on the contract step. Anywhere other than
 // the office flashes red.
+// How many days the vehicle is out: the same count the contract charges for.
+function rentalDays(v){
+  try{
+    if(!v||!v.pu||!v.rt)return 0;
+    var d=Math.round((new Date(v.rt+'T00:00:00')-new Date(v.pu+'T00:00:00'))/86400000);
+    return d>0?d:0;
+  }catch(e){return 0;}
+}
 function hdrTripChips(v){
   var chip=function(txt,alarm,title){
     return '<span'+(alarm?' class="disc-flash"':'')+' title="'+_bx(title||'')+'" style="font-size:12px;font-weight:800;padding:5px 11px;border-radius:7px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
