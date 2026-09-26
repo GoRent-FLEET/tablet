@@ -1159,6 +1159,38 @@ function resetBtn(fn){
   if(!isAdmin())return '';
   return '<button onclick="resetProcess(\''+_bx(fn)+'\',event)" style="margin-left:8px;background:var(--rg);border:1px solid var(--re);color:var(--rl);border-radius:8px;font-size:11px;font-weight:900;padding:4px 9px;cursor:pointer;">🗑 Reset</button>';
 }
+// ── Clear everything this tablet is holding ────────────────────────────────
+// Only for starting clean. Anything still waiting to be sent is thrown away, so this
+// must be done on EVERY tablet BEFORE the server is cleared — otherwise the tablets
+// simply send their copies back up again. The vehicle list and the bookings are not
+// touched: those come from the Fleet Manager and are reloaded on the next sign-in.
+function wipeTabletBtn(){
+  if(!isAdmin())return '';
+  return '<button onclick="wipeThisTablet()" style="padding:8px 14px;border-radius:8px;border:2px solid var(--re);background:var(--rg);color:var(--rl);font-size:13px;font-weight:900;cursor:pointer;white-space:nowrap;">🧹 Clear this tablet</button>';
+}
+async function wipeThisTablet(){
+  if(!canDelete('this tablet’s saved work'))return;
+  if(!confirm('CLEAR THIS TABLET\n\nEverything this tablet is holding is thrown away:\n • every check-out and check-in in progress\n • ticks, photos, signatures and damage marks not yet sent\n • the signed-in staff member\n\nBookings and vehicles are NOT touched — they come from the Fleet Manager.\n\nThis cannot be undone. Clear it now?'))return;
+  if(!confirm('Last check.\n\nAnything on this tablet that has not reached the server yet will be lost.\n\nClear this tablet?'))return;
+  banner('Clearing this tablet…');
+  try{if(_autoTimer)clearInterval(_autoTimer);}catch(e){}
+  try{_drStarted=true;}catch(e){}            // stop the sync sending anything else up
+  try{co={};ci={};coStep=0;ciStep=0;}catch(e){}
+  try{
+    // keep only the tablet's own id and its Supabase sign-in, so it does not need setting up again
+    var drop=[];
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(k&&k!=='gorent_dev'&&k.indexOf('sb-')!==0)drop.push(k);
+    }
+    drop.forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+  }catch(e){}
+  try{sessionStorage.clear();}catch(e){}
+  try{ if(_drDB){var db=await _drDB;db.close();} indexedDB.deleteDatabase('gorent_work'); }catch(e){}
+  hideBanner();
+  alert('This tablet is clear.\n\nIt will reload now and ask for a PIN.');
+  location.reload();
+}
 function canDelete(what){
   if(isAdmin())return true;
   toast('🔒 Only Peter can delete '+(what||'data'),'err');
@@ -1332,6 +1364,7 @@ function drawDoc(){
     +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0 12px;">'
     +'<div style="font-size:12px;color:var(--g5);">Contract, booking details, passports, photos, damage, handover and return report — with print.</div>'
     +'<button onclick="backupNow(false)" style="padding:8px 14px;border-radius:8px;border:2px solid var(--g3);background:var(--g0);color:var(--tx);font-size:13px;font-weight:900;cursor:pointer;white-space:nowrap;">💾 Backup to this computer</button>'
+    +wipeTabletBtn()
     +'</div>'
     +docVehPanel()
     +(rows?'<div style="font-size:12px;font-weight:900;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;">📁 Documents on file</div>'+rows
