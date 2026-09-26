@@ -2847,7 +2847,7 @@ function coStep0(){
       L_VEH.push(item);
     }
   }
-  prefillOK(L_VEH.filter(function(x){return x[0]!=='__SECTION__'&&x[0]!=='__OPTIONAL__';}).map(function(x){return x[1];}));
+  window._L_VEH=L_VEH;
   function _pst(l){var v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';}
   function _pby(l){var v=co.prepItems[l];return (v&&v.by)||'';}
   function _pat(l){var v=co.prepItems[l];return (v&&v.at)||'';}
@@ -2861,7 +2861,7 @@ function coStep0(){
   <div class="step-intro">
     <div class="step-ico">🚗</div>
     <div><div class="step-title">Step 1 — Cleaning</div>
-    <div class="step-sub">Everything is marked OK — tap only what is wrong</div></div>
+    <div class="step-sub">Tap <b>✓ All good</b> on a heading to confirm that whole section · tap any single item that is wrong</div></div>
     <div style="margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:6px;background:var(--g0);border:1px solid var(--am);border-radius:20px;padding:3px 10px 3px 3px;"><div style="width:22px;height:22px;border-radius:50%;background:var(--am);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000;">${APP_USER&&APP_USER.name?APP_USER.name.slice(0,2).toUpperCase():'??'}</div><span style="font-size:12px;font-weight:800;color:var(--al);white-space:nowrap;">🔒 ${APP_USER&&APP_USER.name?APP_USER.name:'Unknown'}</span></div>
   </div>
   <div class="prog-wrap">
@@ -2882,6 +2882,7 @@ function coStep0(){
         <span style="font-size:${isMain?'18':'15'}px;">${lbl.split(' ')[0]}</span>
         <div><div style="font-size:${isMain?'12':'11'}px;font-weight:800;color:${isOpt?'var(--al)':isMain?'var(--tx)':'var(--se)'};">${lbl.replace(lbl.split(' ')[0]+' ','')}</div>
         <div style="font-size:13px;color:var(--g5);">${det}</div></div>
+        ${secBtn('veh',i)}
       </div>`;
     }
     const st=_pst(lbl);const by=_pby(lbl);const at=_pat(lbl);
@@ -2967,47 +2968,77 @@ function coCleanItems(){
     out.push(it[1]);}
   return out;
 }
-// ── EXCEPTION-BASED CHECKING ───────────────────────────────────────────────
-// Everything is taken as in order. Staff tap ONLY what is wrong. This is how a
-// driver's vehicle inspection report works: you record the faults, not the things
-// that were fine. Confirming the step is the statement that it was inspected, and
-// that is what carries the name and the time.
-// Items filled in this way are marked auto:true, so a report can still tell the
-// difference between "inspected and found in order" and "somebody tapped this one".
-function prefillOK(list){
-  var who=(APP_USER&&APP_USER.name)||'';
-  if(!who||!co||!co.prepItems)return 0;
-  var t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),n=0;
-  for(var i=0;i<list.length;i++){
-    var l=list[i];
-    if(co.prepItems[l])continue;
-    co.prepItems[l]={st:'ok',by:who,at:t,auto:true};n++;
-  }
-  if(n){if(!co.prepBy)co.prepBy=who;try{saveCOProgress();}catch(e){}}
-  return n;
-}
-function prefillMechOK(){
-  var who=(APP_USER&&APP_USER.name)||'';
-  if(!who||!co||!co.mechItems)return 0;
-  var n=0;
-  for(var i=0;i<L_MECH.length;i++){
-    var it=L_MECH[i];if(!it||it[0]==='__SECTION__')continue;
-    if(it[0]==='__CAMPING__'&&!(co.v&&co.v.camping))continue;
-    if(co.mechItems[it[1]])continue;
-    co.mechItems[it[1]]='ok';n++;
-    if(!co.mechWho)co.mechWho={};
-    co.mechWho[it[1]]=who+' · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  }
-  if(n){if(!co.mechBy&&APP_USER)co.mechBy=who;if(!co.mechCheckBy)co.mechCheckBy=who;try{saveCOProgress();}catch(e){}}
-  return n;
-}
 // The line that tells staff how the list now works
+// ── "ALL GOOD" PER SECTION ─────────────────────────────────────────────────
+// One deliberate tap confirms the handful of items under one heading — the same way
+// the Handover step and the check-in equipment groups already work. Anything wrong is
+// still tapped on its own, and anything left untouched stays grey and unchecked, so
+// the record still shows what was actually looked at.
+function secItems(which,idx){
+  var list=which==='veh'?(window._L_VEH||[]):which==='equip'?(window._L_EQUIP||[]):L_MECH;
+  var out=[];
+  for(var i=idx+1;i<list.length;i++){
+    var it=list[i];if(!it||!it[0])continue;
+    if(it[0]==='__SECTION__'||it[0]==='__OPTIONAL__')break;
+    if(it[0]==='__CAMPING__'&&!(co&&co.v&&co.v.camping))continue;
+    var lbl=it[1];if(!lbl||String(lbl).indexOf('__QTY__')===0)continue;   // quantities must still be answered
+    if(which!=='mech'&&noCampHidden(lbl,co&&co.v&&co.v.camping))continue;
+    out.push(lbl);
+  }
+  return out;
+}
+function secAllGood(which,idx,ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  var who=(APP_USER&&APP_USER.name)||'';
+  if(!who){toast('Sign in first','err');return;}
+  var labels=secItems(which,idx);
+  if(!labels.length){toast('Nothing to mark here','err');return;}
+  var t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),n=0;
+  for(var i=0;i<labels.length;i++){
+    var lbl=labels[i];
+    if(which==='mech'){
+      if(co.mechItems[lbl])continue;                 // already answered — a reported fault is never turned green
+      co.mechItems[lbl]='ok';
+      if(!co.mechWho)co.mechWho={};
+      co.mechWho[lbl]=who+' · '+t;
+      co.dmgDone=true;
+      if(!co.mechCheckBy)co.mechCheckBy=who;
+    }else{
+      var cur=co.prepItems[lbl];cur=(cur&&cur.st!==undefined?cur.st:cur)||'';
+      if(cur)continue;                               // already answered — a reported fault is never turned green
+      co.prepItems[lbl]={st:'ok',by:who,at:t};
+      if(!co.prepBy)co.prepBy=who;
+    }
+    n++;
+  }
+  try{saveCOProgress();}catch(e){}
+  toast(n?('✓ '+n+' item'+(n===1?'':'s')+' marked good — '+who):'Already done','ok');
+  var s=document.getElementById('cos');
+  if(s)s.innerHTML=which==='veh'?coStep0():which==='equip'?coStep1_equip():coStepMech();
+}
+// The button that sits on a section heading, showing how far that section has got
+function secBtn(which,idx){
+  var labels=secItems(which,idx);
+  if(!labels.length)return '';
+  var done=0;
+  for(var i=0;i<labels.length;i++){
+    var v=which==='mech'?(co.mechItems&&co.mechItems[labels[i]]):(co.prepItems&&co.prepItems[labels[i]]);
+    var st=(v&&v.st!==undefined?v.st:v)||'';
+    if(st)done++;
+  }
+  var all=done>=labels.length;
+  return '<button onclick="secAllGood(\''+which+'\','+idx+',event)" style="margin-left:auto;flex-shrink:0;'
+    +'padding:7px 13px;border-radius:9px;font-size:12px;font-weight:900;cursor:pointer;touch-action:manipulation;'
+    +(all?'border:2px solid var(--gb);background:var(--sg);color:var(--se);':'border:2px solid var(--se);background:var(--se);color:#052010;')
+    +'">'+(all?'✓ All good':'✓ All good ('+(labels.length-done)+')')+'</button>';
+}
 function faultsOnlyNote(what){
+  var who=(APP_USER&&APP_USER.name)||'you';
   return '<div style="display:flex;gap:9px;align-items:flex-start;background:var(--sg);border-left:4px solid var(--se);border-radius:8px;padding:8px 12px;margin-bottom:10px;">'
-    +'<span style="font-size:17px;line-height:1.2;">👉</span>'
-    +'<div style="font-size:13px;font-weight:700;color:var(--tx);line-height:1.45;">Everything below is marked in order. '
-    +'<span style="color:var(--rl);">Tap ONLY what is wrong or missing.</span>'
-    +'<div style="font-weight:600;color:var(--g5);margin-top:2px;">'+_bx(what)+' — your name goes on this when you confirm at the bottom.</div></div></div>';
+    +'<span style="font-size:17px;line-height:1.2;">\uD83D\uDC49</span>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--tx);line-height:1.45;">'
+    +'Tap <span style="color:var(--se);">\u2713 All good</span> on a heading to confirm that whole section at once. Tap a single item only when it is wrong.'
+    +'<div style="font-weight:600;color:var(--g5);margin-top:2px;">'+_bx(what)+' \u2014 every item you confirm is recorded against <b>'+_bx(who)+'</b>.</div></div></div>';
 }
 function coPst(l){var v=co&&co.prepItems&&co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';}
 function coCleanDone(){var it=coCleanItems();return it.length>0&&it.every(function(l){return !!coPst(l);});}
@@ -3137,14 +3168,13 @@ function coStepMech(){
   var who='<div class="who-box"><div class="who-lbl">👤 Who is checking the mechanics?</div>'
     +'<select id="co-mech-nm" onchange="co.mechCheckBy=this.value;saveCOProgress();drawCO()" style="color-scheme:dark;width:100%;padding:12px 14px;font-size:16px;font-weight:800;background:var(--g0);border:2px solid '+(co.mechCheckBy?'var(--gb)':'var(--am)')+';border-radius:var(--rs);color:var(--tx);">'
     +'<option value="">— Select your name —</option>'+names.map(function(n){return '<option'+(n===co.mechCheckBy?' selected':'')+'>'+n+'</option>';}).join('')+'</select></div>';
-  prefillMechOK();
   var rows='';
   for(var i=0;i<L_MECH.length;i++){
     var item=L_MECH[i];
     if(!item||!item[0]) continue;
     if(item[0]==='__CAMPING__'&&!co.v.camping) continue;
     if(item[0]==='__SECTION__'){
-      rows+='<div style="font-size:11px;font-weight:900;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;padding:10px 0 5px;border-bottom:1px solid var(--g2);margin-bottom:6px;">'+item[1]+'</div>';
+      rows+='<div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;color:var(--g5);text-transform:uppercase;letter-spacing:.5px;padding:10px 0 5px;border-bottom:1px solid var(--g2);margin-bottom:6px;"><span>'+item[1]+'</span>'+secBtn('mech',i)+'</div>';
       continue;
     }
     var lbl=item[1]||''; var desc=item[2]||'';
@@ -3169,7 +3199,7 @@ function coStepMech(){
   var allDone=doneCount>=mechCount;
   return '<div class="step-intro"><div class="step-ico">🔩</div>'
     +'<div><div class="step-title">Step 3 — Mechanical</div>'
-    +'<div class="step-sub">All '+mechCount+' items are marked OK \u2014 tap Issue on anything that is not</div></div></div>'
+    +'<div class="step-sub">Tap ✓ All good on a heading to confirm that section · tap Issue on anything that is not ('+doneCount+'/'+mechCount+')</div></div></div>'
     +who
     +faultsOnlyNote('Mechanical check')
     +'<div style="padding:0 4px;">'+rows+'</div>'
@@ -3201,7 +3231,7 @@ function coStep1_equip(){
   }
   // remove section headings that have nothing left under them
   for(var _q=L_EQUIP.length-1;_q>=0;_q--){var _it=L_EQUIP[_q];if(_it[0]==='__SECTION__'||_it[0]==='__OPTIONAL__'){var _nx=L_EQUIP[_q+1];if(!_nx||_nx[0]==='__SECTION__'||_nx[0]==='__OPTIONAL__')L_EQUIP.splice(_q,1);}}
-  prefillOK(L_EQUIP.filter(function(x){return x[0]!=='__SECTION__'&&x[0]!=='__OPTIONAL__'&&String(x[1]).indexOf('__QTY__')!==0;}).map(function(x){return x[1];}));
+  window._L_EQUIP=L_EQUIP;
   function _est(l){var v=co.prepItems[l];return (v&&v.st!==undefined?v.st:v)||'';}
   function _eby(l){var v=co.prepItems[l];return (v&&v.by)||'';}
   function _eat(l){var v=co.prepItems[l];return (v&&v.at)||'';}
@@ -3215,7 +3245,7 @@ function coStep1_equip(){
   <div class="step-intro">
     <div class="step-ico">🏕</div>
     <div><div class="step-title">Step 2 — Equipment Packing &amp; Checks</div>
-    <div class="step-sub">Everything is marked packed — tap only what is missing or damaged</div></div>
+    <div class="step-sub">Tap <b>✓ All good</b> on a heading to confirm that whole section · tap any single item that is missing or damaged</div></div>
   </div>
   <div class="prog-wrap">
     <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:var(--se)"></div></div>
@@ -3233,6 +3263,7 @@ function coStep1_equip(){
         <span style="font-size:${isMain?'18':'15'}px;">${lbl.split(' ')[0]}</span>
         <div><div style="font-size:${isMain?'12':'11'}px;font-weight:800;color:${isOpt?'var(--al)':isMain?'var(--tx)':'var(--se)'};">${lbl.replace(lbl.split(' ')[0]+' ','')}</div>
         <div style="font-size:13px;color:var(--g5);">${det}</div></div>
+        ${secBtn('equip',i)}
       </div>`;
     }
     const st=_est(lbl);
@@ -3278,7 +3309,7 @@ function coStep1_equip(){
   ${photoHTML('co.prepPhotos','📷 Equipment Photos','Photograph all packed equipment — tent, boxes, loose items. Client sees these at handover.',6)}
   ${co.equipSig?
     '<div class="signed">✅<div class="signed-name">'+co.prepBy+' — Equipment confirmed packed</div><div class="signed-time">'+co.equipAt+'</div></div>':
-    '<div class="liab">⚠️ By confirming, <strong>'+(co.prepBy||'[prep staff]')+'</strong> states they have <strong>physically checked every item above</strong> and reported anything wrong.<br>This is recorded with your name and the time. Anything you did not look at is your responsibility.</div>'
+    '<div class="liab">⚠️ <strong>'+(co.prepBy||'[prep staff]')+'</strong> confirms every ✅ green item above is present, packed and in order.<br>Marking a section <strong>✓ All good</strong> puts your name on every item in it. If a fault is found later and you did not report it, <strong>it stands against your name.</strong> Every ⬜ grey item is still NOT CHECKED.</div>'
     +'<button class="btn g" onclick="signEquip()">✓ Confirm — Equipment Packed</button>'}`;
 }
 
