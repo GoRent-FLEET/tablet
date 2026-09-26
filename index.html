@@ -3540,18 +3540,17 @@ function coStep1(){
           ${dtPickers('lcx'+i,d.licExpiry||'',i,'licExpiry')}
         </div>
       </div>
-      ${isPrimary?`<div class="fi" style="margin-bottom:8px;">
-          <label>📋 Quote number</label>
-          <input value="${co.quoteNo||co.v.quote||''}" placeholder="e.g. Q-0343"
+      ${isPrimary?`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+        <div class="fi" style="flex:0 1 120px;min-width:100px;"><label>📋 Quote no.</label>
+          <input value="${co.quoteNo||co.v.quote||''}" placeholder="Q-0343"
             oninput="co.quoteNo=this.value"
             style="font-weight:700;border-color:${co.quoteNo||co.v.quote?'var(--gb)':'var(--g3)'}">
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div class="fi"><label>📧 Email address</label>
+        <div class="fi" style="flex:2 1 220px;min-width:180px;"><label>📧 Email address</label>
           <input type="email" value="${co.clientEmail||''}" placeholder="client@email.com" oninput="co.clientEmail=this.value"
             style="border-color:${co.clientEmail?'var(--gb)':'var(--g3)'}">
         </div>
-        <div class="fi"><label>💬 WhatsApp number</label>
+        <div class="fi" style="flex:1.3 1 180px;min-width:150px;"><label>💬 WhatsApp number</label>
           <input type="tel" value="${co.clientPhone||''}" placeholder="+264 81 ..." oninput="co.clientPhone=this.value"
             style="border-color:${co.clientPhone?'var(--gb)':'var(--g3)'}">
         </div>
