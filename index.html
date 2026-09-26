@@ -4239,7 +4239,28 @@ function previewAndSignContract(){
 
   // Expose to outer scope
   window._ctHasSig=()=>strokes.length>0;
-  window._ctGetSig=()=>{repaint();return cv.toDataURL('image/png');};
+  // The signing area is deliberately large so a client can sign comfortably with a
+  // finger, but what gets saved is trimmed to the writing itself. Otherwise the
+  // contract shows a signature floating in a big empty rectangle, shrunk to nothing.
+  window._ctGetSig=()=>{
+    repaint();
+    try{
+      var minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9,any=false;
+      for(var a=0;a<strokes.length;a++)for(var b=0;b<strokes[a].length;b++){
+        var q=strokes[a][b];any=true;
+        if(q.x<minX)minX=q.x; if(q.x>maxX)maxX=q.x;
+        if(q.y<minY)minY=q.y; if(q.y>maxY)maxY=q.y;
+      }
+      if(!any)return cv.toDataURL('image/png');
+      var pad=10,cw=cv.width/DPR,ch=cv.height/DPR;
+      minX=Math.max(0,minX-pad); minY=Math.max(0,minY-pad);
+      maxX=Math.min(cw,maxX+pad); maxY=Math.min(ch,maxY+pad);
+      var w=Math.max(1,Math.round((maxX-minX)*DPR)),h=Math.max(1,Math.round((maxY-minY)*DPR));
+      var out=document.createElement('canvas');out.width=w;out.height=h;
+      out.getContext('2d').drawImage(cv,Math.round(minX*DPR),Math.round(minY*DPR),w,h,0,0,w,h);
+      return out.toDataURL('image/png');
+    }catch(e){return cv.toDataURL('image/png');}
+  };
   window._ctClr=()=>{strokes.length=0;cur=null;hasSigned=false;repaint();};
 }
 
@@ -8141,8 +8162,8 @@ function buildContractHTML(c,sigUrl){
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;padding-top:14px;border-top:2px solid #000;">
     <div>
       <div style="font-size:13px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:6px;">Renter Signature</div>
-      <div style="border:1px solid #ccc;border-radius:4px;min-height:64px;display:flex;align-items:center;justify-content:center;background:#fafafa;">
-        ${sigUrl?`<img src="${sigUrl}" style="max-height:58px;max-width:100%;display:block;" alt="Renter signature">`:'<span style="color:#ccc;font-size:13px;font-style:italic;">Sign here</span>'}
+      <div style="border:1px solid #ccc;border-radius:4px;min-height:64px;padding:4px 8px;display:flex;align-items:center;justify-content:center;background:#fafafa;">
+        ${sigUrl?`<img src="${sigUrl}" style="max-height:56px;max-width:100%;height:auto;width:auto;display:block;" alt="Renter signature">`:'<span style="color:#ccc;font-size:13px;font-style:italic;">Sign here</span>'}
       </div>
       ${sigUrl?`<div style="font-size:13px;color:#1e8449;margin-top:4px;">✓ Digitally signed — ${fDT(c.client_signed_at)}</div>`:''}
     </div>
