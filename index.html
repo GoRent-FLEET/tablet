@@ -3336,7 +3336,7 @@ function coStep1(){
       </div>
       <div class="fg">
         <div class="fi"><label>Passport expiry</label>
-          <input value="${d.ppExpiry||''}" placeholder="DD/MM/YYYY" oninput="co.drivers[${i}].ppExpiry=this.value">
+          ${dtPickers('ppx'+i,d.ppExpiry||'',i,'ppExpiry')}
         </div>
         <div class="fi"></div>
       </div>
@@ -3345,7 +3345,7 @@ function coStep1(){
           <input value="${d.licNo||''}" placeholder="Licence number" oninput="co.drivers[${i}].licNo=this.value">
         </div>
         <div class="fi"><label>Licence expiry</label>
-          <input value="${d.licExpiry||''}" placeholder="MM/YYYY" oninput="co.drivers[${i}].licExpiry=this.value">
+          ${dtPickers('lcx'+i,d.licExpiry||'',i,'licExpiry')}
         </div>
       </div>
       ${isPrimary?`<div class="fi" style="margin-bottom:8px;">
@@ -4005,8 +4005,10 @@ function previewAndSignContract(){
   const ctx=cv.getContext('2d');
   // Every stroke is remembered as points, not just painted. iOS throws away the picture
   // on a canvas that has been scrolled off screen, which is why the signature used to
-  // vanish when the client scrolled back up the contract. Now it is simply drawn again.
-  const strokes=[];let cur=null;
+  // vanish when the client scrolled up the contract. The points are kept on the check-out
+  // itself, so the signature comes back even if the whole contract window is rebuilt.
+  co._sigStrokes=Array.isArray(co._sigStrokes)?co._sigStrokes:[];
+  const strokes=co._sigStrokes;let cur=null;
   function style(){ctx.strokeStyle='#0f3d26';ctx.lineWidth=2.8;ctx.lineCap='round';ctx.lineJoin='round';}
   function repaint(){
     ctx.setTransform(1,0,0,1,0,0);
@@ -4026,7 +4028,8 @@ function previewAndSignContract(){
     repaint();
   }
   ctx.scale(DPR,DPR);style();
-  let drawing=false,hasSigned=false;
+  let drawing=false,hasSigned=strokes.length>0;
+  if(hasSigned)setTimeout(refit,0);   // reopened: put the signature back on screen
 
   const pt=(e,t)=>{const r=cv.getBoundingClientRect();
     return t?{x:(t.clientX-r.left),y:(t.clientY-r.top)}:{x:e.clientX-r.left,y:e.clientY-r.top};};
@@ -4043,32 +4046,37 @@ function previewAndSignContract(){
   cv.addEventListener('touchend',finish,{passive:false});
 
   // Redraw whenever the screen may have thrown the picture away, and stop watching
-  // once the contract window is closed.
+  // once the contract window is closed. The repeating check is the safety net: whatever
+  // made the picture disappear, it is back within a fraction of a second.
   (function(){
-    var sc=document.getElementById('ct-scroll'),t=null;
-    function again(){clearTimeout(t);t=setTimeout(function(){
+    var t=null;
+    function again(){if(t)cancelAnimationFrame(t);t=requestAnimationFrame(function(){
       if(!document.getElementById('contract-modal')){off();return;}
       if(!drawing&&strokes.length)refit();
-    },120);}
+    });}
     function off(){
+      var sc=document.getElementById('ct-scroll');
       if(sc)sc.removeEventListener('scroll',again);
+      window.removeEventListener('scroll',again,true);
       window.removeEventListener('resize',again);
       window.removeEventListener('orientationchange',again);
       document.removeEventListener('visibilitychange',again);
       clearInterval(iv);
     }
-    if(sc)sc.addEventListener('scroll',again,{passive:true});
+    var sc0=document.getElementById('ct-scroll');
+    if(sc0)sc0.addEventListener('scroll',again,{passive:true});
+    window.addEventListener('scroll',again,true);   // catches whichever box is actually scrolling
     window.addEventListener('resize',again);
     window.addEventListener('orientationchange',again);
     document.addEventListener('visibilitychange',again);
     var iv=setInterval(function(){
       if(!document.getElementById('contract-modal')){off();return;}
       if(!drawing&&strokes.length)repaint();
-    },1500);
+    },400);
   })();
 
   // Expose to outer scope
-  window._ctHasSig=()=>hasSigned&&strokes.length>0;
+  window._ctHasSig=()=>strokes.length>0;
   window._ctGetSig=()=>{repaint();return cv.toDataURL('image/png');};
   window._ctClr=()=>{strokes.length=0;cur=null;hasSigned=false;repaint();};
 }
@@ -4185,6 +4193,7 @@ async function signContract(sigData){
   // Build final HTML
   const finalHTML=buildContractHTML(co.contract,sigData);
   co.contract.contract_html=finalHTML;
+  try{co._sigStrokes=[];}catch(e){}   // signed and filed: the working copy of the strokes is done with
   // Upload sig
   const sigBlob=await(await fetch(sigData)).blob();
   const cln=(co.clientName||'unknown').replace(/[^a-zA-Z0-9]/g,'_');
@@ -7219,6 +7228,60 @@ function timePickers(id,val,onChangeJs,flash){
   return '<div style="display:flex;align-items:center;gap:4px;flex:1;">'
     +sel(id+'-h','hh',hrs,hh)+'<span style="font-size:18px;font-weight:900;color:var(--g5);">:</span>'+sel(id+'-m','mm',mins,mm)
     +'<span style="font-size:11px;font-weight:800;color:var(--g5);margin-left:2px;">24h</span></div>';
+}
+// ── Day / month / year pickers for a client's passport and licence expiry ──
+// Nobody types a date on a tablet. The value is kept as DD/MM/YYYY — exactly what the
+// passport reader produces — so the contract and every screen that already shows these
+// dates carry on working untouched.
+var DT_MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function dtParse(v){
+  var s=String(v||'').trim(),m;
+  if((m=/^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s)))return {d:('0'+m[3]).slice(-2),m:('0'+m[2]).slice(-2),y:m[1]};
+  if((m=/^(\d{1,2})[\/.\- ](\d{1,2})[\/.\- ](\d{4})$/.exec(s)))return {d:('0'+m[1]).slice(-2),m:('0'+m[2]).slice(-2),y:m[3]};
+  if((m=/^(\d{1,2})[\/.\- ](\d{4})$/.exec(s)))return {d:'',m:('0'+m[1]).slice(-2),y:m[2]};   // licences often carry only a month
+  return {d:'',m:'',y:''};
+}
+function dtPickValue(id){
+  var d=document.getElementById(id+'-d'),m=document.getElementById(id+'-m'),y=document.getElementById(id+'-y');
+  if(!d||!m||!y||!d.value||!m.value||!y.value)return '';
+  return d.value+'/'+m.value+'/'+y.value;
+}
+function dtPickChange(id,i,field){
+  var val=dtPickValue(id);
+  try{if(co&&co.drivers&&co.drivers[i])co.drivers[i][field]=val;}catch(e){}
+  var box=document.getElementById(id+'-box');
+  if(box)box.style.borderColor=val?'var(--gb)':'var(--g3)';
+  var w=document.getElementById(id+'-warn');
+  if(w){
+    var msg='';
+    if(val){
+      var p=dtParse(val),iso=p.y+'-'+p.m+'-'+p.d;
+      var due=(co&&co.v&&co.v.rt)||'';
+      if(iso<new Date().toISOString().split('T')[0])msg='⚠ This date has already passed';
+      else if(due&&iso<due)msg='⚠ Expires before the vehicle is due back on '+_dmy(due);
+    }
+    w.innerHTML=msg;w.style.display=msg?'':'none';
+  }
+  try{saveCOProgress();}catch(e){}
+}
+function dtPickers(id,value,i,field){
+  var p=dtParse(value),thisYear=new Date().getFullYear(),k;
+  var days=[],months=[],years=[];
+  for(k=1;k<=31;k++)days.push([('0'+k).slice(-2),k]);
+  for(k=0;k<12;k++)months.push([('0'+(k+1)).slice(-2),DT_MONTHS[k]]);
+  for(k=thisYear;k<=thisYear+15;k++)years.push([k,k]);
+  // a date already on file (or read off the passport) stays selectable even if it is old
+  if(p.y&&!years.some(function(x){return String(x[0])===String(p.y);}))years.unshift([p.y,p.y]);
+  var sel=function(sid,label,opts,val,w){
+    return '<select id="'+sid+'" onchange="dtPickChange(\''+id+'\','+i+',\''+field+'\')" '
+      +'style="color-scheme:dark;flex:'+w+';min-width:0;padding:11px 6px;font-size:16px;font-weight:800;background:var(--g0);border:2px solid var(--g3);border-radius:var(--rs);color:var(--tx);">'
+      +'<option value="">'+label+'</option>'
+      +opts.map(function(o){return '<option value="'+o[0]+'"'+(String(val)===String(o[0])?' selected':'')+'>'+o[1]+'</option>';}).join('')
+      +'</select>';
+  };
+  return '<div id="'+id+'-box" style="display:flex;gap:5px;padding:3px;border:2px solid '+(value?'var(--gb)':'var(--g3)')+';border-radius:var(--rs);">'
+    +sel(id+'-d','Day',days,p.d,'1')+sel(id+'-m','Month',months,p.m,'1.2')+sel(id+'-y','Year',years,p.y,'1.1')
+    +'</div><div id="'+id+'-warn" style="display:none;font-size:13px;font-weight:700;color:var(--rl);margin-top:3px;"></div>';
 }
 function discPickValue(id){
   var d=document.getElementById(id+'-d'),m=document.getElementById(id+'-m'),y=document.getElementById(id+'-y');
