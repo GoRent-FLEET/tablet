@@ -3515,7 +3515,9 @@ function coStep1(){
           ${isPrimary?`<div style="font-size:13px;color:var(--g5);margin-top:3px;">This name goes on the rental contract — use the passport spelling.</div>`:''}
         </div>
         <div class="fi"><label>Date of birth</label>
-          <input value="${d.dob||''}" placeholder="DD/MM/YYYY" oninput="co.drivers[${i}].dob=this.value">
+          <input id="dob${i}" inputmode="numeric" autocomplete="off" value="${d.dob||''}" placeholder="DD/MM/YYYY" maxlength="10"
+            oninput="dobType(this,${i})" style="border-color:${dobAge(d.dob)?'var(--gb)':'var(--g3)'}">
+          <div id="dob-note${i}" style="font-size:12px;font-weight:800;margin-top:3px;color:${dobAge(d.dob)?'var(--se)':'var(--rl)'};">${dobNote(d.dob)}</div>
         </div>
       </div>
       <div class="fg">
@@ -3670,6 +3672,44 @@ function placePicker(field,label,hint){
         +'<div id="pl-warn-'+field+'" style="display:'+(val?'none':'')+';font-size:12px;font-weight:800;color:var(--rl);margin-top:3px;">⚠ Type exactly where, and at what time</div>'
       :'<div style="font-size:12px;color:var(--g5);padding-left:2px;">6 Diehl Str, Windhoek</div>')
     +'</div>';
+}
+// ── DATE OF BIRTH ──────────────────────────────────────────────────────────
+// Typed as eight digits with the slashes put in automatically: 14031985 becomes
+// 14/03/1985. A hundred years of dropdowns would be slower than typing, so this is
+// typing made painless rather than a picker. The age is worked out as they go,
+// because the driver's age decides what they may be charged and insured for.
+function dobAge(v){
+  var m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(v||'').trim());
+  if(!m)return 0;
+  var dd=+m[1],mm=+m[2],yy=+m[3];
+  if(dd<1||dd>31||mm<1||mm>12)return 0;
+  var d=new Date(yy,mm-1,dd);
+  if(d.getFullYear()!==yy||d.getMonth()!==mm-1||d.getDate()!==dd)return 0;   // 31 February and friends
+  var t=new Date(),age=t.getFullYear()-yy;
+  if(t.getMonth()<mm-1||(t.getMonth()===mm-1&&t.getDate()<dd))age--;
+  return (age>=16&&age<=100)?age:0;
+}
+function dobNote(v){
+  var s=String(v||'').trim();
+  if(!s)return '';
+  var age=dobAge(s);
+  if(age)return '\u2713 '+age+' years old'+(age<21?' \u2014 under 21':(age<25?' \u2014 under 25':''));
+  return s.length>=10?'\u26a0 Check this date':'';
+}
+function dobType(el,i){
+  var digits=String(el.value||'').replace(/\D/g,'').slice(0,8);
+  var out=digits;
+  if(digits.length>4)out=digits.slice(0,2)+'/'+digits.slice(2,4)+'/'+digits.slice(4);
+  else if(digits.length>2)out=digits.slice(0,2)+'/'+digits.slice(2);
+  var atEnd=el.selectionStart===el.value.length;
+  el.value=out;
+  if(atEnd)try{el.setSelectionRange(out.length,out.length);}catch(e){}
+  try{co.drivers[i].dob=out;}catch(e){}
+  var age=dobAge(out);
+  el.style.borderColor=age?'var(--gb)':(out.length>=10?'var(--re)':'var(--g3)');
+  var n=document.getElementById('dob-note'+i);
+  if(n){n.textContent=dobNote(out);n.style.color=age?'var(--se)':'var(--rl)';}
+  try{saveCOProgress();}catch(e){}
 }
 function coRedrawDrivers(){
   var s=document.getElementById('cos');if(!s)return;
