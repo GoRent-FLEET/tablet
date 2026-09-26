@@ -1019,6 +1019,39 @@ async function autoRefresh(force){
     else if(pg==='page-co'&&!(co&&co.fn))renderCOPicker();
   }catch(e){}
 }
+// The office moved this booking to a different vehicle. The client's paperwork belongs
+// to the BOOKING and follows it. Everything that describes a vehicle — the cleaning,
+// the equipment, the mechanical check, the damage marks, the odometer, the fuel — was
+// recorded against the OLD vehicle and must not be carried across, or the new vehicle
+// goes out with another vehicle's inspection on file.
+function moveCheckoutToSwapped(){
+  try{
+    if(!co||!co.v||!co.v.bid)return false;
+    var to=FLEET.filter(function(f){return String(f.bid)===String(co.v.bid);})[0];
+    if(!to||!to.fn||to.fn===co.v.fn){toast('Could not find the new vehicle — reload and try again','err');return false;}
+    var from=co.v.fn;
+    // dropped: everything that described the old vehicle
+    co.prepItems={};co.prepLog=[];co.prepCheckedBy={};
+    co.mechItems={};co.mechWho={};co.bonnetItems={};co.bonnetNotes='';
+    co.dmgd=[];co.dmgPhotos=[];co.prepPhotos=[];
+    co.equipSig=null;co.equipAt='';co.equipLog=[];
+    co.mechDone=false;co.bonnetDone=false;co.dmgDone=false;co.inspDone=false;
+    co.prepBy='';co.equipBy='';co.mechCheckBy='';co.inspBy='';co.bonnetBy='';
+    co.odometerOut='';co.fuelOut='';
+    try{initIM();}catch(e){}
+    // kept: the client, their documents and the contract — they belong to the booking
+    var oldV=co.v;
+    co.v=to;co.fn=to.fn;
+    co.vehicleMoved={from:from,to:to.fn,by:(APP_USER&&APP_USER.name)||'',at:now()};
+    try{loadPrevDamage(to.fn);}catch(e){}
+    try{drFinishFleet(from);}catch(e){}   // the old vehicle is free again
+    try{saveCOProgress();}catch(e){}
+    coStep=firstAllowedStep();
+    toast('Moved to '+to.fn+' — the vehicle checks must be done again','err');
+    drawCO();
+    return true;
+  }catch(e){toast('Could not move it: '+e.message,'err');return false;}
+}
 // A vehicle was re-allocated in the Fleet Manager while this check-out / check-in was
 // open. Nobody must hand over a vehicle the booking no longer points at, so say so
 // plainly — once per change, and without throwing away any work already captured.
@@ -1036,10 +1069,15 @@ function checkVehicleSwap(){
       o.v.swappedTo=now.fn;
       toast('⚠ '+(o.v.cl||'This booking')+' has been moved from '+o.v.fn+' to '+now.fn,'err');
       setTimeout(function(){
-        alert('VEHICLE CHANGED\n\n'+(o.v.cl||'This booking')+' was booked on '+o.v.fn
+        var move=confirm('VEHICLE CHANGED\n\n'+(o.v.cl||'This booking')+' was booked on '+o.v.fn
           +'\nThe office has now put this booking on '+now.fn
-          +'\n\nDo NOT hand over '+o.v.fn+'.\n\nClose this '+(p[0]==='checkin'?'check-in':'check-out')
-          +' and start again on '+now.fn+', or check with the office first.');
+          +'\n\nDo NOT hand over '+o.v.fn+'.\n\n'
+          +'OK = move this '+(p[0]==='checkin'?'check-in':'check-out')+' to '+now.fn+'\n'
+          +'    (the client, their documents and the contract come with it;\n'
+          +'     the vehicle checks must be done again on '+now.fn+')\n\n'
+          +'Cancel = leave it as it is and check with the office first');
+        if(move&&p[0]==='checkout')moveCheckoutToSwapped();
+        else if(move)toast('Close this check-in and start again on '+now.fn,'err');
       },300);
     });
   }catch(e){}
