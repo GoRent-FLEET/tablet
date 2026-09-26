@@ -2470,9 +2470,12 @@ function markActive(){try{localStorage.setItem('gorent_active_at',String(Date.no
 function lockedSinceSleep(){ // used on page load: was the device away too long?
   try{var t=+localStorage.getItem('gorent_active_at')||0;return !t||(Date.now()-t)/1000>=lockLimitSec();}catch(e){return false;}
 }
-// Someone else was working on this vehicle: the new person confirms they are taking over
+// Someone else had this vehicle open. Nothing is asked. Tapping the vehicle IS the
+// decision to work on it, and every tick from here on is recorded against whoever is
+// signed in, so a dialog added nothing but an interruption. The message that follows
+// ("Continuing H-000 — last saved by Joe") says who had it before.
 function drConfirmTakeover(fn,prev,what){
-  return confirm('👤 WHO IS WORKING ON '+fn+'?\n\n'+prev+' was busy with this '+what+'.\n\nYou are signed in as '+APP_USER.name+'.\n\nOK = I ('+APP_USER.name+') carry on from here\nCancel = leave it (nothing is lost)');
+  return true;
 }
 function lockForNextPerson(){
   if(!APP_USER)return;
