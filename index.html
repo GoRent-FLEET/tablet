@@ -2779,6 +2779,7 @@ function drawCO(){
         })()
         +(svcTxt?'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+svcCol+';">'+svcTxt+'</span>':'')
         +(tyreTxt?'<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);color:'+tyreCol+';">'+tyreTxt+'</span>':'')
+        +hdrTripChips(_cov)
         +'</div>'
         // Km + fuel OUT (editable, shown on every step)
         +(function(){
@@ -2832,6 +2833,33 @@ function coGoStep(t){
 }
 
 // ── STEP 0: Prep & Pack ──────────────────────────────────────────
+// ── Flights and where the vehicle is collected / returned, on every check-out screen ──
+// These decide whether somebody has to drive out to meet a client, so they are shown
+// the whole way through rather than buried on the contract step. Anywhere other than
+// the office flashes red.
+function hdrTripChips(v){
+  var chip=function(txt,alarm,title){
+    return '<span'+(alarm?' class="disc-flash"':'')+' title="'+_bx(title||'')+'" style="font-size:10px;font-weight:800;padding:3px 9px;border-radius:5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
+      +(alarm?'background:#d13636;color:#fff;border:1px solid #ff8a8a;':'background:rgba(255,255,255,.07);color:rgba(255,255,255,.62);')+'">'+_bx(txt)+'</span>';
+  };
+  var out='';
+  var fi=(v&&v.flightIn)||'',fo=(v&&v.flightOut)||'';
+  out+=chip(fi?'✈ IN '+fi:'✈ No arrival flight',false,'Arrival flight');
+  out+=chip(fo?'🛫 OUT '+fo:'🛫 No departure flight',false,'Departure flight');
+  // what the contract step says if somebody has answered there; otherwise what the
+  // booking itself says, so a remote dropoff is flagged before anyone opens the contract
+  var eff=function(field,bookingVal){
+    try{ if(co&&co['_'+field+'Other']!==undefined)return placeValue(field); }catch(e){}
+    try{ if(co&&co[field])return co[field]; }catch(e){}
+    return bookingVal||'';
+  };
+  var pu=eff('pickupArrangement',(v&&v.puLocation)||'');
+  var dr=eff('dropoffArrangement',(v&&v.doLocation)||'');
+  var isHQ=function(x){return !x||x===GR_HQ||/^\s*windhoek\s*$/i.test(x)||/6 diehl/i.test(x);};
+  out+=chip(isHQ(pu)?'🏢 Collect: GR HQ':'📍 COLLECT: '+pu,!isHQ(pu),'Where the client collects');
+  out+=chip(isHQ(dr)?'🏢 Return: GR HQ':'📍 RETURN: '+dr,!isHQ(dr),'Where the client returns it');
+  return out;
+}
 function coStep0(){
   if(!co||!co.v){return '<div style="padding:20px;color:red;">Error: no vehicle selected (co.v undefined)</div>';}
   if(!L_PREP||!L_PREP.length){return '<div style="padding:20px;color:red;">Error: L_PREP not loaded</div>';}
